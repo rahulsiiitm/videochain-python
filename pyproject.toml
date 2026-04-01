@@ -1,5 +1,6 @@
 [build-system]
 requires = ["setuptools>=61.0"]
+requires-python = ">=3.11"
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -20,3 +21,10 @@ dependencies = [
 
 [project.urls]
 "Homepage" = "https://github.com/rahulsiiitm/videochain"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["videochain*"]
+
+[tool.setuptools.package-data]
+videochain = ["py.typed"]

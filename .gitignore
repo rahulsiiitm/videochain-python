@@ -1,0 +1,44 @@
+# --- Python / Development ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.env
+.python-version
+
+# --- UV specific ---
+.uv/
+
+# --- VideoChain Temp Data (IMPORTANT) ---
+# We don't want to push your test videos or extracted frames
+temp_frames/
+temp_audio/
+*.mp4
+*.mp3
+*.wav
+*.avi
+
+# --- Models & Heavy Weights ---
+# Don't push your .pth or .pt files; provide download links in README instead
+models/*.pth
+models/*.pt
+models/*.bin
+.whisper/
+
+# --- Build & Distribution ---
+dist/
+build/
+*.egg-info/
+.installed.cfg
+.eggs/
+
+# --- Operating System ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDEs ---
+.vscode/
+.idea/
