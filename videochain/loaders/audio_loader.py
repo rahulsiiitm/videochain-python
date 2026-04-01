@@ -13,6 +13,6 @@ class AudioLoader:
         with VideoFileClip(video_path) as video:
             audio_path = os.path.join(self.output_dir, "extracted_audio.mp3")
             # In v2.x, we use write_audiofile directly on the audio attribute
-            video.audio.write_audiofile(audio_path, logger=None)
+            video.audio.write_audiofile(audio_path, logger=None) # type: ignore
             
         return audio_path

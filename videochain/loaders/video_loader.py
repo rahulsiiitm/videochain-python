@@ -24,7 +24,7 @@ class VideoLoader:
             end_frame = scene[1].get_frames()
             mid_frame = (start_frame + end_frame) // 2
             
-            cap.set(cv2.PropertyId(cv2.CAP_PROP_POS_FRAMES), mid_frame)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, mid_frame)
             ret, frame = cap.read()
             
             if ret:

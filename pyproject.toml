@@ -16,7 +16,9 @@ dependencies = [
     "sentence-transformers",
     "faiss-cpu",
     "google-generativeai",
-    "moviepy"
+    "moviepy",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
 ]
 
 [project.urls]
@@ -28,3 +30,6 @@ include = ["videochain*"]
 
 [tool.setuptools.package-data]
 videochain = ["py.typed"]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu121"
