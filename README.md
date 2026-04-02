@@ -1,7 +1,8 @@
 # VideoChain
 > Edge-optimized multimodal RAG framework for video understanding — transforms raw footage into a structured, queryable knowledge base.
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-alpha-orange)
+![Python](https://img.shields.io/badge/Python-3.10+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-alpha-orange) [![PyPI version](https://badge.fury.io/py/videochain.svg)](https://pypi.org/project/videochain/)
+
 
 ---
 
@@ -36,6 +37,8 @@ Concurrent vision and LLM inference with careful VRAM scheduling. Validated on R
 
 ## Installation
 ```bash
+pip install videochain
+
 # Clone the repository
 git clone https://github.com/rahulsiiitm/videochain
 cd videochain
