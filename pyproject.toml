@@ -1,6 +1,5 @@
 [build-system]
 requires = ["setuptools>=61.0"]
-requires-python = ">=3.11"
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +7,22 @@ name = "videochain"
 version = "0.1.0"
 description = "A Lightweight Video RAG Framework for Multimodal Reasoning"
 readme = "README.md"
+requires-python = ">=3.11"
 authors = [{ name = "Rahul Sharma", email = "rahulsharma.hps@gmail.com" }]
+license = { text = "MIT" }
+keywords = ["video-rag", "multimodal", "ai", "computer-vision", "whisper", "ollama"]
+
+# Detailed Classifiers for PyPI
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# Core Dependencies (Added missing ones like Pillow and tqdm)
 dependencies = [
     "opencv-python",
     "scenedetect",
@@ -17,12 +31,24 @@ dependencies = [
     "faiss-cpu",
     "google-generativeai",
     "moviepy",
-    "torch>=2.11.0",
+    "torch>=2.1.0",
     "torchvision>=0.26.0",
+    "pillow",          # For Image processing in VisionProcessor
+    "numpy",           # For array math in VideoLoader
+    "tqdm",            # For progress bars during training/inference
+    "python-dotenv",   # To manage API keys securely
 ]
+
+# --- THE MAGIC PART: CLI Entry Points ---
+# This allows you to run 'videochain-analyze' directly in your terminal 
+# after running 'pip install .'
+[project.scripts]
+videochain-analyze = "examples.build_knowledge_base:main"
+videochain-train = "scripts.train_vision:main"
 
 [project.urls]
 "Homepage" = "https://github.com/rahulsiiitm/videochain"
+"Bug Tracker" = "https://github.com/rahulsiiitm/videochain/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -31,5 +57,6 @@ include = ["videochain*"]
 [tool.setuptools.package-data]
 videochain = ["py.typed"]
 
+# UV specific configuration for CUDA-enabled Torch
 [[tool.uv.index]]
 url = "https://download.pytorch.org/whl/cu121"

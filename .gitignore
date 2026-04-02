@@ -11,6 +11,10 @@ ENV/
 # --- UV specific ---
 .uv/
 
+# --- DATA & MODELS (The Heavy Stuff) ---
+data
+models/*.pth
+
 # --- VideoChain Temp Data (IMPORTANT) ---
 # We don't want to push your test videos or extracted frames
 temp_frames/
