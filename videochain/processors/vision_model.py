@@ -5,17 +5,18 @@ from PIL import Image
 import os
 
 class VisionProcessor:
-    def __init__(self, model_path="security_model.pth"):
-
+    def __init__(self, model_path="models/security_model.pth"):
         """
-        Initializes the PyTorch model and loads your custom trained weights.
+        Multipurpose Vision Engine. 
+        Instead of hardcoded labels, it dynamically adapts to whatever 
+        dataset was used during the training phase.
         """
-        
-        # Hardware Detection
+        # 1. Hardware Detection (Crucial for your RTX 3050)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"[VideoChain] Vision using device: {self.device}")
+        print(f"[VideoChain] Vision Engine active on: {self.device}")
         
-        # Exact same image transformations used during training
+        # 2. Universal Image Preprocessing
+        # These constants (mean/std) are standard for ImageNet-based models
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -23,62 +24,82 @@ class VisionProcessor:
         ])
 
         self.model_path = model_path
-        self.classes = ["UNINITIALIZED"] 
+        self.classes = [] 
+        self.is_dummy = False
         self.model = self._load_model()
 
     def _load_model(self):
-        # 1. Check if the trained brain exists
+        """
+        Reconstructs the neural network and injects custom weights.
+        """
+        # Safety Check: If no model exists, enter 'Dummy Mode'
         if not os.path.exists(self.model_path):
-            print(f"⚠️ [WARNING] Custom model '{self.model_path}' not found!")
-            print("⚠️ Have you run 'python scripts/train_vision.py' yet?")
+            print(f"⚠️ [System] Custom brain '{self.model_path}' not found.")
+            print("⚠️ [System] Running in generic mode. Please train the model to see real results.")
             self.is_dummy = True
             return None
 
-        self.is_dummy = False
-        
-        # 2. Load the checkpoint
-        print(f"[VideoChain] Loading custom weights from {self.model_path}...")
-        checkpoint = torch.load(self.model_path, map_location=self.device)
-        
-        # DYNAMIC LABELS: It reads your folder names! No hardcoded strings.
-        self.classes = checkpoint['classes'] 
-        
-        # 3. Rebuild the MobileNetV3 Architecture
-        model = models.mobilenet_v3_small(weights=None)
-        num_features = model.classifier[3].in_features
-        model.classifier[3] = nn.Linear(num_features, len(self.classes))
-        
-        # 4. Inject your custom weights into the architecture
-        model.load_state_dict(checkpoint['model_state_dict'])
-        model = model.to(self.device)
-        
-        # CRITICAL: Put model in evaluation mode (disables dropout/gradients)
-        model.eval() 
-        
-        print(f"[VideoChain] ✅ Custom Brain Loaded! Active Classes: {self.classes}")
-        return model
+        try:
+            # 1. Load the checkpoint onto your specific device
+            checkpoint = torch.load(self.model_path, map_location=self.device)
+            
+            # 2. Extract Dynamic Labels 
+            # This is what makes it multipurpose! It reads your folder names.
+            self.classes = checkpoint['classes'] 
+            
+            # 3. Build the MobileNetV3 Architecture (Small version for Edge efficiency)
+            model = models.mobilenet_v3_small(weights=None)
+            
+            # 4. Modify the 'Head' to match your number of categories
+            # Whether you have 3 categories or 30, this line adapts automatically.
+            num_features = model.classifier[3].in_features
+            model.classifier[3] = nn.Linear(num_features, len(self.classes))
+            
+            # 5. Load the trained weights
+            model.load_state_dict(checkpoint['model_state_dict'])
+            model = model.to(self.device)
+            
+            # 6. Evaluation Mode (Crucial: Turns off dropout/batchnorm training)
+            model.eval() 
+            
+            print(f"[VideoChain] ✅ Multipurpose Brain Loaded!")
+            print(f"[VideoChain] Active Categories: {self.classes}")
+            return model
+
+        except Exception as e:
+            print(f"❌ [Error] Failed to load model: {e}")
+            self.is_dummy = True
+            return None
 
     def predict_frame(self, image_path):
         """
-        Takes an image path, runs it through the GPU, and returns the dynamic label.
+        Analyzes a single frame and returns the classified category.
         """
         if self.is_dummy or self.model is None:
-            return "NEEDS_TRAINING"
+            return "ANALYSIS_PENDING"
 
         try:
-            # Load and format the image
+            # Open and preprocess image
             image = Image.open(image_path).convert('RGB')
             input_tensor = self.transform(image).unsqueeze(0).to(self.device)
             
-            # Run inference without tracking gradients (Saves VRAM)
+            # Disable gradient tracking to save VRAM on your 3050
             with torch.no_grad():
                 output = self.model(input_tensor)
                 
-                # Get the highest probability prediction
+                # Softmax/Max logic to find the highest confidence class
                 _, predicted_idx = torch.max(output, 1)
                 
-            # Return the actual dynamic string
-            return self.classes[int(predicted_idx.item())]
+            # Convert index back to your dynamic folder name
+            label = self.classes[int(predicted_idx.item())]
+            return label
             
         except Exception as e:
-            return f"ERROR: {str(e)}"
+            return f"PROCESS_ERROR: {str(e)}"
+
+    def update_model(self, new_path):
+        """
+        Allows you to swap 'brains' on the fly (e.g., from Security to Retail).
+        """
+        self.model_path = new_path
+        self.model = self._load_model()

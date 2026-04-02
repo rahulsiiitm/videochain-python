@@ -17,7 +17,7 @@ class VideoLoader:
 
     def extract_keyframes(self, video_path, change_threshold=12.0):
         """
-        Smart Adaptive Extraction via Frame Differencing.
+        Smart Adaptive Extraction via Frame Differencing & Gaussian Blur.
         Only extracts a frame if it is significantly different from the LAST SAVED baseline.
         
         change_threshold: The % of pixels that must change to trigger a save.
@@ -25,7 +25,7 @@ class VideoLoader:
         if not os.path.exists(video_path):
             raise FileNotFoundError(f"❌ Target video not found at: {video_path}")
 
-        print(f"[VideoChain] Running Adaptive Baseline Extraction on {video_path}...")
+        print(f"[VideoChain] Running Robust Adaptive Extraction on {video_path}...")
         
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -36,10 +36,11 @@ class VideoLoader:
             print("[VideoChain] ❌ Error: Could not read the first frame.")
             return []
 
-        # 1. Establish the Initial Baseline
+        # 1. Establish the Initial Baseline (Grayscale + Blur to remove noise/glare)
         prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+        prev_gray = cv2.GaussianBlur(prev_gray, (21, 21), 0)
         
-        # Save the very first frame to establish context
+        # Save the very first frame to establish context (Save the color one, not the blurred one!)
         frame_path = os.path.join(self.output_dir, "scene_0_0.00.jpg")
         cv2.imwrite(frame_path, prev_frame)
         
@@ -49,7 +50,7 @@ class VideoLoader:
         saved_count = 1
         
         # We don't need to check every single frame. Checking 3 times a second is plenty.
-        check_interval = int(fps // 3) 
+        check_interval = int(max(1, fps // 3)) 
 
         while True:
             ret, curr_frame = cap.read()
@@ -62,14 +63,15 @@ class VideoLoader:
             if frame_count % check_interval != 0:
                 continue
 
-            # Convert current frame to grayscale
+            # Convert current frame to grayscale and apply the EXACT same blur
             curr_gray = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
+            curr_gray = cv2.GaussianBlur(curr_gray, (21, 21), 0)
             
             # 2. The Subtraction (Spot the difference)
             diff = cv2.absdiff(prev_gray, curr_gray)
             
-            # 3. Calculate % of significant pixel changes (intensity difference > 30)
-            non_zero_count = np.count_nonzero(diff > 30)
+            # 3. Calculate % of significant pixel changes (Intensity diff > 50 ignores shadows/glare)
+            non_zero_count = np.count_nonzero(diff > 50)
             change_percentage = (non_zero_count / diff.size) * 100
 
             # 4. The Decision Logic
@@ -84,7 +86,7 @@ class VideoLoader:
                     "timestamp": round(timestamp, 2)
                 })
                 
-                # 🎯 YOUR OPTIMIZATION: Update the baseline!
+                # 🎯 YOUR OPTIMIZATION: Update the blurred baseline!
                 prev_gray = curr_gray  
                 
                 saved_count += 1
