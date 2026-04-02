@@ -1,38 +1,103 @@
 import cv2
 import os
-from scenedetect import detect, ContentDetector
+import numpy as np
+import shutil
 
 class VideoLoader:
     def __init__(self, output_dir="temp_frames"):
+        """
+        Initializes the VideoLoader and ensures a clean temporary workspace.
+        """
         self.output_dir = output_dir
+        
+        # Memory Management: Clear old frames
+        if os.path.exists(self.output_dir):
+            shutil.rmtree(self.output_dir)
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def extract_keyframes(self, video_path):
+    def extract_keyframes(self, video_path, change_threshold=12.0):
         """
-        Uses ContentDetector (Adaptive Sampling) to find scene changes.
-        This follows the 'Query-Aware Extraction' logic from iRAG (2026).
+        Smart Adaptive Extraction via Frame Differencing.
+        Only extracts a frame if it is significantly different from the LAST SAVED baseline.
+        
+        change_threshold: The % of pixels that must change to trigger a save.
         """
-        print(f"[VideoChain] Detecting scenes in {video_path}...")
-        scene_list = detect(video_path, ContentDetector())
+        if not os.path.exists(video_path):
+            raise FileNotFoundError(f"❌ Target video not found at: {video_path}")
+
+        print(f"[VideoChain] Running Adaptive Baseline Extraction on {video_path}...")
         
         cap = cv2.VideoCapture(video_path)
-        keyframes = []
-
-        for i, scene in enumerate(scene_list):
-            # Get the middle frame of the scene for the best semantic representation
-            start_frame = scene[0].get_frames()
-            end_frame = scene[1].get_frames()
-            mid_frame = (start_frame + end_frame) // 2
-            
-            cap.set(cv2.CAP_PROP_POS_FRAMES, mid_frame)
-            ret, frame = cap.read()
-            
-            if ret:
-                timestamp = mid_frame / cap.get(cv2.CAP_PROP_FPS)
-                frame_path = os.path.join(self.output_dir, f"scene_{i}_{timestamp:.2f}.jpg")
-                cv2.imwrite(frame_path, frame)
-                keyframes.append({"path": frame_path, "timestamp": timestamp})
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        if fps == 0 or fps is None: fps = 30.0
         
+        ret, prev_frame = cap.read()
+        if not ret:
+            print("[VideoChain] ❌ Error: Could not read the first frame.")
+            return []
+
+        # 1. Establish the Initial Baseline
+        prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+        
+        # Save the very first frame to establish context
+        frame_path = os.path.join(self.output_dir, "scene_0_0.00.jpg")
+        cv2.imwrite(frame_path, prev_frame)
+        
+        keyframes = [{"path": frame_path, "timestamp": 0.0}]
+        
+        frame_count = 1
+        saved_count = 1
+        
+        # We don't need to check every single frame. Checking 3 times a second is plenty.
+        check_interval = int(fps // 3) 
+
+        while True:
+            ret, curr_frame = cap.read()
+            if not ret:
+                break
+                
+            frame_count += 1
+            
+            # Skip frames to save CPU time
+            if frame_count % check_interval != 0:
+                continue
+
+            # Convert current frame to grayscale
+            curr_gray = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
+            
+            # 2. The Subtraction (Spot the difference)
+            diff = cv2.absdiff(prev_gray, curr_gray)
+            
+            # 3. Calculate % of significant pixel changes (intensity difference > 30)
+            non_zero_count = np.count_nonzero(diff > 30)
+            change_percentage = (non_zero_count / diff.size) * 100
+
+            # 4. The Decision Logic
+            if change_percentage > change_threshold:
+                timestamp = frame_count / fps
+                frame_path = os.path.join(self.output_dir, f"scene_{saved_count}_{timestamp:.2f}.jpg")
+                
+                # Save the image
+                cv2.imwrite(frame_path, curr_frame)
+                keyframes.append({
+                    "path": frame_path, 
+                    "timestamp": round(timestamp, 2)
+                })
+                
+                # 🎯 YOUR OPTIMIZATION: Update the baseline!
+                prev_gray = curr_gray  
+                
+                saved_count += 1
+                print(f"   📸 Saved Frame at {timestamp:.1f}s (Change: {change_percentage:.1f}%)")
+
         cap.release()
-        print(f"[VideoChain] Extracted {len(keyframes)} keyframes.")
+        print(f"[VideoChain] Adaptive Extraction Complete: Compressed {frame_count} frames down to {saved_count} keyframes.")
         return keyframes
+
+    def cleanup(self):
+        """
+        Deletes the temporary frames after the Knowledge Base is generated.
+        """
+        if os.path.exists(self.output_dir):
+            shutil.rmtree(self.output_dir)
+            print("[VideoChain] Temporary frame cache cleared.")
