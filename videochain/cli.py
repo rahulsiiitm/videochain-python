@@ -1,40 +1,39 @@
-import cv2
-import time
+import sys
+from .processor import VideoProcessor
 from .vision import VisionEngine
 from .rag import RAGEngine
+from .core.fusion import FusionEngine
 
 def main():
-    print("🚀 VideoChain Multipurpose RAG Initializing...")
+    if len(sys.argv) < 2:
+        print("Usage: videochain-analyze <video_path>")
+        return
+
+    video_path = sys.argv[1]
     
-    # Paths (Assumes you are running from project root)
-    vision = VisionEngine(model_path="models/videochain_vision.pth", class_path="models/classes.txt")
+    # Initialize YOLO-based components
+    vision = VisionEngine(model_path="yolov8n.pt") 
     rag = RAGEngine(mode="Security")
+    processor = VideoProcessor(video_path)
+    fusion = FusionEngine()
 
-    cap = cv2.VideoCapture(0) # Change to filename if needed
-    last_alert = 0
+    # 1. Run Advanced Multimodal Extraction
+    v_data, a_text, volume = processor.extract_context(vision)
+    
+    # 2. Fuse the data and build the Knowledge Base
+    # We wrap the text in the expected timeline format
+    fusion.generate_knowledge_base(v_data, [{"start": 0, "text": a_text}])
+    
+    # 3. Load memory into the RAG
+    rag.load_knowledge("knowledge_base.json")
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret: break
+    print(f"\n✅ Analysis Complete. Peak Audio Volume: {volume:.4f}")
+    print("💬 VideoChain Chat Active. Ask about the burglary (Type 'exit' to quit).")
 
-        label, conf = vision.predict(frame)
-        
-        # Logic: Only trigger RAG for non-normal actions every 5 seconds
-        if label != "normal" and (time.time() - last_alert > 5):
-            alert = rag.generate_alert(label)
-            print(f"🚨 [AI ALERT]: {alert}")
-            last_alert = time.time()
-
-        # UI Overlay
-        color = (0, 255, 0) if label == "normal" else (0, 0, 255)
-        cv2.putText(frame, f"{label.upper()} ({conf:.1f}%)", (20, 50), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-        cv2.imshow("VideoChain Live Installer Test", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'): break
-
-    cap.release()
-    cv2.destroyAllWindows()
+    while True:
+        query = input("\n👤 User: ")
+        if query.lower() in ['exit', 'quit']: break
+        print(f"🤖 AI: {rag.query(query)}")
 
 if __name__ == "__main__":
     main()

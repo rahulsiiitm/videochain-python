@@ -1,22 +1,22 @@
+import cv2
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
+import librosa
+import numpy as np
+import json
 import os
 
-class VisionProcessor:
-    def __init__(self, model_path="models/security_model.pth"):
-        """
-        Multipurpose Vision Engine. 
-        Instead of hardcoded labels, it dynamically adapts to whatever 
-        dataset was used during the training phase.
-        """
-        # 1. Hardware Detection (Crucial for your RTX 3050)
+
+# ==========================
+# Vision Model
+# ==========================
+class VisionEngine:
+    def __init__(self, model_path="models/videochain_vision.pth", confidence_threshold=0.65):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"[VideoChain] Vision Engine active on: {self.device}")
-        
-        # 2. Universal Image Preprocessing
-        # These constants (mean/std) are standard for ImageNet-based models
+        self.threshold = confidence_threshold
+
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
@@ -24,82 +24,193 @@ class VisionProcessor:
         ])
 
         self.model_path = model_path
-        self.classes = [] 
-        self.is_dummy = False
+        self.classes = []
         self.model = self._load_model()
 
     def _load_model(self):
-        """
-        Reconstructs the neural network and injects custom weights.
-        """
-        # Safety Check: If no model exists, enter 'Dummy Mode'
         if not os.path.exists(self.model_path):
-            print(f"⚠️ [System] Custom brain '{self.model_path}' not found.")
-            print("⚠️ [System] Running in generic mode. Please train the model to see real results.")
-            self.is_dummy = True
+            print("⚠️ Model not found, running in dummy mode")
             return None
 
-        try:
-            # 1. Load the checkpoint onto your specific device
-            checkpoint = torch.load(self.model_path, map_location=self.device)
-            
-            # 2. Extract Dynamic Labels 
-            # This is what makes it multipurpose! It reads your folder names.
-            self.classes = checkpoint['classes'] 
-            
-            # 3. Build the MobileNetV3 Architecture (Small version for Edge efficiency)
-            model = models.mobilenet_v3_small(weights=None)
-            
-            # 4. Modify the 'Head' to match your number of categories
-            # Whether you have 3 categories or 30, this line adapts automatically.
-            num_features = model.classifier[3].in_features
-            model.classifier[3] = nn.Linear(num_features, len(self.classes))
-            
-            # 5. Load the trained weights
-            model.load_state_dict(checkpoint['model_state_dict'])
-            model = model.to(self.device)
-            
-            # 6. Evaluation Mode (Crucial: Turns off dropout/batchnorm training)
-            model.eval() 
-            
-            print(f"[VideoChain] ✅ Multipurpose Brain Loaded!")
-            print(f"[VideoChain] Active Categories: {self.classes}")
-            return model
+        checkpoint = torch.load(self.model_path, map_location=self.device, weights_only=True)
+        self.classes = checkpoint.get('classes', ["unknown"])
 
-        except Exception as e:
-            print(f"❌ [Error] Failed to load model: {e}")
-            self.is_dummy = True
-            return None
+        model = models.mobilenet_v3_small(weights=None)
+        num_features = model.classifier[3].in_features
+        model.classifier[3] = nn.Linear(num_features, len(self.classes)) # type: ignore
 
-    def predict_frame(self, image_path):
-        """
-        Analyzes a single frame and returns the classified category.
-        """
-        if self.is_dummy or self.model is None:
-            return "ANALYSIS_PENDING"
+        model.load_state_dict(checkpoint['model_state_dict'])
+        model = model.to(self.device).eval()
 
-        try:
-            # Open and preprocess image
-            image = Image.open(image_path).convert('RGB')
-            input_tensor = self.transform(image).unsqueeze(0).to(self.device)
-            
-            # Disable gradient tracking to save VRAM on your 3050
-            with torch.no_grad():
-                output = self.model(input_tensor)
-                
-                # Softmax/Max logic to find the highest confidence class
-                _, predicted_idx = torch.max(output, 1)
-                
-            # Convert index back to your dynamic folder name
-            label = self.classes[int(predicted_idx.item())]
-            return label
-            
-        except Exception as e:
-            return f"PROCESS_ERROR: {str(e)}"
+        if self.device.type == 'cuda':
+            model = model.half()
 
-    def update_model(self, new_path):
-        """
-        Allows you to swap 'brains' on the fly (e.g., from Security to Retail).
-        """
-        self.model_path = new_path
-        self.model = self._load_model()
+        return model
+
+    def predict(self, frame_array):
+        if self.model is None:
+            return "unknown", 0.0
+
+        img = Image.fromarray(frame_array).convert('RGB')
+        input_tensor = self.transform(img).unsqueeze(0).to(self.device) # type: ignore
+
+        if self.device.type == 'cuda':
+            input_tensor = input_tensor.half()
+
+        with torch.no_grad():
+            output = self.model(input_tensor)
+            probs = torch.nn.functional.softmax(output[0], dim=0)
+            conf, idx = torch.max(probs, 0)
+
+        label = self.classes[int(idx.item())]
+        confidence = conf.item()
+
+        if confidence < self.threshold:
+            return "uncertain", confidence
+
+        return label, confidence
+
+
+# ==========================
+# Video Processing
+# ==========================
+def extract_frames(video_path, frame_skip=5):
+    cap = cv2.VideoCapture(video_path)
+    frames = []
+    count = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        if count % frame_skip == 0:
+            frames.append(frame)
+
+        count += 1
+
+    cap.release()
+    return frames
+
+
+# ==========================
+# Audio Processing
+# ==========================
+def extract_audio(video_path):
+    audio, sr = librosa.load(video_path, sr=None)
+    return audio, sr
+
+
+def analyze_audio(audio, sr):
+    energy = float(np.mean(audio ** 2))
+    duration = len(audio) / sr
+
+    return {
+        "energy": energy,
+        "duration": duration
+    }
+
+
+# ==========================
+# Frame Analysis
+# ==========================
+def analyze_frames(frames, vision_engine):
+    results = []
+    prev_frame = None
+
+    for i, frame in enumerate(frames):
+        label, conf = vision_engine.predict(frame)
+
+        motion_score = 0
+        if prev_frame is not None:
+            diff = cv2.absdiff(prev_frame, frame)
+            motion_score = float(np.mean(diff))
+
+        results.append({
+            "frame_index": i,
+            "label": label,
+            "confidence": float(conf),
+            "motion": motion_score
+        })
+
+        prev_frame = frame
+
+    return results
+
+
+# ==========================
+# Fusion Logic
+# ==========================
+def fuse_results(frame_data, audio_data):
+    label_counts = {}
+
+    for f in frame_data:
+        if f["label"] != "uncertain":
+            label_counts[f["label"]] = label_counts.get(f["label"], 0) + 1
+
+    if label_counts:
+        final_label = max(label_counts, key=lambda x: label_counts[x])
+    else:
+        final_label = "unknown"
+
+    avg_conf = float(np.mean([f["confidence"] for f in frame_data]))
+
+    return {
+        "final_prediction": final_label,
+        "average_confidence": avg_conf,
+        "audio_energy": audio_data["energy"],
+        "detected_events": label_counts
+    }
+
+
+# ==========================
+# JSON Output
+# ==========================
+def generate_json(fusion_result, frame_data):
+    output = {
+        "summary": fusion_result,
+        "frames": frame_data
+    }
+
+    return json.dumps(output, indent=4)
+
+
+# ==========================
+# Main Pipeline
+# ==========================
+def process_video(video_path, model_path="models/videochain_vision.pth"):
+    vision = VisionEngine(model_path=model_path)
+
+    print("📹 Extracting frames...")
+    frames = extract_frames(video_path)
+
+    print("🔊 Extracting audio...")
+    audio, sr = extract_audio(video_path)
+
+    print("🧠 Analyzing frames...")
+    frame_data = analyze_frames(frames, vision)
+
+    print("🎧 Analyzing audio...")
+    audio_data = analyze_audio(audio, sr)
+
+    print("🔗 Fusing results...")
+    fusion = fuse_results(frame_data, audio_data)
+
+    print("📄 Generating JSON...")
+    result_json = generate_json(fusion, frame_data)
+
+    return result_json
+
+
+# ==========================
+# Run Example
+# ==========================
+if __name__ == "__main__":
+    video_path = "sample.mp4"
+
+    output = process_video(video_path)
+    print(output)
+
+    # Save to file
+    with open("output.json", "w") as f:
+        f.write(output)

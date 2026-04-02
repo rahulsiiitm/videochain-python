@@ -1,7 +1,7 @@
 import torch
 import os
 from videochain.loaders.video_loader import VideoLoader
-from videochain.processors.vision_model import VisionProcessor
+from videochain.processors.vision_model import VisionEngine
 
 def test_vision():
     VIDEO_PATH = "sample.mp4"
@@ -12,7 +12,7 @@ def test_vision():
 
     # 1. Initialize
     loader = VideoLoader(output_dir="temp_frames")
-    proc = VisionProcessor() # This should print "Vision using device: cuda"
+    proc = VisionEngine() # This should print "Vision using device: cuda"
 
     # 2. Extract Keyframes (Adaptive Sampling)
     print(f"\n[Step 1] Extracting keyframes from {VIDEO_PATH}...")
@@ -27,9 +27,9 @@ def test_vision():
     
     for i, frame in enumerate(keyframes):
         # We run the actual model here
-        label = proc.predict_frame(frame['path'])
+        label, confidence = proc.predict(frame['path'])
         
-        print(f"Frame {i+1}: Time {frame['timestamp']:.2f}s | Result: {label}")
+        print(f"Frame {i+1}: Time {frame['timestamp']:.2f}s | Result: {label} (Confidence: {confidence:.2f}%)")
         
         # Monitor GPU Memory every 5 frames
         if i % 5 == 0 and torch.cuda.is_available():

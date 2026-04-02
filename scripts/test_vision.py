@@ -50,7 +50,7 @@ def test_inference():
 
     # 5. Make the Prediction
     image = Image.open(test_image_path).convert('RGB')
-    input_tensor = transform(image).unsqueeze(0).to(device)
+    input_tensor = transform(image).unsqueeze(0).to(device) # type: ignore
 
     with torch.no_grad(): # No gradients needed for inference (saves VRAM)
         output = model(input_tensor)
@@ -58,7 +58,7 @@ def test_inference():
         
         # Get top prediction
         confidence, predicted_idx = torch.max(probabilities, 0)
-        predicted_class = classes[predicted_idx.item()]
+        predicted_class = classes[predicted_idx.item()] # type: ignore
 
     # 6. Display Results
     print("-" * 30)

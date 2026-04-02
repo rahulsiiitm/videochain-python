@@ -1,38 +1,36 @@
 import torch
-import torch.nn as nn
-from torchvision import models, transforms
-from PIL import Image
+from ultralytics import YOLO # type: ignore
 
 class VisionEngine:
-    def __init__(self, model_path, class_path, device=None):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    def __init__(self, model_path="yolov8n.pt", confidence_threshold=0.3):
+        """
+        Entity-aware Vision Engine.
+        Replaces simple classification with object detection.
+        """
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # Downloads yolov8n.pt automatically on first run
+        self.model = YOLO(model_path).to(self.device)
         
-        # Load Classes
-        with open(class_path, "r") as f:
-            self.classes = f.read().splitlines()
-
-        # Rebuild Architecture
-        self.model = models.mobilenet_v3_small(weights=None)
-        num_features = self.model.classifier[3].in_features
-        self.model.classifier[3] = nn.Linear(num_features, len(self.classes))
-        
-        # Load Weights
-        self.model.load_state_dict(torch.load(model_path, map_location=self.device))
-        self.model.to(self.device).eval()
-
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
+        # Performance boost for RTX 3050
+        if self.device == 'cuda':
+            self.model.model.half() 
+            
+        self.threshold = confidence_threshold
 
     def predict(self, frame):
-        # Convert CV2 frame to PIL
-        img = Image.fromarray(frame).convert('RGB')
-        input_tensor = self.transform(img).unsqueeze(0).to(self.device)
+        """Detects objects and returns a count summary."""
+        results = self.model(frame, conf=self.threshold, verbose=False)[0]
         
-        with torch.no_grad():
-            output = self.model(input_tensor)
-            prob, idx = torch.max(torch.nn.functional.softmax(output[0], dim=0), 0)
+        # Get labels and counts (e.g., "2 persons, 1 backpack")
+        names = results.names
+        counts = {}
+        for box in results.boxes.cls:
+            label = names[int(box)]
+            counts[label] = counts.get(label, 0) + 1
             
-        return self.classes[idx.item()], prob.item() * 100
+        if not counts:
+            return "no significant objects", 0.0
+            
+        summary = ", ".join([f"{c} {l}" for l, c in counts.items()])
+        avg_conf = results.boxes.conf.mean().item() * 100 if len(results.boxes) > 0 else 0
+        return summary, avg_conf

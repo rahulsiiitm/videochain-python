@@ -2,7 +2,7 @@ import os
 import torch
 from videochain.loaders.video_loader import VideoLoader
 from videochain.loaders.audio_loader import AudioLoader
-from videochain.processors.vision_model import VisionProcessor
+from videochain.processors.vision_model import VisionEngine
 from videochain.processors.audio_model import AudioProcessor
 from videochain.core.fusion import FusionEngine
 
@@ -18,7 +18,7 @@ def main():
     a_loader = AudioLoader(output_dir="temp_audio")
     
     # These will load your PyTorch/Whisper models onto the GPU
-    vision_proc = VisionProcessor(model_path="models/security_model.pth")
+    vision_proc = VisionEngine(model_path="models/security_model.pth")
     audio_proc = AudioProcessor(model_size="base")
     fusion_engine = FusionEngine()
 
@@ -36,10 +36,11 @@ def main():
     # Vision Processing
     vision_results = []
     for frame in keyframes:
-        label = vision_proc.predict_frame(frame['path'])
+        label, confidence = vision_proc.predict(frame['path'])
         vision_results.append({
             "timestamp": frame['timestamp'],
-            "label": label
+            "label": label,
+            "confidence": confidence
         })
     
     # Audio Processing (Whisper)
