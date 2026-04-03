@@ -39,6 +39,7 @@ dependencies = [
     "python-dotenv",
     "ultralytics",    # Added for YOLO-based entity detection
     "librosa",        # Added for advanced audio feature extraction
+    "easyocr",
 ]
 
 # --- CONSOLIDATED CLI ENTRY POINTS ---

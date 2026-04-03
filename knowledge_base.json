@@ -1,153 +1,119 @@
 {
     "metadata": {
-        "total_frames_analyzed": 24,
-        "audio_segments": 5
+        "total_frames_analyzed": 16,
+        "audio_segments": 4,
+        "ocr_events": 2
     },
     "timeline": [
         {
             "time": 0.0,
             "type": "acoustic",
-            "content": "Lages"
+            "content": "1.5 m"
         },
         {
             "time": 0.97,
             "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: UNCERTAIN"
+            "content": "Duration: [0.97s - 2.9s] | Subjects: 1 laptop | Action State: NORMAL"
         },
         {
-            "time": 1.93,
-            "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: UNCERTAIN"
-        },
-        {
-            "time": 2.9,
-            "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: UNCERTAIN"
+            "time": 0.97,
+            "type": "ocr",
+            "content": "ASUS Vivabook"
         },
         {
             "time": 3.87,
             "type": "visual",
-            "content": "Subjects: 1 laptop, 1 tv | Assessed Action: SUSPICIOUS"
-        },
-        {
-            "time": 4.83,
-            "type": "visual",
-            "content": "Subjects: 2 laptop, 1 tv | Assessed Action: SUSPICIOUS"
-        },
-        {
-            "time": 5.0,
-            "type": "acoustic",
-            "content": "Pop"
+            "content": "Duration: [3.87s - 4.83s] | Subjects: 1 laptop, 1 tv | Action State: SUSPICIOUS"
         },
         {
             "time": 5.8,
             "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: SUSPICIOUS"
+            "content": "Duration: [5.8s - 6.77s] | Subjects: 1 laptop | Action State: SUSPICIOUS"
         },
         {
             "time": 6.77,
-            "type": "visual",
-            "content": "Subjects: 1 laptop, 1 tv | Assessed Action: SUSPICIOUS"
+            "type": "ocr",
+            "content": "ASUS Vivobook"
+        },
+        {
+            "time": 7.0,
+            "type": "acoustic",
+            "content": "2.5 m"
         },
         {
             "time": 7.73,
             "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: UNCERTAIN"
-        },
-        {
-            "time": 8.7,
-            "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: UNCERTAIN"
+            "content": "Duration: [7.73s - 8.7s] | Subjects: 1 laptop | Action State: NORMAL"
         },
         {
             "time": 9.67,
             "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: UNCERTAIN"
+            "content": "Duration: [9.67s - 9.67s] | Subjects: 1 laptop, 1 tv | Action State: NORMAL"
         },
         {
             "time": 10.64,
             "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: UNCERTAIN"
+            "content": "Duration: [10.64s - 10.64s] | Subjects: 1 laptop | Action State: NORMAL"
         },
         {
             "time": 11.6,
             "type": "visual",
-            "content": "Subjects: 1 laptop, 1 tv | Assessed Action: UNCERTAIN"
-        },
-        {
-            "time": 11.68,
-            "type": "acoustic",
-            "content": "O put it"
+            "content": "Duration: [11.6s - 11.6s] | Subjects: 1 laptop, 1 tv | Action State: NORMAL"
         },
         {
             "time": 12.57,
             "type": "visual",
-            "content": "Subjects: 1 laptop | Assessed Action: SUSPICIOUS"
+            "content": "Duration: [12.57s - 12.57s] | Subjects: 1 laptop | Action State: SUSPICIOUS"
         },
         {
             "time": 13.54,
             "type": "visual",
-            "content": "Subjects: 1 laptop, 1 keyboard | Assessed Action: SUSPICIOUS"
+            "content": "Duration: [13.54s - 13.54s] | Subjects: 1 laptop, 1 keyboard | Action State: SUSPICIOUS"
+        },
+        {
+            "time": 14.0,
+            "type": "acoustic",
+            "content": "2.5 m"
         },
         {
             "time": 14.5,
             "type": "visual",
-            "content": "Subjects: 1 chair | Assessed Action: UNCERTAIN"
+            "content": "Duration: [14.5s - 14.5s] | Subjects: 1 chair | Action State: NORMAL"
         },
         {
             "time": 15.47,
             "type": "visual",
-            "content": "Subjects: no significant objects | Assessed Action: UNCERTAIN"
-        },
-        {
-            "time": 16.44,
-            "type": "visual",
-            "content": "Subjects: no significant objects | Assessed Action: UNCERTAIN"
-        },
-        {
-            "time": 17.4,
-            "type": "visual",
-            "content": "Subjects: no significant objects | Assessed Action: UNCERTAIN"
+            "content": "Duration: [15.47s - 17.4s] | Subjects: no significant objects | Action State: NORMAL"
         },
         {
             "time": 18.37,
             "type": "visual",
-            "content": "Subjects: no significant objects | Assessed Action: UNCERTAIN"
+            "content": "Duration: [18.37s - 18.37s] | Subjects: 2 tv | Action State: NORMAL"
+        },
+        {
+            "time": 19.0,
+            "type": "acoustic",
+            "content": "2.5 m"
         },
         {
             "time": 19.34,
             "type": "visual",
-            "content": "Subjects: no significant objects | Assessed Action: VIOLENCE"
-        },
-        {
-            "time": 19.64,
-            "type": "acoustic",
-            "content": "\u043e\u0442"
+            "content": "Duration: [19.34s - 19.34s] | Subjects: 1 tv | Action State: VIOLENCE"
         },
         {
             "time": 20.3,
             "type": "visual",
-            "content": "Subjects: no significant objects | Assessed Action: UNCERTAIN"
-        },
-        {
-            "time": 21.27,
-            "type": "visual",
-            "content": "Subjects: no significant objects | Assessed Action: UNCERTAIN"
+            "content": "Duration: [20.3s - 21.27s] | Subjects: no significant objects | Action State: NORMAL"
         },
         {
             "time": 22.24,
             "type": "visual",
-            "content": "Subjects: no significant objects | Assessed Action: VIOLENCE"
+            "content": "Duration: [22.24s - 22.24s] | Subjects: 1 person, 1 book | Action State: VIOLENCE"
         },
         {
             "time": 23.2,
             "type": "visual",
-            "content": "Subjects: 1 book | Assessed Action: UNCERTAIN"
-        },
-        {
-            "time": 23.28,
-            "type": "acoustic",
-            "content": "Remove"
+            "content": "Duration: [23.2s - 23.2s] | Subjects: 1 person, 1 laptop, 1 oven | Action State: NORMAL"
         }
     ]
 }

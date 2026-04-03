@@ -1,89 +1,106 @@
 import argparse
 import sys
 import os
+import warnings
+import torch
+
+# ==========================================
+# 🛑 AGGRESSIVE WARNING SUPPRESSION
+# ==========================================
+warnings.filterwarnings("ignore")
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" # Suppress TensorFlow if backend uses it
+os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1" # Avoid Hugging Face token warnings if not logged in
 
 from videochain.processor import VideoProcessor
 from videochain.rag import RAGEngine
 from videochain.core.fusion import FusionEngine
-
-# Import BOTH vision engines (we alias them so Python doesn't get confused)
 from videochain.vision import VisionEngine as YoloEngine
 from videochain.processors.vision_model import VisionEngine as ActionEngine
+
+def print_hardware_status(step=""):
+    """Prints current GPU status and VRAM usage."""
+    if torch.cuda.is_available():
+        allocated = torch.cuda.memory_allocated(0) / (1024 ** 2)
+        print(f"🖥️  [GPU] {step} | VRAM Used: {allocated:.1f} MB")
+    else:
+        print(f"🖥️  [CPU] {step} | (CUDA NOT DETECTED)")
 
 def main():
     parser = argparse.ArgumentParser(description="VideoChain: Multimodal RAG CLI")
     parser.add_argument("video_path", help="Path to the video file")
-    parser.add_argument("--llm", default="gemini/gemini-2.5-flash", help="Choose the LLM")
+    parser.add_argument("--llm", default="gemini/gemini-2.5-flash", help="LLM backend")
+    parser.add_argument("--ocr-lang", nargs="+", default=["en"], help="OCR languages")
+    parser.add_argument("--query", help="Single-shot query", default=None)
     args = parser.parse_args()
 
     if not os.path.exists(args.video_path):
-        print(f"[ERROR] Video file not found at {args.video_path}")
+        print(f"[ERROR] Video file not found: {args.video_path}")
         sys.exit(1)
 
-    print(f"\n[INFO] Starting VideoChain Analysis on: {args.video_path}")
-    print(f"[INFO] Powered by: {args.llm}")
+    print(f"\n[INFO] VideoChain Analysis — {args.video_path}")
+    print(f"[INFO] LLM: {args.llm} | OCR languages: {args.ocr_lang}")
     print("-" * 50)
 
-    # =================================================================
-    # STEP 1: LOAD VISION MODELS (DUAL-BRAIN)
-    # =================================================================
-    print("\n[INFO] Step 1: Booting Dual-Vision Models...")
-    # Load YOLO for Objects
+    # ── Hardware Check ─────────────────────────────────────
+    if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+        vram_total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+        print(f"[SYSTEM] Hardware Engine: GPU Active ({gpu_name} - {vram_total:.1f} GB VRAM)")
+    else:
+        print("[SYSTEM] ⚠️ Hardware Engine: CPU ONLY. PyTorch cannot find your NVIDIA GPU.")
+        print("[SYSTEM] ⚠️ Please reinstall PyTorch with CUDA support for hardware acceleration.")
+
+    # ── Vision models ──────────────────────────────────────
+    print("\n[INFO] Booting Dual-Vision Models...")
     yolo_model = YoloEngine(model_path="yolov8s.pt", confidence_threshold=0.25)
-    # Load MobileNet for Intent
-    action_model = ActionEngine(model_path="models/videochain_vision.pth") 
+    action_model = ActionEngine(model_path="models/videochain_vision.pth")
+    print_hardware_status("Vision Models Loaded")
 
-    # =================================================================
-    # STEP 2: MULTIMODAL EXTRACTION
-    # =================================================================
-    print("[INFO] Step 2: Extracting Scene Graphs & Audio Timestamps...")
-    processor = VideoProcessor(args.video_path)
+    # ── Extraction ─────────────────────────────────────────
+    print("\n[INFO] Extracting Scene Graphs, Audio & OCR...")
+    processor = VideoProcessor(args.video_path, ocr_languages=args.ocr_lang)
     fusion = FusionEngine(output_file="knowledge_base.json")
-    
-    # Pass BOTH models into our new processor
-    v_data, a_data, volume = processor.extract_context(yolo_model, action_model)
-    
-    print("[INFO] Step 3: Fusing Data into Knowledge Base...")
-    # Pass the actual synced audio data, not the hardcoded string
-    fusion.generate_knowledge_base(v_data, a_data)
-    print(f"[SUCCESS] Extraction complete. Peak Audio Volume: {volume:.4f}")
 
-    # =================================================================
-    # STEP 3: THE FAISS RAG ENGINE
-    # =================================================================
-    print(f"\n[INFO] Step 4: Initializing AI Engine ({args.llm})...")
+    v_data, a_data, ocr_data, volume = processor.extract_context(yolo_engine=yolo_model, action_engine=action_model)
+    print_hardware_status("Extraction Complete")
+
+    print("\n[INFO] Fusing into Knowledge Base...")
+    fusion.generate_knowledge_base(v_data, a_data, ocr_data)
+    print(f"[SUCCESS] Peak Audio Volume: {volume:.4f}")
+
+    # ── RAG ────────────────────────────────────────────────
+    print(f"\n[INFO] Initializing RAG Engine ({args.llm})...")
     rag = RAGEngine(model_name=args.llm)
-    
+    print_hardware_status("FAISS Index Built")
+
     if not rag.load_knowledge("knowledge_base.json"):
-        print("[ERROR] Failed to start chat. Knowledge base is missing or corrupted.")
+        print("[ERROR] Knowledge base missing or corrupted.")
         sys.exit(1)
 
-    # =================================================================
-    # STEP 4: CHAT LOOP
-    # =================================================================
-    print("\n[SYSTEM] VideoChain Chat Active. Type 'exit' or 'quit' to terminate.")
-    
+    # ── Single-shot query mode ─────────────────────────────
+    if args.query:
+        print(f"\n[QUERY] {args.query}")
+        print(f"AI: {rag.query(args.query)}")
+        return
+
+    # ── Interactive chat ───────────────────────────────────
+    print("\n[SYSTEM] Chat active. Type 'exit' to quit.")
     while True:
         try:
             user_input = input("\nUser: ").strip()
-            
-            if user_input.lower() in ['exit', 'quit']:
-                print("[SYSTEM] Exiting VideoChain. Session terminated.")
+            if user_input.lower() in ("exit", "quit"):
+                print("[SYSTEM] Session terminated.")
                 break
-            
             if not user_input:
                 continue
-
-            print(f"[SYSTEM] Analyzing video memory for: '{user_input}'...")
-            response = rag.query(user_input, top_k=10)
-            
-            print(f"AI: {response}")
-
+            print(f"AI: {rag.query(user_input, top_k=10)}")
         except KeyboardInterrupt:
-            print("\n(┬┬﹏┬┬) Exiting VideoChain. Session terminated.")
+            print("\n(┬┬﹏┬┬) Session terminated.")
             break
         except Exception as e:
-            print(f"\n[ERROR] Chat Exception: {e}")
+            print(f"[ERROR] {e}")
 
 if __name__ == "__main__":
     main()
