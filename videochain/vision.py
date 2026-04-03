@@ -13,7 +13,7 @@ class VisionEngine:
         
         # Performance boost for RTX 3050
         if self.device == 'cuda':
-            self.model.model.half() 
+            self.model.model.half()  # type: ignore
             
         self.threshold = confidence_threshold
 

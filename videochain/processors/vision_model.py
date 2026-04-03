@@ -7,7 +7,7 @@ import librosa
 import numpy as np
 import json
 import os
-
+import sys
 
 # ==========================
 # Vision Model
@@ -29,23 +29,48 @@ class VisionEngine:
 
     def _load_model(self):
         if not os.path.exists(self.model_path):
-            print("⚠️ Model not found, running in dummy mode")
+            print(f"[WARNING] Model not found at {self.model_path}, running in dummy mode.")
             return None
 
-        checkpoint = torch.load(self.model_path, map_location=self.device, weights_only=True)
-        self.classes = checkpoint.get('classes', ["unknown"])
-
+        # Load the checkpoint (removed weights_only=True to allow reading the 'classes' list)
+        checkpoint = torch.load(self.model_path, map_location=self.device)
+        
+        # 1. Initialize the blank MobileNet architecture
         model = models.mobilenet_v3_small(weights=None)
+        
+        # 2. Robust Loading Logic
+        if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
+            # Format A: Modern save (contains both weights and classes)
+            self.classes = checkpoint.get('classes', ["emergency", "normal", "suspicious", "violence"])
+            state_dict = checkpoint['model_state_dict']
+        elif isinstance(checkpoint, dict):
+            # Format B: Legacy save (just the raw weights)
+            self.classes = ["emergency", "normal", "suspicious", "violence"]
+            state_dict = checkpoint
+        else:
+            # Format C: Full model object saved
+            self.classes = ["emergency", "normal", "suspicious", "violence"]
+            state_dict = checkpoint.state_dict() # type: ignore
+
+        # 3. Resize the final classification layer to match the number of classes
         num_features = model.classifier[3].in_features
-        model.classifier[3] = nn.Linear(num_features, len(self.classes)) # type: ignore
+        model.classifier[3] = nn.Linear(num_features, len(self.classes))
 
-        model.load_state_dict(checkpoint['model_state_dict'])
-        model = model.to(self.device).eval()
+        try:
+            # 4. Inject the weights into the architecture
+            model.load_state_dict(state_dict)
+            model = model.to(self.device).eval()
 
-        if self.device.type == 'cuda':
-            model = model.half()
-
-        return model
+            # RTX 3050 Memory Optimization
+            if self.device.type == 'cuda':
+                model = model.half()
+                
+            print(f"[SUCCESS] ActionEngine loaded successfully with classes: {self.classes}")
+            return model
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to map weights to the ActionEngine: {e}")
+            sys.exit(1)
 
     def predict(self, frame_array):
         if self.model is None:
@@ -72,89 +97,55 @@ class VisionEngine:
 
 
 # ==========================
-# Video Processing
+# Video Processing Helpers
 # ==========================
 def extract_frames(video_path, frame_skip=5):
     cap = cv2.VideoCapture(video_path)
     frames = []
     count = 0
-
     while True:
         ret, frame = cap.read()
-        if not ret:
-            break
-
+        if not ret: break
         if count % frame_skip == 0:
             frames.append(frame)
-
         count += 1
-
     cap.release()
     return frames
 
-
-# ==========================
-# Audio Processing
-# ==========================
 def extract_audio(video_path):
     audio, sr = librosa.load(video_path, sr=None)
     return audio, sr
 
-
 def analyze_audio(audio, sr):
     energy = float(np.mean(audio ** 2))
     duration = len(audio) / sr
+    return {"energy": energy, "duration": duration}
 
-    return {
-        "energy": energy,
-        "duration": duration
-    }
-
-
-# ==========================
-# Frame Analysis
-# ==========================
 def analyze_frames(frames, vision_engine):
     results = []
     prev_frame = None
-
     for i, frame in enumerate(frames):
         label, conf = vision_engine.predict(frame)
-
         motion_score = 0
         if prev_frame is not None:
             diff = cv2.absdiff(prev_frame, frame)
             motion_score = float(np.mean(diff))
-
         results.append({
             "frame_index": i,
             "label": label,
             "confidence": float(conf),
             "motion": motion_score
         })
-
         prev_frame = frame
-
     return results
 
-
-# ==========================
-# Fusion Logic
-# ==========================
 def fuse_results(frame_data, audio_data):
     label_counts = {}
-
     for f in frame_data:
         if f["label"] != "uncertain":
             label_counts[f["label"]] = label_counts.get(f["label"], 0) + 1
-
-    if label_counts:
-        final_label = max(label_counts, key=lambda x: label_counts[x])
-    else:
-        final_label = "unknown"
-
+    final_label = max(label_counts, key=lambda x: label_counts[x]) if label_counts else "unknown"
     avg_conf = float(np.mean([f["confidence"] for f in frame_data]))
-
     return {
         "final_prediction": final_label,
         "average_confidence": avg_conf,
@@ -162,55 +153,28 @@ def fuse_results(frame_data, audio_data):
         "detected_events": label_counts
     }
 
-
-# ==========================
-# JSON Output
-# ==========================
 def generate_json(fusion_result, frame_data):
-    output = {
-        "summary": fusion_result,
-        "frames": frame_data
-    }
-
+    output = {"summary": fusion_result, "frames": frame_data}
     return json.dumps(output, indent=4)
 
-
-# ==========================
-# Main Pipeline
-# ==========================
 def process_video(video_path, model_path="models/videochain_vision.pth"):
     vision = VisionEngine(model_path=model_path)
-
     print("📹 Extracting frames...")
     frames = extract_frames(video_path)
-
     print("🔊 Extracting audio...")
     audio, sr = extract_audio(video_path)
-
     print("🧠 Analyzing frames...")
     frame_data = analyze_frames(frames, vision)
-
     print("🎧 Analyzing audio...")
     audio_data = analyze_audio(audio, sr)
-
     print("🔗 Fusing results...")
     fusion = fuse_results(frame_data, audio_data)
-
     print("📄 Generating JSON...")
-    result_json = generate_json(fusion, frame_data)
+    return generate_json(fusion, frame_data)
 
-    return result_json
-
-
-# ==========================
-# Run Example
-# ==========================
 if __name__ == "__main__":
     video_path = "sample.mp4"
-
     output = process_video(video_path)
     print(output)
-
-    # Save to file
     with open("output.json", "w") as f:
         f.write(output)
