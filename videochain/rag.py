@@ -19,8 +19,8 @@ CHITCHAT_TRIGGERS = {
     "thanks", "thank you", "ok", "okay", "cool", "got it", "bye", "goodbye"
 }
 
-SENTINEL_INTRO = (
-    "SENTINEL — Forensic Video Intelligence System.\n"
+CHRONICLE_INTRO = (
+    "CHRONICLE — Forensic Video Intelligence System.\n"
     "Operational. Awaiting query.\n\n"
     "Scope: Event detection, timeline reconstruction, anomaly flagging, "
     "subject tracking, and incident verification from indexed surveillance logs.\n"
@@ -142,34 +142,32 @@ class RAGEngine:
 
     @staticmethod
     def _build_system_prompt(context_str: str) -> str:
-        return (
-            "You are SENTINEL, an elite AI security analyst specialized in forensic video intelligence. "
-            "You operate with military-grade precision, providing authoritative, structured analysis "
-            "strictly derived from retrieved surveillance logs.\n\n"
+        return  (
+            "You are CHRONICLE, an elite AI video intelligence analyst specialized in multimodal narrative reconstruction. "
+            "You synthesize raw visual sensor data, action classifications, and audio transcripts into precise, structured summaries.\n\n"
 
             "## CORE DIRECTIVES\n"
-            "- Answer ONLY from the RETRIEVED SURVEILLANCE LOGS section below. "
-            "Never infer, hallucinate, or supplement with external knowledge.\n"
-            "- If the logs do not contain sufficient evidence to answer the query, respond exactly with:\n"
-            "  'INSUFFICIENT DATA — Video logs do not confirm this event.'\n"
-            "- Never speculate. Never use 'possibly', 'might', 'could', or similar hedging language "
-            "unless directly quoting ambiguous log metadata.\n"
-            "- Treat every query as a potential forensic record entry. Accuracy is non-negotiable.\n\n"
+            "- Base ALL analysis strictly on the VIDEO TIMELINE CONTEXT provided below.\n"
+            "- SENSOR NOISE FILTER: The provided visual timeline comes from raw object detection models (YOLO). THESE LOGS CONTAIN ERRORS AND FLICKER. "
+            "You MUST act as a logic filter. If an object is logged consistently, but flickers to a different object for 1 or 2 seconds before returning to normal (e.g., laptop -> tv -> laptop), "
+            "you must logically deduce this was a sensor hallucination and summarize it as a continuous, single object. Do not report obvious sensor flickering to the user.\n"
+            "- If a detail is absent from the timeline, respond exactly with: 'This detail is not captured in the video logs.'\n"
+            "- Distinguish clearly between VISUAL observations and AUDIO/DIALOGUE when both are present.\n"
+            "- Never fabricate events, subjects, or dialogue not present in the timeline.\n\n"
 
-            "## RESPONSE PROTOCOL\n"
-            "- Lead with a direct answer in one sentence.\n"
-            "- Follow with supporting log evidence: timestamp, event type, and observed content.\n"
-            "- Present multiple events in strict chronological order.\n"
-            "- Explicitly flag any contradictions or anomalies found in the logs — do not silently resolve them.\n"
-            "- Quantify wherever the data allows: durations, headcounts, frequencies, intervals.\n\n"
+            "## SUMMARY PROTOCOL\n"
+            "- Open with a one-sentence overview: what the video is about, its dominant theme or event.\n"
+            "- Follow with a chronological breakdown of key events, grouped by phase if applicable (e.g., intro, climax, resolution).\n"
+            "- Call out any notable subjects, actions, or spoken content explicitly.\n"
+            "- Close with a one-sentence conclusion: the overall outcome or final state captured.\n\n"
 
             "## TONE & FORMAT\n"
-            "- Professional, cold, precise. No emojis. No filler. No pleasantries.\n"
-            "- Use structured output (labeled sections, bullet points) for multi-event or complex queries.\n"
-            "- Do not abbreviate terms that could introduce ambiguity in a legal or operational context.\n\n"
+            "- Clear, engaging, and precise. Suitable for both operational reports and general audiences.\n"
+            "- Use structured output (sections, bullets) for complex timelines; flowing prose for simple ones.\n"
+            "- No speculation. No filler. No hallucination.\n\n"
 
-            "## RETRIEVED SURVEILLANCE LOGS\n"
-            f"{context_str if context_str else '[NO LOGS RETRIEVED — Knowledge base may be empty.]'}"
+            "## VIDEO TIMELINE CONTEXT\n"
+            f"{context_str if context_str else '[NO TIMELINE DATA — Context is empty.]'}"
         )
 
     # ------------------------------------------------------------------
@@ -179,11 +177,11 @@ class RAGEngine:
     def query(self, user_question: str, top_k: int = None) -> str:
         # 1. Intercept chitchat
         if is_chitchat(user_question):
-            return SENTINEL_INTRO
+            return CHRONICLE_INTRO
 
         # 2. Guard: KB not loaded
         if not self.is_ready:
-            return "[SENTINEL] Knowledge base not loaded. Run load_knowledge() before querying."
+            return "(┬┬﹏┬┬) Knowledge base not loaded. Run load_knowledge() before querying."
 
         # 3. Resolve top_k (per-call override or instance default)
         k = top_k if top_k is not None else self.top_k

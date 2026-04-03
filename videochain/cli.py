@@ -29,7 +29,7 @@ def main():
     # =================================================================
     print("\n[INFO] Step 1: Booting Dual-Vision Models...")
     # Load YOLO for Objects
-    yolo_model = YoloEngine(model_path="yolov8n.pt") 
+    yolo_model = YoloEngine(model_path="yolov8s.pt", confidence_threshold=0.25)
     # Load MobileNet for Intent
     action_model = ActionEngine(model_path="models/videochain_vision.pth") 
 
@@ -80,7 +80,7 @@ def main():
             print(f"AI: {response}")
 
         except KeyboardInterrupt:
-            print("\n[SYSTEM] Exiting VideoChain. Session terminated.")
+            print("\n(┬┬﹏┬┬) Exiting VideoChain. Session terminated.")
             break
         except Exception as e:
             print(f"\n[ERROR] Chat Exception: {e}")
