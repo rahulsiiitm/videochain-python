@@ -7,7 +7,7 @@ class AudioLoader:
         os.makedirs(self.output_dir, exist_ok=True)
 
     def extract_audio(self, video_path):
-        print(f"[VideoChain] Extracting audio from {video_path}...")
+        print(f"[vidchain] Extracting audio from {video_path}...")
         
         # Load the video file
         with VideoFileClip(video_path) as video:

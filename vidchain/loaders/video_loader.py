@@ -25,7 +25,7 @@ class VideoLoader:
         if not os.path.exists(video_path):
             raise FileNotFoundError(f"❌ Target video not found at: {video_path}")
 
-        print(f"[VideoChain] Running Robust Adaptive Extraction on {video_path}...")
+        print(f"[vidchain] Running Robust Adaptive Extraction on {video_path}...")
         
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -33,7 +33,7 @@ class VideoLoader:
         
         ret, prev_frame = cap.read()
         if not ret:
-            print("[VideoChain] ❌ Error: Could not read the first frame.")
+            print("[vidchain] ❌ Error: Could not read the first frame.")
             return []
 
         # 1. Establish the Initial Baseline (Grayscale + Blur to remove noise/glare)
@@ -93,7 +93,7 @@ class VideoLoader:
                 print(f"   📸 Saved Frame at {timestamp:.1f}s (Change: {change_percentage:.1f}%)")
 
         cap.release()
-        print(f"[VideoChain] Adaptive Extraction Complete: Compressed {frame_count} frames down to {saved_count} keyframes.")
+        print(f"[vidchain] Adaptive Extraction Complete: Compressed {frame_count} frames down to {saved_count} keyframes.")
         return keyframes
 
     def cleanup(self):
@@ -102,4 +102,4 @@ class VideoLoader:
         """
         if os.path.exists(self.output_dir):
             shutil.rmtree(self.output_dir)
-            print("[VideoChain] Temporary frame cache cleared.")
+            print("[vidchain] Temporary frame cache cleared.")

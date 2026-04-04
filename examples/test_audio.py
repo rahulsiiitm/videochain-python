@@ -9,8 +9,8 @@ if ffmpeg_bin not in os.environ["PATH"]:
     print(f"🛠️ System path updated with FFmpeg: {ffmpeg_bin}")
     
 # ------------------------------------
-from videochain.loaders.audio_loader import AudioLoader
-from videochain.processors.audio_model import AudioProcessor
+from vidchain.loaders.audio_loader import AudioLoader
+from vidchain.processors.audio_model import AudioProcessor
 
 def main():
     # 1. Configuration

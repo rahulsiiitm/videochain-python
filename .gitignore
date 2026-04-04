@@ -15,7 +15,7 @@ ENV/
 data
 models/*.pth
 
-# --- VideoChain Temp Data (IMPORTANT) ---
+# --- vidchain Temp Data (IMPORTANT) ---
 # We don't want to push your test videos or extracted frames
 temp_frames/
 temp_audio/

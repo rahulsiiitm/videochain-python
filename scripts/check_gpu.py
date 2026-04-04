@@ -2,7 +2,7 @@ import torch
 import sys
 
 print("\n" + "="*40)
-print(" 🚀 VIDEOCHAIN HARDWARE DIAGNOSTIC 🚀 ")
+print(" 🚀 vidchain HARDWARE DIAGNOSTIC 🚀 ")
 print("="*40)
 
 print(f"Python Version:  {sys.version.split()[0]}")
@@ -23,7 +23,7 @@ if cuda_available:
     print(f"💾 Total VRAM:   {vram_total:.2f} GB")
     print(f"⚙️  CUDA Version: {cuda_version}")
     print("="*40)
-    print("You are ready to run the VideoChain CLI!")
+    print("You are ready to run the vidchain CLI!")
 else:
     print("❌ STATUS: CPU ONLY")
     print("PyTorch cannot see your NVIDIA GPU.")

@@ -1,19 +1,19 @@
 {
     "metadata": {
-        "total_frames_analyzed": 16,
-        "audio_segments": 4,
+        "total_frames_analyzed": 15,
+        "audio_segments": 11,
         "ocr_events": 2
     },
     "timeline": [
         {
             "time": 0.0,
             "type": "acoustic",
-            "content": "1.5 m"
+            "content": "3.1kg"
         },
         {
             "time": 0.97,
             "type": "visual",
-            "content": "Duration: [0.97s - 2.9s] | Subjects: 1 laptop | Action State: NORMAL"
+            "content": "Duration: [0.97s - 2.9s] | Subjects: 1 laptop | Action State: UNKNOWN"
         },
         {
             "time": 0.97,
@@ -21,14 +21,29 @@
             "content": "ASUS Vivabook"
         },
         {
+            "time": 2.0,
+            "type": "acoustic",
+            "content": "4.3kg"
+        },
+        {
             "time": 3.87,
             "type": "visual",
-            "content": "Duration: [3.87s - 4.83s] | Subjects: 1 laptop, 1 tv | Action State: SUSPICIOUS"
+            "content": "Duration: [3.87s - 4.83s] | Subjects: 1 laptop, 1 tv | Action State: UNKNOWN"
+        },
+        {
+            "time": 4.0,
+            "type": "acoustic",
+            "content": "4.4kg"
         },
         {
             "time": 5.8,
             "type": "visual",
-            "content": "Duration: [5.8s - 6.77s] | Subjects: 1 laptop | Action State: SUSPICIOUS"
+            "content": "Duration: [5.8s - 8.7s] | Subjects: 1 laptop | Action State: UNKNOWN"
+        },
+        {
+            "time": 6.0,
+            "type": "acoustic",
+            "content": "5.3kg"
         },
         {
             "time": 6.77,
@@ -36,49 +51,54 @@
             "content": "ASUS Vivobook"
         },
         {
-            "time": 7.0,
+            "time": 8.0,
             "type": "acoustic",
-            "content": "2.5 m"
-        },
-        {
-            "time": 7.73,
-            "type": "visual",
-            "content": "Duration: [7.73s - 8.7s] | Subjects: 1 laptop | Action State: NORMAL"
+            "content": "6.2kg"
         },
         {
             "time": 9.67,
             "type": "visual",
-            "content": "Duration: [9.67s - 9.67s] | Subjects: 1 laptop, 1 tv | Action State: NORMAL"
+            "content": "Duration: [9.67s - 9.67s] | Subjects: 1 laptop, 1 tv | Action State: UNKNOWN"
+        },
+        {
+            "time": 10.0,
+            "type": "acoustic",
+            "content": "7.4kg"
         },
         {
             "time": 10.64,
             "type": "visual",
-            "content": "Duration: [10.64s - 10.64s] | Subjects: 1 laptop | Action State: NORMAL"
+            "content": "Duration: [10.64s - 10.64s] | Subjects: 1 laptop | Action State: UNKNOWN"
         },
         {
             "time": 11.6,
             "type": "visual",
-            "content": "Duration: [11.6s - 11.6s] | Subjects: 1 laptop, 1 tv | Action State: NORMAL"
+            "content": "Duration: [11.6s - 11.6s] | Subjects: 1 laptop, 1 tv | Action State: UNKNOWN"
+        },
+        {
+            "time": 12.0,
+            "type": "acoustic",
+            "content": "7.8kg"
         },
         {
             "time": 12.57,
             "type": "visual",
-            "content": "Duration: [12.57s - 12.57s] | Subjects: 1 laptop | Action State: SUSPICIOUS"
+            "content": "Duration: [12.57s - 12.57s] | Subjects: 1 laptop | Action State: UNKNOWN"
         },
         {
             "time": 13.54,
             "type": "visual",
-            "content": "Duration: [13.54s - 13.54s] | Subjects: 1 laptop, 1 keyboard | Action State: SUSPICIOUS"
+            "content": "Duration: [13.54s - 13.54s] | Subjects: 1 laptop, 1 keyboard | Action State: UNKNOWN"
         },
         {
             "time": 14.0,
             "type": "acoustic",
-            "content": "2.5 m"
+            "content": "6.3kg"
         },
         {
             "time": 14.5,
             "type": "visual",
-            "content": "Duration: [14.5s - 14.5s] | Subjects: 1 chair | Action State: NORMAL"
+            "content": "Duration: [14.5s - 14.5s] | Subjects: 1 chair | Action State: UNKNOWN"
         },
         {
             "time": 15.47,
@@ -86,19 +106,24 @@
             "content": "Duration: [15.47s - 17.4s] | Subjects: no significant objects | Action State: NORMAL"
         },
         {
-            "time": 18.37,
-            "type": "visual",
-            "content": "Duration: [18.37s - 18.37s] | Subjects: 2 tv | Action State: NORMAL"
+            "time": 18.0,
+            "type": "acoustic",
+            "content": "7.8kg"
         },
         {
-            "time": 19.0,
-            "type": "acoustic",
-            "content": "2.5 m"
+            "time": 18.37,
+            "type": "visual",
+            "content": "Duration: [18.37s - 18.37s] | Subjects: 2 tv | Action State: UNKNOWN"
         },
         {
             "time": 19.34,
             "type": "visual",
-            "content": "Duration: [19.34s - 19.34s] | Subjects: 1 tv | Action State: VIOLENCE"
+            "content": "Duration: [19.34s - 19.34s] | Subjects: 1 tv | Action State: UNKNOWN"
+        },
+        {
+            "time": 20.0,
+            "type": "acoustic",
+            "content": "7.8kg"
         },
         {
             "time": 20.3,
@@ -106,14 +131,19 @@
             "content": "Duration: [20.3s - 21.27s] | Subjects: no significant objects | Action State: NORMAL"
         },
         {
+            "time": 22.0,
+            "type": "acoustic",
+            "content": "7.3kg"
+        },
+        {
             "time": 22.24,
             "type": "visual",
-            "content": "Duration: [22.24s - 22.24s] | Subjects: 1 person, 1 book | Action State: VIOLENCE"
+            "content": "Duration: [22.24s - 22.24s] | Subjects: 1 person, 1 book | Action State: UNKNOWN"
         },
         {
             "time": 23.2,
             "type": "visual",
-            "content": "Duration: [23.2s - 23.2s] | Subjects: 1 person, 1 laptop, 1 oven | Action State: NORMAL"
+            "content": "Duration: [23.2s - 23.2s] | Subjects: 1 person, 1 laptop, 1 oven | Action State: UNKNOWN"
         }
     ]
 }

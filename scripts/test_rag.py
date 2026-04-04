@@ -1,7 +1,7 @@
 import requests
 import json
 
-def generate_videochain_alert(detected_action, mode="Security"):
+def generate_vidchain_alert(detected_action, mode="Security"):
     print(f"🚨 Vision Engine detected: [{detected_action.upper()}]")
     print(f"🧠 RAG Engine processing in [{mode}] mode...\n")
 
@@ -43,10 +43,10 @@ if __name__ == "__main__":
     # Let's test the Multi-Purpose functionality!
     
     # Test 1: Healthcare mode reacting to a Fall (Emergency)
-    generate_videochain_alert(detected_action="emergency", mode="Healthcare")
+    generate_vidchain_alert(detected_action="emergency", mode="Healthcare")
     
     # Test 2: Retail mode reacting to a Sneak (Suspicious)
-    generate_videochain_alert(detected_action="suspicious", mode="Retail")
+    generate_vidchain_alert(detected_action="suspicious", mode="Retail")
     
     # Test 3: Security mode reacting to a Hit (Violence)
-    generate_videochain_alert(detected_action="violence", mode="Security")
+    generate_vidchain_alert(detected_action="violence", mode="Security")

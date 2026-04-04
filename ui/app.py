@@ -39,14 +39,14 @@ class GPUWorker(QtCore.QThread):
 # ══════════════════════════════════════════
 # MAIN UI CLASS
 # ══════════════════════════════════════════
-class VideoChainHUD(QtWidgets.QMainWindow):
+class vidchainHUD(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         
         # ── Frameless + translucent window ──
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.setWindowTitle("VIDEOCHAIN – SEC-INTEL HUD")
+        self.setWindowTitle("vidchain – SEC-INTEL HUD")
         self.resize(1100, 700)
         self._drag_pos = None
 
@@ -64,7 +64,7 @@ class VideoChainHUD(QtWidgets.QMainWindow):
         left_w.setStyleSheet("QWidget { background: rgba(6, 12, 28, 220); border: 1px solid rgba(0, 217, 255, 40); border-radius: 5px; }")
         lp = QtWidgets.QVBoxLayout(left_w)
         
-        title = QtWidgets.QLabel("VIDEOCHAIN")
+        title = QtWidgets.QLabel("vidchain")
         title.setStyleSheet("font-size: 24px; font-weight: 800; color: #00D9FF; letter-spacing: 4px; border: none; background: transparent;")
         lp.addWidget(title)
         
@@ -129,7 +129,7 @@ class VideoChainHUD(QtWidgets.QMainWindow):
         self.chat_log = QtWidgets.QTextEdit()
         self.chat_log.setReadOnly(True)
         self.chat_log.setStyleSheet("QTextEdit { background: rgba(0, 10, 20, 100); color: #E2E8F0; font-family: 'Courier New'; font-size: 13px; border: 1px solid rgba(0, 217, 255, 20); padding: 10px; }")
-        self.chat_log.append("> SYSTEM: VideoChain RAG Engine Online.")
+        self.chat_log.append("> SYSTEM: vidchain RAG Engine Online.")
         self.chat_log.append("> SYSTEM: Waiting for temporal knowledge base...")
         rp.addWidget(self.chat_log)
 
@@ -203,6 +203,6 @@ class VideoChainHUD(QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    window = VideoChainHUD()
+    window = vidchainHUD()
     window.show()
     sys.exit(app.exec_())

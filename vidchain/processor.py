@@ -8,7 +8,7 @@ import whisper
 import librosa
 import numpy as np
 
-from videochain.processors.ocr_model import OCRProcessor
+from vidchain.processors.ocr_model import OCRProcessor
 
 OCR_INTERVAL_SECONDS = 5.0
 
@@ -30,8 +30,8 @@ class VideoProcessor:
         audio_segments = []
         for segment in raw_audio_result.get("segments", []):
             audio_segments.append({
-                "start": round(segment["start"], 2),
-                "text": segment["text"].strip()
+                "start": round(segment["start"], 2), # type: ignore
+                "text": segment["text"].strip() # type: ignore
             })
 
         y, sr = librosa.load(self.video_path, sr=None)

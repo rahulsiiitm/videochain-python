@@ -1,10 +1,10 @@
 import os
 import torch
-from videochain.loaders.video_loader import VideoLoader
-from videochain.loaders.audio_loader import AudioLoader
-from videochain.processors.vision_model import VisionEngine
-from videochain.processors.audio_model import AudioProcessor
-from videochain.core.fusion import FusionEngine
+from vidchain.loaders.video_loader import VideoLoader
+from vidchain.loaders.audio_loader import AudioLoader
+from vidchain.processors.vision_model import VisionEngine
+from vidchain.processors.audio_model import AudioProcessor
+from vidchain.core.fusion import FusionEngine
 
 def main():
     VIDEO_PATH = "sample.mp4"
@@ -13,7 +13,7 @@ def main():
         return
 
     # --- PHASE 1: Initialization ---
-    print("\n🚀 [Initializing VideoChain Pipeline...]")
+    print("\n🚀 [Initializing vidchain Pipeline...]")
     v_loader = VideoLoader(output_dir="temp_frames")
     a_loader = AudioLoader(output_dir="temp_audio")
     

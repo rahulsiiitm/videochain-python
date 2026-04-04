@@ -15,7 +15,7 @@ class FusionEngine:
             audio_data:   List of dicts — {'start': float, 'text': str}
             ocr_data:     List of dicts — {'timestamp': float, 'text': str}  (optional)
         """
-        print("[VideoChain] Fusing multimodal data streams...")
+        print("[vidchain] Fusing multimodal data streams...")
 
         ocr_data = ocr_data or []
 
@@ -57,6 +57,6 @@ class FusionEngine:
         with open(self.output_file, "w") as f:
             json.dump(knowledge_base, f, indent=4)
 
-        print(f"[VideoChain] ✅ Knowledge Base saved to {self.output_file}")
+        print(f"[vidchain] ✅ Knowledge Base saved to {self.output_file}")
         print(f"             Visual: {len(vision_data)} | Audio: {len(audio_data)} | OCR: {len(ocr_data)}")
         return knowledge_base

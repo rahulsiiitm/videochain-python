@@ -15,14 +15,14 @@ def train_edge_model():
     data_dir = Path("data/train")
     model_save_dir = Path("models")
     model_save_dir.mkdir(exist_ok=True)
-    model_save_path = model_save_dir / "videochain_vision.pth"
+    model_save_path = model_save_dir / "vidchain_vision.pth"
     
     batch_size = 32
     epochs = 10
     learning_rate = 0.001
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"🚀 Initializing VideoChain Vision Engine on: {device.type.upper()}")
+    print(f"🚀 Initializing vidchain Vision Engine on: {device.type.upper()}")
 
     # ==========================================
     # 2. DATA PIPELINE

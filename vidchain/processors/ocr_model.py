@@ -23,9 +23,9 @@ class OCRProcessor:
             os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
             torch.zeros(1).cuda()  # warm up CUDA before EasyOCR spawns its context
 
-        print(f"[VideoChain] OCR Engine initializing on: {'CUDA' if self.use_gpu else 'CPU'}")
+        print(f"[vidchain] OCR Engine initializing on: {'CUDA' if self.use_gpu else 'CPU'}")
         self.reader = easyocr.Reader(languages, gpu=self.use_gpu, verbose=False)
-        print("[VideoChain] OCR Engine ready.")
+        print("[vidchain] OCR Engine ready.")
 
         # Deduplication: suppress repeated identical OCR text across consecutive frames
         self._last_text: str | None = None

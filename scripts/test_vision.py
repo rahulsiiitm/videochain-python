@@ -25,7 +25,7 @@ def test_inference():
     model.classifier[3] = nn.Linear(num_features, len(classes))
     
     # Load YOUR custom weights
-    model_path = "models/videochain_vision.pth"
+    model_path = "models/vidchain_vision.pth"
     model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     model = model.to(device)
     model.eval() # Set to evaluation mode (turns off training features)

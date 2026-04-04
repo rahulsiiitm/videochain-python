@@ -13,11 +13,11 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" # Suppress TensorFlow if backend uses it
 os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1" # Avoid Hugging Face token warnings if not logged in
 
-from videochain.processor import VideoProcessor
-from videochain.rag import RAGEngine
-from videochain.core.fusion import FusionEngine
-from videochain.vision import VisionEngine as YoloEngine
-from videochain.processors.vision_model import VisionEngine as ActionEngine
+from vidchain.processor import VideoProcessor
+from vidchain.rag import RAGEngine
+from vidchain.core.fusion import FusionEngine
+from vidchain.vision import VisionEngine as YoloEngine
+from vidchain.processors.vision_model import VisionEngine as ActionEngine
 
 def print_hardware_status(step=""):
     """Prints current GPU status and VRAM usage."""
@@ -28,7 +28,7 @@ def print_hardware_status(step=""):
         print(f"🖥️  [CPU] {step} | (CUDA NOT DETECTED)")
 
 def main():
-    parser = argparse.ArgumentParser(description="VideoChain: Multimodal RAG CLI")
+    parser = argparse.ArgumentParser(description="vidchain: Multimodal RAG CLI")
     parser.add_argument("video_path", help="Path to the video file")
     parser.add_argument("--llm", default="gemini/gemini-2.5-flash", help="LLM backend")
     parser.add_argument("--ocr-lang", nargs="+", default=["en"], help="OCR languages")
@@ -39,7 +39,7 @@ def main():
         print(f"[ERROR] Video file not found: {args.video_path}")
         sys.exit(1)
 
-    print(f"\n[INFO] VideoChain Analysis — {args.video_path}")
+    print(f"\n[INFO] vidchain Analysis — {args.video_path}")
     print(f"[INFO] LLM: {args.llm} | OCR languages: {args.ocr_lang}")
     print("-" * 50)
 
@@ -55,7 +55,7 @@ def main():
     # ── Vision models ──────────────────────────────────────
     print("\n[INFO] Booting Dual-Vision Models...")
     yolo_model = YoloEngine(model_path="yolov8s.pt", confidence_threshold=0.25)
-    action_model = ActionEngine(model_path="models/videochain_vision.pth")
+    action_model = ActionEngine(model_path="models/vidchain_vision.pth")
     print_hardware_status("Vision Models Loaded")
 
     # ── Extraction ─────────────────────────────────────────
@@ -71,13 +71,13 @@ def main():
     print(f"[SUCCESS] Peak Audio Volume: {volume:.4f}")
 
     # ── RAG ────────────────────────────────────────────────
-    print(f"\n[INFO] Initializing RAG Engine ({args.llm})...")
+    print(f"\n[INFO] Initializing VidChain RAG Architecture ({args.llm})...")
     rag = RAGEngine(model_name=args.llm)
-    print_hardware_status("FAISS Index Built")
-
-    if not rag.load_knowledge("knowledge_base.json"):
-        print("[ERROR] Knowledge base missing or corrupted.")
-        sys.exit(1)
+    
+    print("-" * 50)
+    print("[SYSTEM] B.A.B.U.R.A.O. Engine Online.")
+    print("[SYSTEM] (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation)")
+    print("-" * 50)
 
     # ── Single-shot query mode ─────────────────────────────
     if args.query:

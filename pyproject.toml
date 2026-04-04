@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "videochain"
-version = "0.1.0"
+name = "VidChain"
+version = "0.2.0"
 description = "A Lightweight Video RAG Framework for Multimodal Reasoning"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,38 +26,39 @@ classifiers = [
 dependencies = [
     "opencv-python",
     "scenedetect",
-    "openai-whisper",
+    "openai-whisper",       # Provides the 'whisper' import
     "sentence-transformers",
     "faiss-cpu",
+    "litellm",              # Added for your 'gemini/gemini-2.5-flash' routing
     "google-generativeai",
     "moviepy",
-    "torch>=2.1.0",
-    "torchvision>=0.26.0",
-    "pillow",
+    "pillow<12.0",          # 🛑 PINNED: Fixes the MoviePy incompatibility crash
+    "torch",                # 🛑 UNPINNED: Allows users to install their own cu118/cu121 versions
+    "torchvision",          # 🛑 UNPINNED: Prevents pip from forcing a CPU downgrade
+    "torchaudio",           # Added to complete the PyTorch hardware triad
     "numpy",
     "tqdm",
     "python-dotenv",
-    "ultralytics",    # Added for YOLO-based entity detection
-    "librosa",        # Added for advanced audio feature extraction
-    "easyocr",
+    "ultralytics",          # YOLO-based Noun Engine
+    "librosa",              # Audio energy extraction
+    "easyocr",              # GPU-accelerated text extraction
 ]
 
 # --- CONSOLIDATED CLI ENTRY POINTS ---
-# This allows you to run these commands directly in your terminal
 [project.scripts]
-videochain-analyze = "videochain.cli:main"
-videochain-train = "scripts.train_vision:main"
+vidchain-analyze = "vidchain.cli:main"
+vidchain-train = "scripts.train_vision:main"
 
 [project.urls]
-"Homepage" = "https://github.com/rahulsiiitm/videochain"
-"Bug Tracker" = "https://github.com/rahulsiiitm/videochain/issues"
+"Homepage" = "https://github.com/rahulsiiitm/videochain-python"
+"Bug Tracker" = "https://github.com/rahulsiiitm/videochain-python/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["videochain*"]
+include = ["vidchain*"]
 
 [tool.setuptools.package-data]
-videochain = ["py.typed"]
+vidchain = ["py.typed"]
 
 # UV specific configuration for CUDA-enabled Torch
 [[tool.uv.index]]

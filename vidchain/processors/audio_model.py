@@ -11,7 +11,7 @@ class AudioProcessor:
         # 1. Check for FFmpeg presence
         if not FFMPEG_PATH:
             raise RuntimeError(
-                "❌ FFmpeg not found! VideoChain requires FFmpeg to be installed "
+                "❌ FFmpeg not found! vidchain requires FFmpeg to be installed "
                 "and added to your System PATH. \n"
                 "👉 Windows: 'winget install ffmpeg' \n"
                 "👉 Mac: 'brew install ffmpeg'"
@@ -19,7 +19,7 @@ class AudioProcessor:
 
         # 2. Detect your RTX 3050 (or current GPU)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"[VideoChain] Audio Engine active on: {self.device}")
+        print(f"[vidchain] Audio Engine active on: {self.device}")
         
         # 3. Load Whisper
         self.model = whisper.load_model(model_size, device=self.device)
@@ -29,7 +29,7 @@ class AudioProcessor:
         Extracts speech and maps it to timestamps.
         Optimized for RTX 3050 using FP16.
         """
-        print(f"[VideoChain] Transcribing: {os.path.basename(audio_path)}")
+        print(f"[vidchain] Transcribing: {os.path.basename(audio_path)}")
         
         # FP16 is 2x faster on your 3050, but Whisper requires FP32 for CPU
         use_fp16 = True if self.device == "cuda" else False

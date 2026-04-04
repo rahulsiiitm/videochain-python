@@ -13,7 +13,7 @@ import sys
 # Vision Model
 # ==========================
 class VisionEngine:
-    def __init__(self, model_path="models/videochain_vision.pth", confidence_threshold=0.65):
+    def __init__(self, model_path="models/vidchain_vision.pth", confidence_threshold=0.65):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.threshold = confidence_threshold
 
@@ -157,7 +157,7 @@ def generate_json(fusion_result, frame_data):
     output = {"summary": fusion_result, "frames": frame_data}
     return json.dumps(output, indent=4)
 
-def process_video(video_path, model_path="models/videochain_vision.pth"):
+def process_video(video_path, model_path="models/vidchain_vision.pth"):
     vision = VisionEngine(model_path=model_path)
     print("📹 Extracting frames...")
     frames = extract_frames(video_path)

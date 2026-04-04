@@ -1,7 +1,7 @@
 import torch
 import os
-from videochain.loaders.video_loader import VideoLoader
-from videochain.processors.vision_model import VisionEngine
+from vidchain.loaders.video_loader import VideoLoader
+from vidchain.processors.vision_model import VisionEngine
 
 def test_vision():
     VIDEO_PATH = "sample.mp4"

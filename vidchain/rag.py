@@ -19,9 +19,9 @@ CHITCHAT_TRIGGERS = {
     "thanks", "thank you", "ok", "okay", "cool", "got it", "bye", "goodbye"
 }
 
-CHRONICLE_INTRO = (
-    "CHRONICLE — Forensic Video Intelligence System.\n"
-    "Operational. Awaiting query.\n\n"
+BABURAO_INTRO = (
+    "B.A.B.U.R.A.O. (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation)\n"
+    "Status: Operational. Awaiting query.\n\n"
     "Scope: Event detection, timeline reconstruction, anomaly flagging, "
     "subject tracking, and incident verification from indexed surveillance logs.\n"
     "Submit a specific query to begin analysis."
@@ -86,7 +86,7 @@ class RAGEngine:
             ]
 
             embeddings = self.embedder.encode(self.chunk_texts, convert_to_numpy=True)
-            self.index.add(embeddings)
+            self.index.add(embeddings) # type: ignore
             self.is_ready = True
 
             print(f"[SUCCESS] FAISS index built — {self.index.ntotal} vectors indexed.")
@@ -109,7 +109,7 @@ class RAGEngine:
 
         query_vector = self.embedder.encode([question], convert_to_numpy=True)
         k = min(top_k, self.index.ntotal)
-        distances, indices = self.index.search(query_vector, k)
+        distances, indices = self.index.search(query_vector, k) # type: ignore
 
         chunks = [self.chunk_texts[i] for i in indices[0] if i < len(self.chunk_texts)]
         return "\n".join(chunks), len(chunks)
@@ -132,7 +132,7 @@ class RAGEngine:
 
         try:
             response = completion(**kwargs)
-            return response.choices[0].message.content.strip()
+            return response.choices[0].message.content.strip() # type: ignore
         except Exception as e:
             return f"[ERROR] LLM routing failure ({self.model_name}): {e}"
 
@@ -143,7 +143,7 @@ class RAGEngine:
     @staticmethod
     def _build_system_prompt(context_str: str) -> str:
         return (
-            "You are CHRONICLE, an intelligent, conversational video AI copilot. "
+            "You are BABURAO, an intelligent, conversational video AI copilot. "
             "Your job is to watch raw sensor logs and tell the user what is happening in a natural, human, and conversational tone. "
             "You are a helpful colleague, not a robot generating incident reports.\n\n"
 
@@ -166,10 +166,10 @@ class RAGEngine:
     # Public query interface
     # ------------------------------------------------------------------
 
-    def query(self, user_question: str, top_k: int = None) -> str:
+    def query(self, user_question: str, top_k: int = None) -> str: # type: ignore
         # 1. Intercept chitchat
         if is_chitchat(user_question):
-            return CHRONICLE_INTRO
+            return BABURAO_INTRO
 
         # 2. Guard: KB not loaded
         if not self.is_ready:
