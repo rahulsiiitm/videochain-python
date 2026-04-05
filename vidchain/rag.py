@@ -62,6 +62,21 @@ class RAGEngine:
     # Knowledge base
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _serialize_entry(e: dict) -> str:
+        parts = [f"[{e['time']}s]"]
+        if e.get("duration"):
+            parts.append(f"Duration: {e['duration']}")
+        if e.get("objects"):
+            parts.append(f"Objects: {e['objects']}")
+        if e.get("action"):
+            parts.append(f"Action: {e['action']}")
+        if e.get("ocr"):
+            parts.append(f"Screen text: {e['ocr']}")
+        if e.get("audio"):
+            parts.append(f"Audio: \"{e['audio']}\"")
+        return " | ".join(parts)
+
     def load_knowledge(self, file_path: str = "knowledge_base.json") -> bool:
         if not os.path.exists(file_path):
             print(f"[ERROR] Knowledge base not found: {file_path}")
@@ -81,8 +96,7 @@ class RAGEngine:
             print("[INFO] Vectorizing timeline into FAISS index...")
 
             self.chunk_texts = [
-                f"[{e['time']}s] {e['type'].upper()}: {e['content']}"
-                for e in self.video_memory
+                self._serialize_entry(e) for e in self.video_memory
             ]
 
             embeddings = self.embedder.encode(self.chunk_texts, convert_to_numpy=True)

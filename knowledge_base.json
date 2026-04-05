@@ -1,149 +1,146 @@
 {
     "metadata": {
-        "total_frames_analyzed": 15,
-        "audio_segments": 11,
-        "ocr_events": 2
+        "total_frames_analyzed": 16,
+        "audio_segments": 12,
+        "ocr_events": 2,
+        "total_timeline_entries": 17
     },
     "timeline": [
         {
-            "time": 0.0,
-            "type": "acoustic",
-            "content": "3.1kg"
-        },
-        {
             "time": 0.97,
-            "type": "visual",
-            "content": "Duration: [0.97s - 2.9s] | Subjects: 1 laptop | Action State: UNKNOWN"
-        },
-        {
-            "time": 0.97,
-            "type": "ocr",
-            "content": "ASUS Vivabook"
+            "duration": "[0.97s - 2.9s]",
+            "objects": "1 laptop",
+            "action": "NORMAL",
+            "ocr": "ASUS Vivabook",
+            "audio": "12.17.16.2014"
         },
         {
             "time": 2.0,
-            "type": "acoustic",
-            "content": "4.3kg"
+            "duration": null,
+            "objects": null,
+            "action": null,
+            "ocr": null,
+            "audio": "19.09.14.2014"
         },
         {
             "time": 3.87,
-            "type": "visual",
-            "content": "Duration: [3.87s - 4.83s] | Subjects: 1 laptop, 1 tv | Action State: UNKNOWN"
-        },
-        {
-            "time": 4.0,
-            "type": "acoustic",
-            "content": "4.4kg"
+            "duration": "[3.87s - 4.83s]",
+            "objects": "1 laptop, 1 tv",
+            "action": "SUSPICIOUS",
+            "ocr": null,
+            "audio": "19.09.14.2014"
         },
         {
             "time": 5.8,
-            "type": "visual",
-            "content": "Duration: [5.8s - 8.7s] | Subjects: 1 laptop | Action State: UNKNOWN"
+            "duration": "[5.8s - 6.77s]",
+            "objects": "1 laptop",
+            "action": "SUSPICIOUS",
+            "ocr": null,
+            "audio": "15.2013"
         },
         {
-            "time": 6.0,
-            "type": "acoustic",
-            "content": "5.3kg"
-        },
-        {
-            "time": 6.77,
-            "type": "ocr",
-            "content": "ASUS Vivobook"
-        },
-        {
-            "time": 8.0,
-            "type": "acoustic",
-            "content": "6.2kg"
+            "time": 7.73,
+            "duration": "[7.73s - 8.7s]",
+            "objects": "1 laptop",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "19.10.1914"
         },
         {
             "time": 9.67,
-            "type": "visual",
-            "content": "Duration: [9.67s - 9.67s] | Subjects: 1 laptop, 1 tv | Action State: UNKNOWN"
-        },
-        {
-            "time": 10.0,
-            "type": "acoustic",
-            "content": "7.4kg"
+            "duration": "[9.67s - 9.67s]",
+            "objects": "1 laptop, 1 tv",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "15.2013"
         },
         {
             "time": 10.64,
-            "type": "visual",
-            "content": "Duration: [10.64s - 10.64s] | Subjects: 1 laptop | Action State: UNKNOWN"
+            "duration": "[10.64s - 10.64s]",
+            "objects": "1 laptop",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "15.2013"
         },
         {
             "time": 11.6,
-            "type": "visual",
-            "content": "Duration: [11.6s - 11.6s] | Subjects: 1 laptop, 1 tv | Action State: UNKNOWN"
-        },
-        {
-            "time": 12.0,
-            "type": "acoustic",
-            "content": "7.8kg"
+            "duration": "[11.6s - 11.6s]",
+            "objects": "1 laptop, 1 tv",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 12.57,
-            "type": "visual",
-            "content": "Duration: [12.57s - 12.57s] | Subjects: 1 laptop | Action State: UNKNOWN"
+            "duration": "[12.57s - 12.57s]",
+            "objects": "1 laptop",
+            "action": "SUSPICIOUS",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 13.54,
-            "type": "visual",
-            "content": "Duration: [13.54s - 13.54s] | Subjects: 1 laptop, 1 keyboard | Action State: UNKNOWN"
-        },
-        {
-            "time": 14.0,
-            "type": "acoustic",
-            "content": "6.3kg"
+            "duration": "[13.54s - 13.54s]",
+            "objects": "1 laptop, 1 keyboard",
+            "action": "SUSPICIOUS",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 14.5,
-            "type": "visual",
-            "content": "Duration: [14.5s - 14.5s] | Subjects: 1 chair | Action State: UNKNOWN"
+            "duration": "[14.5s - 14.5s]",
+            "objects": "1 chair",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 15.47,
-            "type": "visual",
-            "content": "Duration: [15.47s - 17.4s] | Subjects: no significant objects | Action State: NORMAL"
-        },
-        {
-            "time": 18.0,
-            "type": "acoustic",
-            "content": "7.8kg"
+            "duration": "[15.47s - 17.4s]",
+            "objects": "no significant objects",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 18.37,
-            "type": "visual",
-            "content": "Duration: [18.37s - 18.37s] | Subjects: 2 tv | Action State: UNKNOWN"
+            "duration": "[18.37s - 18.37s]",
+            "objects": "2 tv",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 19.34,
-            "type": "visual",
-            "content": "Duration: [19.34s - 19.34s] | Subjects: 1 tv | Action State: UNKNOWN"
-        },
-        {
-            "time": 20.0,
-            "type": "acoustic",
-            "content": "7.8kg"
+            "duration": "[19.34s - 19.34s]",
+            "objects": "1 tv",
+            "action": "VIOLENCE",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 20.3,
-            "type": "visual",
-            "content": "Duration: [20.3s - 21.27s] | Subjects: no significant objects | Action State: NORMAL"
-        },
-        {
-            "time": 22.0,
-            "type": "acoustic",
-            "content": "7.3kg"
+            "duration": "[20.3s - 21.27s]",
+            "objects": "no significant objects",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 22.24,
-            "type": "visual",
-            "content": "Duration: [22.24s - 22.24s] | Subjects: 1 person, 1 book | Action State: UNKNOWN"
+            "duration": "[22.24s - 22.24s]",
+            "objects": "1 person, 1 book",
+            "action": "VIOLENCE",
+            "ocr": null,
+            "audio": "19.1013"
         },
         {
             "time": 23.2,
-            "type": "visual",
-            "content": "Duration: [23.2s - 23.2s] | Subjects: 1 person, 1 laptop, 1 oven | Action State: UNKNOWN"
+            "duration": "[23.2s - 23.2s]",
+            "objects": "1 person, 1 laptop, 1 oven",
+            "action": "NORMAL",
+            "ocr": null,
+            "audio": "19.1013"
         }
     ]
 }

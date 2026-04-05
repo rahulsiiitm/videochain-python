@@ -70,10 +70,16 @@ def main():
     fusion.generate_knowledge_base(v_data, a_data, ocr_data)
     print(f"[SUCCESS] Peak Audio Volume: {volume:.4f}")
 
-    # ── RAG ────────────────────────────────────────────────
+# ── RAG ────────────────────────────────────────────────
     print(f"\n[INFO] Initializing VidChain RAG Architecture ({args.llm})...")
     rag = RAGEngine(model_name=args.llm)
     
+    # 🛑 YOU NEED TO ADD THESE 4 LINES 🛑
+    print_hardware_status("FAISS Index Built")
+    if not rag.load_knowledge("knowledge_base.json"):
+        print("[ERROR] Knowledge base missing or corrupted.")
+        sys.exit(1)
+
     print("-" * 50)
     print("[SYSTEM] B.A.B.U.R.A.O. Engine Online.")
     print("[SYSTEM] (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation)")
