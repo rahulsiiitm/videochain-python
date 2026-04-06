@@ -52,7 +52,7 @@ class OCRProcessor:
             meaningful = [
                 text.strip()
                 for (_, text, conf) in results
-                if conf >= 0.4 and len(text.strip()) >= MIN_TEXT_LENGTH
+                if float(conf) >= 0.4 and len(text.strip()) >= MIN_TEXT_LENGTH
             ]
 
             if not meaningful:

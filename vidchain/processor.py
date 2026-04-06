@@ -1,43 +1,59 @@
-import warnings
-# Suppress noisy library warnings
-warnings.filterwarnings("ignore")
-
+import os
 import cv2
 import torch
-import whisper
+import whisper  # type: ignore
 import librosa
 import numpy as np
+from moviepy import VideoFileClip
 
 from vidchain.processors.ocr_model import OCRProcessor
+from vidchain.processors.emotion_model import ThreadedEmotionAnalyzer
 
 OCR_INTERVAL_SECONDS = 5.0
+
 
 class VideoProcessor:
     def __init__(self, video_path: str, ocr_languages: list = ["en"]):
         self.video_path = video_path
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        print(f"[INFO] Loading Whisper Audio Model (base) on {self.device.upper()}...")
+        print(f"[INFO] Pipeline device: {self.device.upper()}")
+        print("[INFO] Loading Whisper Audio Model (base)...")
         self.audio_model = whisper.load_model("base", device=self.device)
 
-        print(f"[INFO] Loading OCR Engine on {self.device.upper()}...")
+        print("[INFO] Loading OCR Engine...")
         self.ocr = OCRProcessor(languages=ocr_languages)
 
+        print("[INFO] Loading Emotion Engine...")
+        self.emotion = ThreadedEmotionAnalyzer()
+
+    def _extract_wav(self) -> str:
+        wav_path = self.video_path.rsplit(".", 1)[0] + "_audio.wav"
+        if os.path.exists(wav_path):
+            return wav_path
+        print("[INFO] Extracting audio to WAV...")
+        with VideoFileClip(self.video_path) as clip:
+            clip.audio.write_audiofile(wav_path, fps=16000, logger=None)  # type: ignore
+        print(f"[INFO] Audio extracted: {wav_path}")
+        return wav_path
+
     def extract_context(self, yolo_engine, action_engine):
-        print(f"[INFO] Extracting Audio Timestamps (Whisper) via {self.device.upper()}...")
-        raw_audio_result = self.audio_model.transcribe(self.video_path)
+        # ── Audio ──────────────────────────────────────────────────
+        wav_path = self._extract_wav()
 
-        audio_segments = []
-        for segment in raw_audio_result.get("segments", []):
-            audio_segments.append({
-                "start": round(segment["start"], 2), # type: ignore
-                "text": segment["text"].strip() # type: ignore
-            })
+        print("[INFO] Transcribing audio (Whisper)...")
+        raw_audio = self.audio_model.transcribe(wav_path, fp16=(self.device == "cuda"))
+        audio_segments = [
+            {"start": round(s["start"], 2), "end": round(s["end"], 2), "text": s["text"].strip()}
+            for s in raw_audio.get("segments", [])
+        ]
 
-        y, sr = librosa.load(self.video_path, sr=None)
+        print("[INFO] Analyzing audio energy (librosa)...")
+        y, sr = librosa.load(wav_path, sr=None)
         peak_volume = float(np.max(librosa.feature.rms(y=y)))
 
-        print(f"[INFO] Extracting Scene Graphs + OCR (Dual-Brain) via {self.device.upper()}...")
+        # ── Vision + OCR + Emotion ─────────────────────────────────
+        print("[INFO] Extracting Scene Graphs + OCR + Emotions (Dual-Brain)...")
         cap = cv2.VideoCapture(self.video_path)
         fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
 
@@ -45,7 +61,8 @@ class VideoProcessor:
         ocr_events = []
         prev_gray = None
         frame_idx = 0
-        last_ocr_time = -OCR_INTERVAL_SECONDS 
+        last_ocr_time = -OCR_INTERVAL_SECONDS
+        last_emotion: str | None = None  # carry forward last known emotion
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -56,8 +73,11 @@ class VideoProcessor:
 
             if prev_gray is not None and np.mean(cv2.absdiff(prev_gray, gray)) > 2.0:
                 timestamp = round(frame_idx / fps, 2)
+
+                # ── YOLO ──
                 objects, _ = yolo_engine.predict(frame)
 
+                # ── Action ──
                 if objects == "no significant objects":
                     action = "NORMAL"
                 else:
@@ -65,12 +85,21 @@ class VideoProcessor:
                     if action.lower() == "uncertain":
                         action = "NORMAL"
 
+                # ── Emotion (threaded, non-blocking) ──
+                if self.emotion.processor.should_run(objects):
+                    self.emotion.submit(frame)          # fire and forget
+                result = self.emotion.collect()         # grab last completed result
+                if result:
+                    last_emotion = result               # carry forward until updated
+
                 raw_events.append({
                     "timestamp": timestamp,
-                    "objects": objects,
-                    "action": action.upper()
+                    "objects":   objects,
+                    "action":    action.upper(),
+                    "emotion":   last_emotion,          # None if no person seen yet
                 })
 
+                # ── OCR (rate-limited) ──
                 if self.ocr.should_run(objects) and (timestamp - last_ocr_time) >= OCR_INTERVAL_SECONDS:
                     text = self.ocr.extract_text(frame)
                     if text:
@@ -84,6 +113,7 @@ class VideoProcessor:
 
         cap.release()
 
+        # ── Semantic Chunking ──────────────────────────────────────
         print("[INFO] Compressing timeline via Semantic Chunking...")
         chunked_events = []
 
@@ -93,7 +123,12 @@ class VideoProcessor:
             current["end_time"] = current["start_time"]
 
             for event in raw_events[1:]:
-                if event["action"] == current["action"] and event["objects"] == current["objects"]:
+                same_scene = (
+                    event["action"] == current["action"]
+                    and event["objects"] == current["objects"]
+                    and event["emotion"] == current["emotion"]
+                )
+                if same_scene:
                     current["end_time"] = event["timestamp"]
                 else:
                     chunked_events.append(self._build_scene_graph(current))
@@ -112,4 +147,10 @@ class VideoProcessor:
             f"Subjects: {chunk['objects']} | "
             f"Action State: {chunk['action']}"
         )
-        return {"timestamp": chunk["start_time"], "label": label}
+        if chunk.get("emotion"):
+            label += f" | Emotion: {chunk['emotion']}"
+        return {
+            "timestamp": chunk["start_time"],
+            "label":     label,
+            "emotion":   chunk.get("emotion"),
+        }

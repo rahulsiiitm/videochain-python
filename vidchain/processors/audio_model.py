@@ -61,9 +61,9 @@ class AudioProcessor:
             segments = []
             for segment in result.get('segments', []):
                 segments.append({
-                    "start": round(segment['start'], 2),
-                    "end": round(segment['end'], 2),
-                    "text": segment['text'].strip()
+                    "start": round(segment['start'], 2), #type: ignore
+                    "end": round(segment['end'], 2), #type: ignore
+                    "text": segment['text'].strip() #type: ignore
                 })
             return segments
         except Exception as e:

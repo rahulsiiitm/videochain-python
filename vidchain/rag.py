@@ -2,7 +2,7 @@ import os
 import json
 import numpy as np
 import faiss
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
 from dotenv import load_dotenv
 from litellm import completion
 
@@ -29,8 +29,7 @@ BABURAO_INTRO = (
 
 
 def is_chitchat(text: str) -> bool:
-    normalized = text.strip().lower().rstrip("!?.,'\"")
-    return normalized in CHITCHAT_TRIGGERS
+    return text.strip().lower().rstrip("!?.,'\"") in CHITCHAT_TRIGGERS
 
 
 # ---------------------------------------------------------------------------
@@ -41,11 +40,18 @@ class RAGEngine:
     def __init__(
         self,
         model_name: str = "gemini/gemini-2.5-flash",
-        embedding_model: str = "all-MiniLM-L6-v2",
-        top_k: int = 10,
+        # BGE vastly outperforms MiniLM for domain-specific retrieval
+        embedding_model: str = "BAAI/bge-base-en-v1.5",
+        # Cross-encoder reranker — rescores FAISS candidates by true relevance
+        reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        top_k: int = 15,          # fetch more from FAISS for reranker to work with
+        rerank_top_k: int = 6,    # keep only best N after reranking
+        temporal_window: int = 2, # pull N neighboring entries around each FAISS hit
     ):
         self.model_name = model_name
         self.top_k = top_k
+        self.rerank_top_k = rerank_top_k
+        self.temporal_window = temporal_window
         self.video_memory: list = []
         self.chunk_texts: list = []
         self.is_ready = False
@@ -54,12 +60,16 @@ class RAGEngine:
         print(f"[INFO] Loading embedding model: {embedding_model}")
         self.embedder = SentenceTransformer(embedding_model)
 
+        print(f"[INFO] Loading reranker: {reranker_model}")
+        self.reranker = CrossEncoder(reranker_model, max_length=512)
+
         self.dimension = self.embedder.get_sentence_embedding_dimension()
-        self.index = faiss.IndexFlatL2(self.dimension)
-        print("[INFO] FAISS index created.")
+        # HNSW: faster approximate search, scales to longer videos
+        self.index = faiss.IndexHNSWFlat(self.dimension, 32)
+        print("[INFO] FAISS HNSW index created.")
 
     # ------------------------------------------------------------------
-    # Knowledge base
+    # Serialization — unified KB entry → rich text for embedding
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -75,7 +85,13 @@ class RAGEngine:
             parts.append(f"Screen text: {e['ocr']}")
         if e.get("audio"):
             parts.append(f"Audio: \"{e['audio']}\"")
+        if e.get("emotion"):
+            parts.append(f"Emotion: {e['emotion']}")
         return " | ".join(parts)
+
+    # ------------------------------------------------------------------
+    # Knowledge base
+    # ------------------------------------------------------------------
 
     def load_knowledge(self, file_path: str = "knowledge_base.json") -> bool:
         if not os.path.exists(file_path):
@@ -89,18 +105,21 @@ class RAGEngine:
             self.video_memory = data.get("timeline", [])
 
             if not self.video_memory:
-                print("[WARNING] Knowledge base loaded but timeline is empty.")
+                print("[WARNING] Knowledge base timeline is empty.")
                 return False
 
             print(f"[INFO] {len(self.video_memory)} events loaded from {file_path}")
-            print("[INFO] Vectorizing timeline into FAISS index...")
+            print("[INFO] Vectorizing timeline into FAISS HNSW index...")
 
-            self.chunk_texts = [
-                self._serialize_entry(e) for e in self.video_memory
-            ]
+            self.chunk_texts = [self._serialize_entry(e) for e in self.video_memory]
 
-            embeddings = self.embedder.encode(self.chunk_texts, convert_to_numpy=True)
-            self.index.add(embeddings) # type: ignore
+            # BGE document prefix improves retrieval accuracy
+            prefixed = [f"Represent this video event for retrieval: {t}" for t in self.chunk_texts]
+            embeddings = self.embedder.encode(prefixed, convert_to_numpy=True, show_progress_bar=False)
+            # Normalize for cosine similarity
+            embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
+
+            self.index.add(embeddings.astype(np.float32))
             self.is_ready = True
 
             print(f"[SUCCESS] FAISS index built — {self.index.ntotal} vectors indexed.")
@@ -114,19 +133,52 @@ class RAGEngine:
             return False
 
     # ------------------------------------------------------------------
-    # FAISS retrieval
+    # Retrieval: FAISS → temporal expansion → cross-encoder rerank
     # ------------------------------------------------------------------
 
-    def _retrieve(self, question: str, top_k: int) -> tuple:
+    def _retrieve(self, question: str) -> str:
         if self.index.ntotal == 0:
-            return "", 0
+            return ""
 
-        query_vector = self.embedder.encode([question], convert_to_numpy=True)
-        k = min(top_k, self.index.ntotal)
-        distances, indices = self.index.search(query_vector, k) # type: ignore
+        # BGE query prefix
+        query_vec = self.embedder.encode(
+            [f"Represent this query for searching video events: {question}"],
+            convert_to_numpy=True
+        )
+        query_vec = query_vec / np.linalg.norm(query_vec, axis=1, keepdims=True)
 
-        chunks = [self.chunk_texts[i] for i in indices[0] if i < len(self.chunk_texts)]
-        return "\n".join(chunks), len(chunks)
+        k = min(self.top_k, self.index.ntotal)
+        _, indices = self.index.search(query_vec.astype(np.float32), k)
+
+        # Temporal window: expand each FAISS hit to include neighboring timestamps
+        # so the LLM gets narrative context, not isolated frames
+        expanded = set()
+        for idx in indices[0]:
+            if idx < 0 or idx >= len(self.chunk_texts):
+                continue
+            for offset in range(-self.temporal_window, self.temporal_window + 1):
+                neighbor = idx + offset
+                if 0 <= neighbor < len(self.chunk_texts):
+                    expanded.add(neighbor)
+
+        candidates = [(i, self.chunk_texts[i]) for i in sorted(expanded)]
+
+        if not candidates:
+            return ""
+
+        # Cross-encoder reranking: score each candidate against the raw query
+        pairs = [[question, text] for (_, text) in candidates]
+        scores = self.reranker.predict(pairs)
+
+        # Keep top rerank_top_k by score
+        ranked = sorted(zip(scores, candidates), key=lambda x: x[0], reverse=True)
+        top = ranked[:self.rerank_top_k]
+
+        # Re-sort chronologically so BABURAO tells the story in order
+        top_sorted = sorted(top, key=lambda x: x[1][0])
+
+        print(f"[INFO] FAISS candidates: {len(candidates)} | After rerank: {self.rerank_top_k}")
+        return "\n".join(text for (_, (_, text)) in top_sorted)
 
     # ------------------------------------------------------------------
     # LLM call
@@ -140,18 +192,17 @@ class RAGEngine:
                 {"role": "user",   "content": user_question},
             ],
         }
-
         if self.model_name.startswith("ollama/"):
             kwargs["api_base"] = "http://localhost:11434"
 
         try:
             response = completion(**kwargs)
-            return response.choices[0].message.content.strip() # type: ignore
+            return response.choices[0].message.content.strip()  # type: ignore
         except Exception as e:
             return f"[ERROR] LLM routing failure ({self.model_name}): {e}"
 
     # ------------------------------------------------------------------
-    # System prompt
+    # System prompt — BABURAO personality preserved
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -162,15 +213,17 @@ class RAGEngine:
             "You are a helpful colleague, not a robot generating incident reports.\n\n"
 
             "## COGNITIVE COMMON SENSE (CRITICAL)\n"
-            "- **DEDUCE THE SCENE:** Use abductive reasoning. If you see a 'laptop' and 'keyboard', the scene is a 'computer desk'. \n"
+            "- **DEDUCE THE SCENE:** Use abductive reasoning. If you see a 'laptop' and 'keyboard', the scene is a 'computer desk'.\n"
             "- **BAN ABSURDITIES:** If the scene is a desk, and the sensor suddenly detects an 'oven' or a 'TV' for a few seconds, IGNORE IT COMPLETELY. It is a sensor glitch. Never mention objects that make no logical sense in the environment.\n"
             "- **TRANSLATE LABELS:** Never say 'action state was VIOLENCE'. Say 'they got visibly frustrated' or 'they hit the desk'. Never say 'NORMAL'. Say 'they were just working quietly'.\n"
-            "- **WEAVE IN OCR:** If you see OCR text (like 'ASUS Vivobook'), just weave it into the story naturally.\n\n"
+            "- **WEAVE IN OCR:** If you see OCR text (like 'ASUS Vivobook'), just weave it into the story naturally. E.g. 'they were working on their ASUS Vivobook'.\n"
+            "- **WEAVE IN AUDIO:** If audio transcripts are present, treat them as actual spoken dialogue — quote or paraphrase them naturally.\n\n"
 
             "## ADAPTIVE CONVERSATION PROTOCOL\n"
-            "- **Match the User's Energy:** If the user asks a casual question (e.g., 'what happened?', 'summary?'), respond with a natural, flowing 2-3 sentence paragraph. Talk like a human explaining a video to a friend.\n"
-            "- **No Robotic Formatting:** DO NOT use bold headers, bullet points, or sections (like 'Probable Scenario' or 'Forensic Evidence') UNLESS the user explicitly types 'give me a detailed report' or 'forensic breakdown'.\n"
-            "- **No Timestamps:** Never read out raw timestamps unless the user asks 'when exactly did this happen?'.\n\n"
+            "- **Match the User's Energy:** Casual question → 2-3 sentence natural paragraph. Talk like a human explaining a video to a friend.\n"
+            "- **No Robotic Formatting:** No bold headers, bullet points, or sections UNLESS the user explicitly asks for 'a detailed report' or 'forensic breakdown'.\n"
+            "- **No Raw Timestamps:** Never read out raw timestamps unless the user asks 'when exactly did this happen?'.\n\n"
+            "- **USE EMOTIONS:** If emotion data is present, lead with it. 'The person appeared visibly agitated' is more useful than 'action: SUSPICIOUS'.\n\n"
 
             "## RAW SENSOR LOGS\n"
             f"{context_str if context_str else '[NO TIMELINE DATA — Context is empty.]'}"
@@ -180,22 +233,15 @@ class RAGEngine:
     # Public query interface
     # ------------------------------------------------------------------
 
-    def query(self, user_question: str, top_k: int = None) -> str: # type: ignore
-        # 1. Intercept chitchat
+    def query(self, user_question: str, top_k: int = None) -> str:  # type: ignore
         if is_chitchat(user_question):
             return BABURAO_INTRO
 
-        # 2. Guard: KB not loaded
         if not self.is_ready:
             return "(┬┬﹏┬┬) Knowledge base not loaded. Run load_knowledge() before querying."
 
-        # 3. Resolve top_k (per-call override or instance default)
-        k = top_k if top_k is not None else self.top_k
+        context_str = self._retrieve(user_question)
+        print(f"[INFO] Context built for query: '{user_question}'")
 
-        # 4. Retrieve context from FAISS
-        context_str, chunk_count = self._retrieve(user_question, k)
-        print(f"[INFO] Retrieved {chunk_count} chunks from FAISS for query: '{user_question}'")
-
-        # 5. Build prompt and call LLM
         system_prompt = self._build_system_prompt(context_str)
         return self._call_llm(system_prompt, user_question)

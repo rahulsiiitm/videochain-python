@@ -26,22 +26,22 @@ classifiers = [
 dependencies = [
     "opencv-python",
     "scenedetect",
-    "openai-whisper",       # Provides the 'whisper' import
+    "openai-whisper", # Provides the 'whisper' import
     "sentence-transformers",
     "faiss-cpu",
-    "litellm",              # Added for your 'gemini/gemini-2.5-flash' routing
+    "litellm", # Added for your 'gemini/gemini-2.5-flash' routing
     "google-generativeai",
     "moviepy",
-    "pillow<12.0",          # 🛑 PINNED: Fixes the MoviePy incompatibility crash
-    "torch",                # 🛑 UNPINNED: Allows users to install their own cu118/cu121 versions
-    "torchvision",          # 🛑 UNPINNED: Prevents pip from forcing a CPU downgrade
-    "torchaudio",           # Added to complete the PyTorch hardware triad
+    "pillow<12.0", # 🛑 PINNED: Fixes the MoviePy incompatibility crash
+    "torch", # 🛑 UNPINNED: Allows users to install their own cu118/cu121 versions
+    "torchvision", # 🛑 UNPINNED: Prevents pip from forcing a CPU downgrade
+    "torchaudio", # Added to complete the PyTorch hardware triad
     "numpy",
     "tqdm",
     "python-dotenv",
-    "ultralytics",          # YOLO-based Noun Engine
-    "librosa",              # Audio energy extraction
-    "easyocr",              # GPU-accelerated text extraction
+    "ultralytics", # YOLO-based Noun Engine
+    "librosa", # Audio energy extraction
+    "easyocr", # GPU-accelerated text extraction
 ]
 
 # --- CONSOLIDATED CLI ENTRY POINTS ---
