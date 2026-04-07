@@ -14,7 +14,7 @@ class FusionEngine:
         def get_audio_at(ts):
             for a in audio_data:
                 start = a.get("start", 0)
-                end = a.get("end", start + 3.0)
+                end   = a.get("end", start + 3.0)
                 if start <= ts <= end:
                     return a["text"]
             return None
@@ -22,35 +22,40 @@ class FusionEngine:
         timeline = []
 
         for v in vision_data:
-            ts = v["timestamp"]
+            ts    = v["timestamp"]
             label = v["label"]
-            objects  = _extract(label, "Subjects:", "| Action")
-            action   = _extract(label, "Action State:", "| Emotion") or _extract(label, "Action State:", None)
-            duration = _extract(label, "Duration:", "| Subjects")
+
+            objects  = _extract(label, "Subjects:",     "| Action")
+            action   = _extract(label, "Action State:", "| Emotion") or _extract(label, "Action State:", "| Camera") or _extract(label, "Action State:", None)
+            duration = _extract(label, "Duration:",     "| Subjects")
 
             timeline.append({
-                "time":     ts,
-                "duration": duration.strip() if duration else None,
-                "objects":  objects.strip() if objects else "no significant objects",
-                "action":   action.strip() if action else "UNKNOWN",
-                "emotion":  v.get("emotion"),           # from processor, already human-readable
-                "ocr":      ocr_map.get(ts),
-                "audio":    get_audio_at(ts),
+                "time":             ts,
+                "duration":         duration.strip() if duration else None,
+                "objects":          objects.strip() if objects else "no significant objects",
+                "action":           action.strip() if action else "UNKNOWN",
+                "emotion":          v.get("emotion"),
+                "camera_motion":    v.get("camera_motion"),
+                "tracked_subjects": v.get("tracked_subjects", []),
+                "ocr":              ocr_map.get(ts),
+                "audio":            get_audio_at(ts),
             })
 
-        # Audio-only segments with no visual overlap
+        # Audio-only segments
         visual_times = {v["timestamp"] for v in vision_data}
         for a in audio_data:
             start = a.get("start", 0)
             if not any(abs(start - vt) < 1.0 for vt in visual_times):
                 timeline.append({
-                    "time":     start,
-                    "duration": None,
-                    "objects":  None,
-                    "action":   None,
-                    "emotion":  None,
-                    "ocr":      None,
-                    "audio":    a["text"],
+                    "time":             start,
+                    "duration":         None,
+                    "objects":          None,
+                    "action":           None,
+                    "emotion":          None,
+                    "camera_motion":    None,
+                    "tracked_subjects": [],
+                    "ocr":              None,
+                    "audio":            a["text"],
                 })
 
         timeline.sort(key=lambda x: x["time"])
