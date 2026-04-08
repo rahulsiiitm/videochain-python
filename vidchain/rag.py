@@ -2,15 +2,15 @@ import os
 import json
 import time
 import numpy as np
-from typing import Any, List, Dict, Optional  # <--- ADD 'Any' HERE
-from sentence_transformers import SentenceTransformer, CrossEncoder
+from typing import Any, List, Dict, Optional
+from sentence_transformers import CrossEncoder
 from dotenv import load_dotenv
 from litellm import completion
 
 load_dotenv()
 
 # ---------------------------------------------------------------------------
-# Intent classifier
+# Intent classifier & Persona
 # ---------------------------------------------------------------------------
 
 CHITCHAT_TRIGGERS = {
@@ -24,14 +24,12 @@ BABURAO_INTRO = (
     "B.A.B.U.R.A.O. (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation)\n"
     "Status: Operational. Awaiting query.\n\n"
     "Scope: Event detection, timeline reconstruction, anomaly flagging, "
-    "subject tracking, and incident verification from indexed surveillance logs.\n"
-    "Submit a specific query to begin analysis."
+    "subject tracking, and incident verification from indexed surveillance logs."
 )
 
-
 def is_chitchat(text: str) -> bool:
+    if not text: return False
     return text.strip().lower().rstrip("!?.,'\"") in CHITCHAT_TRIGGERS
-
 
 # ---------------------------------------------------------------------------
 # RAG Engine
@@ -41,7 +39,7 @@ class RAGEngine:
     def __init__(
         self,
         model_name: str = "gemini/gemini-2.5-flash",
-        vector_store: Any = None,  # <--- ADD THIS LINE
+        vector_store: Any = None,
         embedding_model: str = "BAAI/bge-base-en-v1.5",
         reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
         top_k: int = 15,          
@@ -49,147 +47,94 @@ class RAGEngine:
         temporal_window: int = 2, 
     ):
         self.model_name = model_name
-        self.vector_store = vector_store # <--- ADD THIS LINE
+        self.vector_store = vector_store
+        self.embedding_model = embedding_model # Optional: store it if you want
         self.top_k = top_k
         self.rerank_top_k = rerank_top_k
         self.temporal_window = temporal_window
         
-        self.video_memory: list = []
-        self.chunk_texts: list = []
-        self.chat_history: list = [] 
-        self.is_ready = False
-
-        # NOTE: You can now comment out or remove the FAISS index lines 
-        # because ChromaStore handles the indexing now!
-        # self.index = faiss.IndexHNSWFlat(self.dimension, 32) 
+        # Load Reranker once to save VRAM later
+        print(f"[INFO] Booting Reranker Engine...")
+        self.reranker = CrossEncoder(reranker_model)
         
-        print(f"[INFO] RAG Engine initialized with VectorStore: {self.vector_store is not None}")
+        self.chat_history: list = [] 
+        self.is_ready = True if vector_store else False
 
-    # ------------------------------------------------------------------
-    # Serialization
-    # ------------------------------------------------------------------
+        print(f"[INFO] RAG Engine initialized with VectorStore: {self.vector_store is not None}")
 
     @staticmethod
     def _serialize_entry(e: dict) -> str:
-        parts = [f"[{e['time']}s]"]
-        if e.get("duration"): parts.append(f"Duration: {e['duration']}")
-        if e.get("objects"): parts.append(f"Objects: {e['objects']}")
+        """Standardizes how video events look to the LLM."""
+        parts = [f"[{e.get('time', e.get('timestamp', 0))}s]"]
         if e.get("action"): parts.append(f"Action: {e['action']}")
+        if e.get("objects"): parts.append(f"Visuals: {e['objects']}")
         if e.get("ocr"): parts.append(f"Screen text: {e['ocr']}")
-        if e.get("audio"): parts.append(f"Audio: \"{e['audio']}\"")
+        if e.get("audio"): parts.append(f"Speech: \"{e['audio']}\"")
         if e.get("emotion"): parts.append(f"Emotion: {e['emotion']}")
         return " | ".join(parts)
 
     # ------------------------------------------------------------------
-    # Knowledge base
-    # ------------------------------------------------------------------
-
-    def load_knowledge(self, file_path: str = "knowledge_base.json") -> bool:
-        if not os.path.exists(file_path):
-            print(f"[ERROR] Knowledge base not found: {file_path}")
-            return False
-
-        try:
-            with open(file_path, "r") as f:
-                data = json.load(f)
-
-            self.video_memory = data.get("timeline", [])
-
-            if not self.video_memory:
-                print("[WARNING] Knowledge base timeline is empty.")
-                return False
-
-            print(f"[INFO] {len(self.video_memory)} events loaded from {file_path}")
-            print("[INFO] Vectorizing timeline into FAISS HNSW index...")
-
-            self.chunk_texts = [self._serialize_entry(e) for e in self.video_memory]
-
-            prefixed = [f"Represent this video event for retrieval: {t}" for t in self.chunk_texts]
-            embeddings = self.embedder.encode(prefixed, convert_to_numpy=True, show_progress_bar=False)
-            embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
-
-            self.index.add(embeddings.astype(np.float32)) # type: ignore
-            self.is_ready = True
-
-            print(f"[SUCCESS] FAISS index built — {self.index.ntotal} vectors indexed.")
-            return True
-
-        except Exception as e:
-            print(f"[ERROR] Failed to load knowledge base: {e}")
-            return False
-
-    # ------------------------------------------------------------------
-    # Agentic Intent Router (Chain of Thought)
+    # Intent Routing
     # ------------------------------------------------------------------
     
     def _route_intent(self, user_input: str) -> str:
-        """
-        Agentic Router: Decides if we need to search the video database or just use chat memory.
-        """
-        prompt = f"""You are a routing system. Read the user's message and classify it into exactly ONE category:
-        1. VIDEO_SEARCH: The user is asking about events, objects, actions, audio, or people occurring in the video.
-        2. CONVERSATION: The user is referring to a previous message, asking a general question, or talking about the chat itself (e.g. "what did I just ask?", "why did you say that?").
+        """Agentic Router: Decides if we search the video or use memory."""
+        prompt = f"""Classify this message into ONE category:
+        1. VIDEO_SEARCH: Asking about events/objects/people in the video.
+        2. CONVERSATION: General talk, greetings, or referring to previous messages.
 
         User Message: "{user_input}"
-        
-        Output ONLY the category name (VIDEO_SEARCH or CONVERSATION)."""
+        Output only the category name."""
         
         try:
-            kwargs = {
-                "model": self.model_name,
-                "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 10,
-                "temperature": 0.0 # Keep it deterministic
-            }
-            if self.model_name.startswith("ollama/"):
-                kwargs["api_base"] = "http://localhost:11434"
-                
-            response = completion(**kwargs)
-            intent = response.choices[0].message.content.strip().upper() #type: ignore
+            response = completion(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=10,
+                temperature=0.0
+            )
+            # Fix: Handle NoneType or empty response
+            res_content = response.choices[0].message.content #type: ignore
+            if not res_content: return "VIDEO_SEARCH"
+            
+            intent = res_content.strip().upper()
             return "VIDEO_SEARCH" if "VIDEO" in intent else "CONVERSATION"
         except Exception as e:
             print(f"[WARNING] Router failed: {e}. Defaulting to VIDEO_SEARCH.")
-            return "VIDEO_SEARCH" # Safe fallback
+            return "VIDEO_SEARCH"
 
     # ------------------------------------------------------------------
-    # Retrieval
+    # Retrieval (Now using ChromaStore)
     # ------------------------------------------------------------------
 
     def _retrieve(self, question: str) -> str:
-        if self.index.ntotal == 0:
+        """Retrieves and reranks video events from ChromaDB."""
+        if not self.vector_store:
             return ""
 
-        query_vec = self.embedder.encode(
-            [f"Represent this query for searching video events: {question}"],
-            convert_to_numpy=True
+        # Search ChromaDB
+        results = self.vector_store.collection.query(
+            query_texts=[question],
+            n_results=self.top_k,
+            include=["documents", "metadatas"]
         )
-        query_vec = query_vec / np.linalg.norm(query_vec, axis=1, keepdims=True)
 
-        k = min(self.top_k, self.index.ntotal)
-        _, indices = self.index.search(query_vec.astype(np.float32), k) # type: ignore
-
-        expanded = set()
-        for idx in indices[0]:
-            if idx < 0 or idx >= len(self.chunk_texts):
-                continue
-            for offset in range(-self.temporal_window, self.temporal_window + 1):
-                neighbor = idx + offset
-                if 0 <= neighbor < len(self.chunk_texts):
-                    expanded.add(neighbor)
-
-        candidates = [(i, self.chunk_texts[i]) for i in sorted(expanded)]
-        if not candidates:
+        if not results or not results['documents'][0]:
             return ""
 
-        pairs = [[question, text] for (_, text) in candidates]
+        # Extract raw strings for reranking
+        candidates = results['documents'][0]
+        
+        # Reranking for high forensic precision
+        pairs = [[question, doc] for doc in candidates]
         scores = self.reranker.predict(pairs)
-
+        
+        # Sort and take top_k
         ranked = sorted(zip(scores, candidates), key=lambda x: x[0], reverse=True)
-        top = ranked[:self.rerank_top_k]
-        top_sorted = sorted(top, key=lambda x: x[1][0])
+        top_docs = [doc for score, doc in ranked[:self.rerank_top_k]]
 
-        print(f"[INFO] FAISS candidates: {len(candidates)} | After rerank: {self.rerank_top_k}")
-        return "\n".join(text for (_, (_, text)) in top_sorted)
+        print(f"[INFO] ChromaDB found {len(candidates)} events. Reranker picked top {len(top_docs)}.")
+        return "\n".join(top_docs)
 
     # ------------------------------------------------------------------
     # System prompt
@@ -229,64 +174,40 @@ class RAGEngine:
             return base_prompt + "## LOGS\nNo new video logs needed for this conversational query."
 
     # ------------------------------------------------------------------
-    # LLM call
+    # Public Query Interface
     # ------------------------------------------------------------------
 
-    def _call_llm(self, system_prompt: str, final_user_prompt: str) -> str:
-        messages = [{"role": "system", "content": system_prompt}]
-        
-        # 🛑 INJECT SHORT-TERM MEMORY (Limit to last 4 messages to save VRAM)
-        if self.chat_history:
-            messages.extend(self.chat_history[-4:])
-            
-        messages.append({"role": "user", "content": final_user_prompt})
-
-        kwargs = {
-            "model": self.model_name,
-            "messages": messages,
-        }
-        if self.model_name.startswith("ollama/"):
-            kwargs["api_base"] = "http://localhost:11434"
-
-        try:
-            response = completion(**kwargs)
-            return response.choices[0].message.content.strip()  # type: ignore
-        except Exception as e:
-            return f"[ERROR] LLM generation failure ({self.model_name}): {e}"
-
-    # ------------------------------------------------------------------
-    # Public query interface
-    # ------------------------------------------------------------------
-
-    def query(self, user_question: str, top_k: int = None) -> str:  # type: ignore
+    def query(self, user_question: str, stream: bool = False) -> str:
         if is_chitchat(user_question):
             return BABURAO_INTRO
 
-        if not self.is_ready:
-            return "(┬┬﹏┬┬) Knowledge base not loaded. Run load_knowledge() before querying."
-
-        # 1. Agentic Routing
+        # 1. Route Intent
         intent = self._route_intent(user_question)
 
-        # Let the GPU VRAM flush before firing the massive context prompt
-        time.sleep(1.0)
-
-        # 2. Conditional Retrieval
+        # 2. Get Context
+        context_str = ""
         if intent == "VIDEO_SEARCH":
             print(f"[INFO] Intent: {intent} -> Searching Vector Database...")
             context_str = self._retrieve(user_question)
-            final_user_prompt = f"Video Context:\n{context_str}\n\nUser Question: {user_question}"
         else:
-            print(f"[INFO] Intent: {intent} -> Bypassing FAISS. Using Conversational Memory...")
-            context_str = "" # Blank context so the LLM relies purely on memory
-            final_user_prompt = f"User Question: {user_question}"
+            print(f"[INFO] Intent: {intent} -> Using Conversational Memory...")
 
-        # 3. Build Prompt & Call Engine
+        # 3. LLM Generation
         system_prompt = self._build_system_prompt(context_str)
-        answer = self._call_llm(system_prompt, final_user_prompt)
         
-        # 4. Save to Memory
-        self.chat_history.append({"role": "user", "content": user_question})
-        self.chat_history.append({"role": "assistant", "content": answer})
+        messages = [{"role": "system", "content": system_prompt}]
+        if self.chat_history:
+            messages.extend(self.chat_history[-4:])
+        messages.append({"role": "user", "content": user_question})
 
-        return answer
+        try:
+            response = completion(model=self.model_name, messages=messages)
+            answer = response.choices[0].message.content.strip() #type: ignore
+            
+            # Update Memory
+            self.chat_history.append({"role": "user", "content": user_question})
+            self.chat_history.append({"role": "assistant", "content": answer})
+            
+            return answer
+        except Exception as e:
+            return f"[ERROR] B.A.B.U.R.A.O. logic failure: {e}"

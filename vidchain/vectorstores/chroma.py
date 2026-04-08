@@ -1,6 +1,7 @@
 import chromadb
 from chromadb.config import Settings
 from typing import List, Dict, Any, Optional
+from chromadb.utils import embedding_functions
 
 class ChromaStore:
     """
@@ -9,11 +10,18 @@ class ChromaStore:
     """
     def __init__(self, persist_dir: str = "./vidchain_db", collection_name: str = "video_events"):
         self.persist_dir = persist_dir
-        # Initialize the persistent client (saves data to a folder)
         self.client = chromadb.PersistentClient(path=self.persist_dir)
         
-        # Create or load the collection
-        self.collection = self.client.get_or_create_collection(name=collection_name)
+        # Use a standard local embedding function to avoid SSL timeouts
+        # This uses the SentenceTransformer you likely already have cached
+        self.emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="BAAI/bge-base-en-v1.5"
+        )
+        
+        self.collection = self.client.get_or_create_collection(
+            name=collection_name, 
+            embedding_function=self.emb_fn # type: ignore
+        )
 
     def add_events(self, video_id: str, documents: List[str], metadatas: List[Dict[str, Any]]):
         """
