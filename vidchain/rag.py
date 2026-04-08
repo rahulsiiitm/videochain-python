@@ -2,7 +2,7 @@ import os
 import json
 import time
 import numpy as np
-import faiss
+from typing import Any, List, Dict, Optional  # <--- ADD 'Any' HERE
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from dotenv import load_dotenv
 from litellm import completion
@@ -41,6 +41,7 @@ class RAGEngine:
     def __init__(
         self,
         model_name: str = "gemini/gemini-2.5-flash",
+        vector_store: Any = None,  # <--- ADD THIS LINE
         embedding_model: str = "BAAI/bge-base-en-v1.5",
         reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
         top_k: int = 15,          
@@ -48,25 +49,21 @@ class RAGEngine:
         temporal_window: int = 2, 
     ):
         self.model_name = model_name
+        self.vector_store = vector_store # <--- ADD THIS LINE
         self.top_k = top_k
         self.rerank_top_k = rerank_top_k
         self.temporal_window = temporal_window
         
         self.video_memory: list = []
         self.chunk_texts: list = []
-        self.chat_history: list = [] # 🛑 Short-term conversational memory
+        self.chat_history: list = [] 
         self.is_ready = False
 
-        print(f"[INFO] RAG Engine initializing — model: {self.model_name}")
-        print(f"[INFO] Loading embedding model: {embedding_model}")
-        self.embedder = SentenceTransformer(embedding_model)
-
-        print(f"[INFO] Loading reranker: {reranker_model}")
-        self.reranker = CrossEncoder(reranker_model, max_length=512)
-
-        self.dimension = self.embedder.get_sentence_embedding_dimension()
-        self.index = faiss.IndexHNSWFlat(self.dimension, 32)
-        print("[INFO] FAISS HNSW index created.")
+        # NOTE: You can now comment out or remove the FAISS index lines 
+        # because ChromaStore handles the indexing now!
+        # self.index = faiss.IndexHNSWFlat(self.dimension, 32) 
+        
+        print(f"[INFO] RAG Engine initialized with VectorStore: {self.vector_store is not None}")
 
     # ------------------------------------------------------------------
     # Serialization

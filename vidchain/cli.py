@@ -10,12 +10,10 @@ import torch
 warnings.filterwarnings("ignore")
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3" # Suppress TensorFlow if backend uses it
-os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1" # Avoid Hugging Face token warnings if not logged in
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
 
-from vidchain.processor import VideoProcessor
-from vidchain.rag import RAGEngine
-from vidchain.core.fusion import FusionEngine
+from vidchain.client import VidChain
 from vidchain.vision import VisionEngine as YoloEngine
 from vidchain.processors.vision_model import VisionEngine as ActionEngine
 
@@ -50,7 +48,13 @@ def main():
         print(f"[SYSTEM] Hardware Engine: GPU Active ({gpu_name} - {vram_total:.1f} GB VRAM)")
     else:
         print("[SYSTEM] ⚠️ Hardware Engine: CPU ONLY. PyTorch cannot find your NVIDIA GPU.")
-        print("[SYSTEM] ⚠️ Please reinstall PyTorch with CUDA support for hardware acceleration.")
+
+    # ── Initialize VidChain Orchestrator ───────────────────
+    # This handles RAG, VectorStore, and Summarizer setup
+    vc = VidChain(config={
+        "llm_provider": args.llm,
+        "db_path": "./vidchain_storage"
+    })
 
     # ── Vision models ──────────────────────────────────────
     print("\n[INFO] Booting Dual-Vision Models...")
@@ -58,26 +62,21 @@ def main():
     action_model = ActionEngine(model_path="models/vidchain_vision.pth")
     print_hardware_status("Vision Models Loaded")
 
-    # ── Extraction ─────────────────────────────────────────
-    print("\n[INFO] Extracting Scene Graphs, Audio & OCR...")
-    processor = VideoProcessor(args.video_path, ocr_languages=args.ocr_lang)
-    fusion = FusionEngine(output_file="knowledge_base.json")
-
-    v_data, a_data, ocr_data, volume = processor.extract_context(yolo_engine=yolo_model, action_engine=action_model)
-    print_hardware_status("Extraction Complete")
-
-    print("\n[INFO] Fusing into Knowledge Base...")
-    fusion.generate_knowledge_base(v_data, a_data, ocr_data)
-    print(f"[SUCCESS] Peak Audio Volume: {volume:.4f}")
-
-# ── RAG ────────────────────────────────────────────────
-    print(f"\n[INFO] Initializing VidChain RAG Architecture ({args.llm})...")
-    rag = RAGEngine(model_name=args.llm)
+    # ── Extraction & Ingestion ──────────────────────────────
+    print("\n[INFO] Running Multimodal Extraction & Semantic Fusion...")
     
-    # 🛑 YOU NEED TO ADD THESE 4 LINES 🛑
-    print_hardware_status("FAISS Index Built")
-    if not rag.load_knowledge("knowledge_base.json"):
-        print("[ERROR] Knowledge base missing or corrupted.")
+    # ingest() now internally calls processor.extract_context and saves to ChromaDB
+    # It returns a unique video_id for the session
+    try:
+        video_id = vc.ingest(
+            video_source=args.video_path,
+            yolo_engine=yolo_model,
+            action_engine=action_model,
+            ocr_languages=args.ocr_lang
+        )
+        print_hardware_status("Ingestion & Indexing Complete")
+    except Exception as e:
+        print(f"[ERROR] Ingestion failed: {e}")
         sys.exit(1)
 
     print("-" * 50)
@@ -88,7 +87,8 @@ def main():
     # ── Single-shot query mode ─────────────────────────────
     if args.query:
         print(f"\n[QUERY] {args.query}")
-        print(f"AI: {rag.query(args.query)}")
+        # Using vc.ask ensures the Agentic Intent Router is used
+        print(f"AI: {vc.ask(args.query)}")
         return
 
     # ── Interactive chat ───────────────────────────────────
@@ -101,7 +101,11 @@ def main():
                 break
             if not user_input:
                 continue
-            print(f"AI: {rag.query(user_input, top_k=10)}")
+            
+            # vc.ask handles both video search and conversational memory
+            response = vc.ask(user_input)
+            print(f"AI: {response}")
+            
         except KeyboardInterrupt:
             print("\n(┬┬﹏┬┬) Session terminated.")
             break

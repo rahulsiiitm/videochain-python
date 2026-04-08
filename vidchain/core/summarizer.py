@@ -1,109 +1,130 @@
-# """
-# VidChain Core: Map-Reduce Video Summarizer
-# ------------------------------------------
-# Bypasses vector retrieval to perform global temporal summarization.
-# Chunks heavy video timelines into digestible blocks to prevent LLM 
-# context-window overflow and VRAM crashes.
-# """
+"""
+vidchain/core/summarizer.py
+--------------------------
+Advanced Map-Reduce Narrative Engine.
+Features: Recursive Summarization, Contextual Bridging, and Provider Abstraction.
+"""
 
-# import json
-# from litellm import completion
+import math
+from typing import List, Dict, Any, Optional
+from litellm import completion
 
-# class VideoSummarizer:
-#     def __init__(self, model_name="ollama/llama3", chunk_duration_sec=600):
-#         """
-#         chunk_duration_sec: Defines the size of the "Map" blocks. Default is 600s (10 minutes).
-#         """
-#         self.model_name = model_name
-#         self.chunk_duration = chunk_duration_sec
+class VideoSummarizer:
+    def __init__(self, model_name: str = "ollama/phi3", max_words_per_chunk: int = 1500):
+        """
+        max_words_per_chunk: Controls the density of the 'Map' phase to fit LLM context windows.
+        """
+        self.model_name = model_name
+        self.max_words = max_words_per_chunk
 
-#     def _chunk_timeline(self, timeline_data: list) -> list:
-#         """Slices the JSON timeline into sequential blocks based on timestamps."""
-#         chunks = []
-#         current_chunk = []
-#         current_limit = self.chunk_duration
+    def _serialize_for_summary(self, event: Dict[str, Any]) -> str:
+        """Converts a raw event into a dense string for the LLM to read."""
+        # We prioritize Action, OCR, and Audio as they drive the narrative
+        parts = [f"[{event.get('timestamp', 0)}s]"]
+        if event.get('action'): parts.append(f"Action: {event['action']}")
+        if event.get('objects'): parts.append(f"Visuals: {event['objects']}")
+        if event.get('ocr'): parts.append(f"Text: {event['ocr']}")
+        if event.get('audio'): parts.append(f"Speech: {event['audio']}")
+        return " | ".join(parts)
 
-#         for event in timeline_data:
-#             if event["timestamp"] <= current_limit:
-#                 current_chunk.append(event)
-#             else:
-#                 chunks.append(current_chunk)
-#                 current_chunk = [event]
-#                 current_limit += self.chunk_duration
-                
-#         if current_chunk:
-#             chunks.append(current_chunk)
+    def _chunk_by_token_limit(self, timeline: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
+        """
+        Smarter Chunking: Instead of fixed time, we chunk by data density.
+        A busy 1-minute scene is more important than 1 hour of an empty room.
+        """
+        chunks = []
+        current_chunk = []
+        current_word_count = 0
+
+        for event in timeline:
+            event_text = self._serialize_for_summary(event)
+            word_count = len(event_text.split())
             
-#         return chunks
+            if current_word_count + word_count > self.max_words:
+                chunks.append(current_chunk)
+                current_chunk = [event]
+                current_word_count = word_count
+            else:
+                current_chunk.append(event)
+                current_word_count += word_count
+        
+        if current_chunk:
+            chunks.append(current_chunk)
+        return chunks
 
-#     def _map_phase(self, chunks: list) -> list:
-#         """Processes each video chunk individually (The 'Map' step)."""
-#         print(f"\n[INFO] Starting Map Phase: Processing {len(chunks)} temporal chunks...")
-#         chapter_summaries = []
+    def generate(self, timeline: List[Dict[str, Any]], mode: str = "concise") -> str:
+        """
+        The Main Entry Point. Handles recursive reduction if the video is massive.
+        """
+        if not timeline:
+            return "No data available to summarize."
 
-#         for i, chunk in enumerate(chunks):
-#             print(f"  -> Summarizing Chapter {i + 1}/{len(chunks)}...")
+        print(f"[Summarizer] Processing {len(timeline)} events in '{mode}' mode...")
+        
+        # 1. Map Phase: Summarize individual chapters
+        chunks = self._chunk_by_token_limit(timeline)
+        chapter_summaries = self._map_phase(chunks)
+
+        # 2. Recursive Reduce: If we have too many chapters, reduce them in groups
+        # This allows summarizing 24-hour feeds without crashing
+        final_narrative = self._recursive_reduce(chapter_summaries, mode)
+        
+        return final_narrative
+
+    def _map_phase(self, chunks: List[List[Dict[str, Any]]]) -> List[str]:
+        summaries = []
+        for i, chunk in enumerate(chunks):
+            print(f"  -> Mapping Chapter {i+1}/{len(chunks)}...")
+            chunk_text = "\n".join([self._serialize_for_summary(e) for e in chunk])
             
-#             # Format the chunk into raw text for the LLM
-#             chunk_text = "\n".join([
-#                 f"[{evt['timestamp']}s] Camera: {evt.get('camera', 'static')} | Subjects: {evt['subjects']} | Action: {evt['action']}"
-#                 for evt in chunk
-#             ])
-
-#             prompt = f"""You are a forensic analyst. Read this chronological log of a video segment and write a concise, 3-sentence summary of what happened. Do not mention that you are reading a log.
+            prompt = f"""Summarize this video segment logs into a dense narrative.
+            Focus on escalating actions, key subjects, and any spoken dialogue.
             
-#             LOG DATA:
-#             {chunk_text}
-#             """
+            DATA:
+            {chunk_text}
+            """
+            
+            response = completion(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3 # Low temperature for factual accuracy
+            )
+            summaries.append(response.choices[0].message.content)
+        return summaries
 
-#             response = completion(
-#                 model=self.model_name,
-#                 messages=[{"role": "user", "content": prompt}]
-#             )
-#             chapter_summaries.append(f"Chapter {i + 1}: {response.choices[0].message.content}")
+    def _recursive_reduce(self, summaries: List[str], mode: str) -> str:
+        """
+        Fuses summaries together. If there are > 5 summaries, it reduces them 
+        into sub-summaries first to prevent context loss.
+        """
+        if len(summaries) == 1:
+            return self._final_polish(summaries[0], mode)
 
-#         return chapter_summaries
+        # Group summaries into sets of 5 to maintain high detail
+        print(f"  -> Reducing {len(summaries)} chapters...")
+        grouped_summaries = []
+        for i in range(0, len(summaries), 5):
+            batch = "\n\n".join(summaries[i:i+5])
+            prompt = f"Combine these sequential video summaries into one flowing narrative:\n\n{batch}"
+            
+            response = completion(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            grouped_summaries.append(response.choices[0].message.content)
 
-#     def _reduce_phase(self, chapter_summaries: list) -> str:
-#         """Fuses all chapter summaries into a final master narrative (The 'Reduce' step)."""
-#         print("\n[INFO] Starting Reduce Phase: Synthesizing final narrative...")
+        # Recurse until we have one final summary
+        return self._recursive_reduce(grouped_summaries, mode)
+
+    def _final_polish(self, raw_summary: str, mode: str) -> str:
+        """Applies the B.A.B.U.R.A.O. persona and requested formatting."""
+        persona = "You are B.A.B.U.R.A.O., an elite forensic AI."
+        style = "Write a cohesive, engaging story." if mode == "concise" else "Provide a detailed chronological breakdown."
         
-#         combined_text = "\n\n".join(chapter_summaries)
+        prompt = f"{persona} {style} Polish this summary:\n\n{raw_summary}"
         
-#         prompt = f"""You are B.A.B.U.R.A.O., an elite forensic video AI copilot.
-#         You have been provided with sequential chapter summaries of a long video feed.
-#         Write a cohesive, engaging master summary of the entire video. 
-#         Ensure chronological flow and highlight any escalating situations or key actions.
-#         Do not use robotic phrases.
-        
-#         CHAPTER SUMMARIES:
-#         {combined_text}
-#         """
-
-#         response = completion(
-#             model=self.model_name,
-#             messages=[{"role": "system", "content": prompt}]
-#         )
-#         return response.choices[0].message.content
-
-#     def generate_master_summary(self, kb_path: str = "knowledge_base.json") -> str:
-#         """Executes the full Map-Reduce pipeline."""
-#         try:
-#             with open(kb_path, 'r') as f:
-#                 data = json.load(f)
-#         except FileNotFoundError:
-#             return "[ERROR] Knowledge base not found. Please ingest a video first."
-
-#         if not data.get("timeline"):
-#             return "[ERROR] Timeline is empty."
-
-#         # 1. Chunking
-#         chunks = _chunk_timeline(self, data["timeline"])
-        
-#         # 2. Map (Analyze Chapters)
-#         chapter_summaries = self._map_phase(chunks)
-        
-#         # 3. Reduce (Final Polish)
-#         final_summary = self._reduce_phase(chapter_summaries)
-        
-#         return final_summary
+        response = completion(
+            model=self.model_name,
+            messages=[{"role": "system", "content": prompt}]
+        )
+        return response.choices[0].message.content.strip()

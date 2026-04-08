@@ -1,7 +1,7 @@
 {
     "metadata": {
         "total_frames_analyzed": 21,
-        "audio_segments": 4,
+        "audio_segments": 3,
         "ocr_events": 2,
         "total_timeline_entries": 21
     },
@@ -17,7 +17,7 @@
                 "laptop #1"
             ],
             "ocr": "ASUS Vivabook",
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 3.87,
@@ -31,7 +31,7 @@
                 "tv #2"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 4.83,
@@ -45,7 +45,7 @@
                 "tv #2"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 5.8,
@@ -58,7 +58,7 @@
                 "laptop #1 (present 4.8s)"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 6.77,
@@ -71,7 +71,7 @@
                 "laptop #1 (present 5.8s)"
             ],
             "ocr": "ASUS Vivobook",
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 7.73,
@@ -84,7 +84,7 @@
                 "laptop #1 (present 6.8s)"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 9.67,
@@ -98,7 +98,7 @@
                 "tv #2 (present 5.8s)"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 10.64,
@@ -111,7 +111,7 @@
                 "laptop #1 (present 9.7s)"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 11.6,
@@ -125,7 +125,7 @@
                 "tv #2 (present 7.7s)"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 12.57,
@@ -138,7 +138,7 @@
                 "laptop #1 (present 11.6s)"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 13.54,
@@ -152,7 +152,7 @@
                 "keyboard #3"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 14.5,
@@ -165,7 +165,7 @@
                 "All previous tracks reset."
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 15.47,
@@ -178,7 +178,7 @@
                 "All previous tracks reset."
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 16.44,
@@ -189,7 +189,7 @@
             "camera_motion": "static",
             "tracked_subjects": [],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 17.4,
@@ -200,7 +200,7 @@
             "camera_motion": "zooming out",
             "tracked_subjects": [],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 18.37,
@@ -214,7 +214,7 @@
                 "tv #5"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 19.34,
@@ -227,7 +227,7 @@
                 "tv #4, moving right"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "1-Laf\u518d\u5df4"
         },
         {
             "time": 20.3,
@@ -238,7 +238,7 @@
             "camera_motion": "zooming out",
             "tracked_subjects": [],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "4-3"
         },
         {
             "time": 21.27,
@@ -251,7 +251,7 @@
                 "All previous tracks reset."
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "8-4"
         },
         {
             "time": 22.24,
@@ -265,7 +265,7 @@
                 "book #7"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "8-4"
         },
         {
             "time": 23.2,
@@ -280,7 +280,7 @@
                 "oven #9"
             ],
             "ocr": null,
-            "audio": "1.5kg de gallo"
+            "audio": "8-4"
         }
     ]
 }

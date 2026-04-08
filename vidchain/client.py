@@ -1,72 +1,134 @@
 """
 vidchain/client.py
 ------------------
-The main orchestration layer for the VidChain framework.
-Allows developers to easily ingest videos, generate Map-Reduce summaries, 
-and query the temporal knowledge base.
+Titan-Class Orchestration Layer.
+Fixed: Handled unified multimodal fusion stream from VideoProcessor.
 """
 
+import os
+import uuid
+from typing import Optional, Dict, Any, Callable, List
 from vidchain.processor import VideoProcessor
-# from vidchain.processors.tracker import TemporalTracker
 from vidchain.core.summarizer import VideoSummarizer
 from vidchain.rag import RAGEngine
-import os
+from vidchain.vectorstores.chroma import ChromaStore
 
 class VidChain:
-    def __init__(self, llm="gemini/gemini-2.5-flash", vector_store_path="./vidchain_db"):
-        """Initializes the VidChain framework."""
-        self.llm = llm
-        self.db_path = vector_store_path
-        self.rag_engine = RAGEngine(model_name=self.llm)
-        self.summarizer = VideoSummarizer(model_name=self.llm)
-
-    def ingest(self, video_path: str, extract_audio: bool = True, ocr: bool = True):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
-        Processes a video through the multimodal pipeline and saves it to the vector store.
-        For a 2-hour movie, developers run this once as a background job.
+        Standardizes initialization. 
+        Devs can pass a dict to override anything from LLM choice to DB persistence.
         """
-        print(f"[VidChain] Ingesting target: {video_path}")
-        
-        # 1. Run the YOLO + MobileNet + Tracker pipeline
-        processor = VideoProcessor(video_path, ocr_languages=["en"] if ocr else [])
-        
-        # (Assuming your internal processor saves to a standard JSON or ChromaDB here)
-        kb_path = os.path.join(self.db_path, "knowledge_base.json")
-        processor.extract_and_save(output_path=kb_path) # type: ignore
-        
-        # 2. Load the newly built DB into the RAG engine
-        self.rag_engine.load_knowledge(kb_path)
-        print("[VidChain] Ingestion complete. Knowledge base active.")
+        self.config = {
+            "llm_provider": "ollama/llama3",
+            "embedding_provider": "BAAI/bge-base-en-v1.5",
+            "db_path": "./vidchain_storage",
+            "collection_name": "global_video_index",
+            "processing_device": "cuda", # 'cuda', 'cpu', or 'mps'
+            "verbose": True
+        }
+        if config:
+            self.config.update(config)
 
-    def summarize(self, force_recompute: bool = False) -> str:
+        # 1. Memory Layer (Persistent ChromaDB)
+        self.vector_store = ChromaStore(
+            persist_dir=self.config["db_path"], 
+            collection_name=self.config["collection_name"]
+        )
+        
+        # 2. Reasoning Layer (RAG Engine with Intent Routing)
+        self.rag_engine = RAGEngine(
+            model_name=self.config["llm_provider"], 
+            vector_store=self.vector_store, # type: ignore
+            embedding_model=self.config["embedding_provider"]
+        )
+        
+        # 3. Narrative Layer (Map-Reduce Summarizer)
+        self.summarizer = VideoSummarizer(
+            model_name=self.config["llm_provider"]
+        )
+
+    # ------------------------------------------------------------------
+    # CORE PIPELINE
+    # ------------------------------------------------------------------
+
+    def ingest(
+        self, 
+        video_source: str, 
+        yolo_engine: Any, 
+        action_engine: Any,
+        video_id: Optional[str] = None, 
+        on_progress: Optional[Callable[[float], None]] = None,
+        **processor_kwargs
+    ) -> str:
         """
-        Generates a master plot summary using Hierarchical Map-Reduce.
-        Handles massive contexts (like full movies) without blowing up VRAM.
+        High-level ingestion. Now handles the FUSED timeline output.
         """
-        kb_path = os.path.join(self.db_path, "knowledge_base.json")
-        summary_path = os.path.join(self.db_path, "master_summary.txt")
+        v_id = video_id or str(uuid.uuid4())[:8]
+        if self.config["verbose"]:
+            print(f"[VidChain] Pipeline Start -> ID: {v_id} | Source: {video_source}")
 
-        # Developer Experience (DX) Fix: Don't re-summarize a 2-hour movie if we already did it!
-        if os.path.exists(summary_path) and not force_recompute:
-            print("[VidChain] Loading pre-computed master summary...")
-            with open(summary_path, 'r') as f:
-                return f.read()
-
-        print("[VidChain] Executing Map-Reduce Global Summarization...")
-        summary = self.summarizer.generate_master_summary(kb_path)
+        # Initialize the Fused Processor
+        processor = VideoProcessor(
+            video_source, 
+            **processor_kwargs
+        )
         
-        # Cache the summary so the next call is instant
-        with open(summary_path, 'w') as f:
-            f.write(summary)
+        # FIX: The processor now returns ONE fused timeline object
+        # This prevents the "ValueError: too many values to unpack"
+        print("[VidChain] Executing Multimodal Fusion (Vision + Audio + OCR + Emotion)...")
+        fused_timeline = processor.extract_context(
+            yolo_engine=yolo_engine, 
+            action_engine=action_engine
+        )
+        
+        # Multi-modal Injection into Vector DB
+        # We serialize each fused entry so the RAG engine can read it as text
+        self.vector_store.insert_video( # type: ignore
+            video_id=v_id, 
+            chunk_texts=[self.rag_engine._serialize_entry(e) for e in fused_timeline],
+            metadata=fused_timeline
+        )
+        
+        # Set RAG engine to ready since data is now indexed
+        self.rag_engine.is_ready = True
+        
+        if self.config["verbose"]:
+            print(f"[VidChain] Ingestion Complete. {len(fused_timeline)} semantic events indexed.")
             
-        return summary
+        return v_id
 
-    def ask(self, query: str) -> str:
+    def ask(self, query: str, stream: bool = False, **kwargs) -> Any:
         """
-        Agentic routing: Answers specific temporal questions using the RAG Engine.
+        The Entry Point for QA. Supports Agentic Routing.
         """
-        if not self.rag_engine.is_ready:
-            raise RuntimeError("Knowledge base not loaded. Call .ingest() first.")
-            
-        print(f"[VidChain] Querying temporal vector store: '{query}'")
-        return self.rag_engine.query(query)
+        return self.rag_engine.query(query, stream=stream, **kwargs) # type: ignore
+
+    def summarize_video(self, video_id: str, depth: str = "concise") -> str:
+        """
+        Advanced Summarization using the persistent DB context.
+        """
+        # Fetching context from ChromaDB for the specific video
+        docs = self.vector_store.get_video_context(video_id) # type: ignore
+        return self.summarizer.generate(docs, mode=depth)
+
+    # ------------------------------------------------------------------
+    # DEVELOPER UTILITIES
+    # ------------------------------------------------------------------
+
+    def set_llm(self, model_identifier: str):
+        """Hot-swap the LLM engine (e.g., switch from Llama3 to Gemini)."""
+        self.config["llm_provider"] = model_identifier
+        self.rag_engine.model_name = model_identifier
+        self.summarizer.model_name = model_identifier
+
+    def list_indexed_videos(self) -> List[str]:
+        """Returns all video IDs currently in the persistent database."""
+        return self.vector_store.list_videos()
+
+    def purge_storage(self, video_id: Optional[str] = None):
+        """Clear specific video or nuke the entire library."""
+        if video_id:
+            self.vector_store.delete_video(video_id)
+        else:
+            self.vector_store.nuke_database() # type: ignore
