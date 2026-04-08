@@ -8,7 +8,7 @@ from moviepy import VideoFileClip
 
 from vidchain.processors.ocr_model import OCRProcessor
 from vidchain.processors.emotion_model import ThreadedEmotionAnalyzer
-from vidchain.processors.temporal_tracker import TemporalTracker
+from vidchain.processors.tracker import TemporalTracker
 
 OCR_INTERVAL_SECONDS = 5.0
 
@@ -47,7 +47,7 @@ class VideoProcessor:
         print("[INFO] Transcribing audio (Whisper)...")
         raw_audio = self.audio_model.transcribe(wav_path, fp16=(self.device == "cuda"))
         audio_segments = [
-            {"start": round(s["start"], 2), "end": round(s["end"], 2), "text": s["text"].strip()}
+            {"start": round(s["start"], 2), "end": round(s["end"], 2), "text": s["text"].strip()} # type: ignore
             for s in raw_audio.get("segments", [])
         ]
 

@@ -1,9 +1,9 @@
 {
     "metadata": {
-        "total_frames_analyzed": 18,
-        "audio_segments": 2,
+        "total_frames_analyzed": 21,
+        "audio_segments": 4,
         "ocr_events": 2,
-        "total_timeline_entries": 18
+        "total_timeline_entries": 21
     },
     "timeline": [
         {
@@ -17,7 +17,7 @@
                 "laptop #1"
             ],
             "ocr": "ASUS Vivabook",
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 3.87,
@@ -31,7 +31,7 @@
                 "tv #2"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 4.83,
@@ -45,7 +45,7 @@
                 "tv #2"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 5.8,
@@ -58,7 +58,7 @@
                 "laptop #1 (present 4.8s)"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 6.77,
@@ -71,7 +71,7 @@
                 "laptop #1 (present 5.8s)"
             ],
             "ocr": "ASUS Vivobook",
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 7.73,
@@ -84,7 +84,7 @@
                 "laptop #1 (present 6.8s)"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 9.67,
@@ -98,7 +98,7 @@
                 "tv #2 (present 5.8s)"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 10.64,
@@ -111,7 +111,7 @@
                 "laptop #1 (present 9.7s)"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 11.6,
@@ -125,7 +125,7 @@
                 "tv #2 (present 7.7s)"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 12.57,
@@ -138,7 +138,7 @@
                 "laptop #1 (present 11.6s)"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 13.54,
@@ -152,98 +152,135 @@
                 "keyboard #3"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 14.5,
             "duration": "[14.5s - 14.5s]",
             "objects": "1 chair",
-            "action": "NORMAL | Camera: zooming out | Tracking: chair #4",
+            "action": "NORMAL | Camera: SCENE CUT DETECTED | Tracking: All previous tracks reset.",
             "emotion": null,
-            "camera_motion": "zooming out",
+            "camera_motion": "SCENE CUT DETECTED",
             "tracked_subjects": [
-                "chair #4"
+                "All previous tracks reset."
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 15.47,
-            "duration": "[15.47s - 17.4s]",
+            "duration": "[15.47s - 15.47s]",
+            "objects": "no significant objects",
+            "action": "NORMAL | Camera: SCENE CUT DETECTED | Tracking: All previous tracks reset.",
+            "emotion": null,
+            "camera_motion": "SCENE CUT DETECTED",
+            "tracked_subjects": [
+                "All previous tracks reset."
+            ],
+            "ocr": null,
+            "audio": "1.5kg de gallo"
+        },
+        {
+            "time": 16.44,
+            "duration": "[16.44s - 16.44s]",
+            "objects": "no significant objects",
+            "action": "NORMAL",
+            "emotion": null,
+            "camera_motion": "static",
+            "tracked_subjects": [],
+            "ocr": null,
+            "audio": "1.5kg de gallo"
+        },
+        {
+            "time": 17.4,
+            "duration": "[17.4s - 17.4s]",
             "objects": "no significant objects",
             "action": "NORMAL | Camera: zooming out",
             "emotion": null,
             "camera_motion": "zooming out",
             "tracked_subjects": [],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 18.37,
             "duration": "[18.37s - 18.37s]",
             "objects": "2 tv",
-            "action": "NORMAL | Camera: zooming out | Tracking: tv #5, tv #6",
+            "action": "NORMAL | Camera: zooming out | Tracking: tv #4, tv #5",
             "emotion": null,
             "camera_motion": "zooming out",
             "tracked_subjects": [
-                "tv #5",
-                "tv #6"
+                "tv #4",
+                "tv #5"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 19.34,
             "duration": "[19.34s - 19.34s]",
             "objects": "1 tv",
-            "action": "VIOLENCE | Camera: zooming out | Tracking: tv #5, moving right",
+            "action": "VIOLENCE | Camera: zooming out | Tracking: tv #4, moving right",
             "emotion": null,
             "camera_motion": "zooming out",
             "tracked_subjects": [
-                "tv #5, moving right"
+                "tv #4, moving right"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 20.3,
-            "duration": "[20.3s - 21.27s]",
+            "duration": "[20.3s - 20.3s]",
             "objects": "no significant objects",
             "action": "NORMAL | Camera: zooming out",
             "emotion": null,
             "camera_motion": "zooming out",
             "tracked_subjects": [],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
+        },
+        {
+            "time": 21.27,
+            "duration": "[21.27s - 21.27s]",
+            "objects": "no significant objects",
+            "action": "NORMAL | Camera: SCENE CUT DETECTED | Tracking: All previous tracks reset.",
+            "emotion": null,
+            "camera_motion": "SCENE CUT DETECTED",
+            "tracked_subjects": [
+                "All previous tracks reset."
+            ],
+            "ocr": null,
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 22.24,
             "duration": "[22.24s - 22.24s]",
             "objects": "1 person, 1 book",
-            "action": "VIOLENCE | Camera: zooming out | Tracking: person #7, book #8",
+            "action": "VIOLENCE | Tracking: person #6, book #7",
             "emotion": null,
-            "camera_motion": "zooming out",
+            "camera_motion": "static",
             "tracked_subjects": [
-                "person #7",
-                "book #8"
+                "person #6",
+                "book #7"
             ],
             "ocr": null,
-            "audio": null
+            "audio": "1.5kg de gallo"
         },
         {
             "time": 23.2,
             "duration": "[23.2s - 23.2s]",
             "objects": "1 person, 1 laptop, 1 oven",
-            "action": "NORMAL | Camera: zooming out | Tracking: person #7, moving up, laptop #9, oven #10",
+            "action": "NORMAL | Camera: zooming out | Tracking: person #6, moving up, laptop #8, oven #9",
             "emotion": null,
             "camera_motion": "zooming out",
             "tracked_subjects": [
-                "person #7, moving up",
-                "laptop #9",
-                "oven #10"
+                "person #6, moving up",
+                "laptop #8",
+                "oven #9"
             ],
             "ocr": null,
-            "audio": "Malek"
+            "audio": "1.5kg de gallo"
         }
     ]
 }
