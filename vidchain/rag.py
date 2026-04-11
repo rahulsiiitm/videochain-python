@@ -66,6 +66,10 @@ class RAGEngine:
     def _serialize_entry(e: dict) -> str:
         """Standardizes how video events look to the LLM."""
         parts = [f"[{e.get('time', e.get('timestamp', 0))}s]"]
+        
+        # NEW: Inject CLIP Scene Environment context
+        if e.get("scene"): parts.append(f"Environment: {e['scene']}")
+        
         if e.get("action"): parts.append(f"Action: {e['action']}")
         if e.get("objects"): parts.append(f"Visuals: {e['objects']}")
         if e.get("ocr"): parts.append(f"Screen text: {e['ocr']}")
@@ -108,7 +112,7 @@ class RAGEngine:
     # ------------------------------------------------------------------
 
     def _retrieve(self, question: str) -> str:
-        """Retrieves and reranks video events from ChromaDB."""
+        """Retrieves, reranks, and chronologically sorts video events from ChromaDB."""
         if not self.vector_store:
             return ""
 
@@ -129,9 +133,19 @@ class RAGEngine:
         pairs = [[question, doc] for doc in candidates]
         scores = self.reranker.predict(pairs)
         
-        # Sort and take top_k
+        # Sort by relevance and take top_k
         ranked = sorted(zip(scores, candidates), key=lambda x: x[0], reverse=True)
         top_docs = [doc for score, doc in ranked[:self.rerank_top_k]]
+
+        # NEW: Re-sort the final selection CHRONOLOGICALLY to maintain narrative flow
+        def extract_time(text: str) -> float:
+            try:
+                # Extracts 10.5 from "[10.5s] Action: ..."
+                return float(text.split('s]')[0].strip('['))
+            except:
+                return 0.0
+                
+        top_docs.sort(key=extract_time)
 
         print(f"[INFO] ChromaDB found {len(candidates)} events. Reranker picked top {len(top_docs)}.")
         return "\n".join(top_docs)

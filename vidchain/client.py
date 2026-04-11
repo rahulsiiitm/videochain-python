@@ -51,6 +51,7 @@ class VidChain:
         # Engine Placeholders for Lazy Loading
         self.yolo_engine = None
         self.action_engine = None
+        self.scene_engine = None  # <--- NEW: Environment Anchor
 
     # ------------------------------------------------------------------
     # INTERNAL ENGINE MANAGEMENT
@@ -72,6 +73,12 @@ class VidChain:
             if self.config["verbose"]:
                 print("[vidchain] Initializing default Action Engine...")
             self.action_engine = ActionEngine(model_path="models/vidchain_vision.pth")
+
+        if self.scene_engine is None:
+            from vidchain.processors.scene_model import SceneEngine
+            if self.config["verbose"]:
+                print("[vidchain] Initializing Scene Engine (CLIP)...")
+            self.scene_engine = SceneEngine()  # <--- NEW: Load CLIP
 
     # ------------------------------------------------------------------
     # CORE PIPELINE
@@ -96,17 +103,16 @@ class VidChain:
         self._init_engines()
         processor = VideoProcessor(video_source, **kwargs)
 
-        # --- FIX: CALL THIS ONLY ONCE ---
         if self.config["verbose"]:
-            print("[VidChain] Executing Multimodal Fusion (Vision + Audio + OCR + Emotion)...")
+            print("[VidChain] Executing Multimodal Fusion (Vision + Audio + OCR + Scene + Emotion)...")
             
         # This one call handles everything and returns the fused timeline
         fused_timeline = processor.extract_context(
             yolo_engine=self.yolo_engine, 
             action_engine=self.action_engine,
+            scene_engine=self.scene_engine,  # <--- NEW: Pass to processor
             on_progress=on_progress
         )
-        # --------------------------------
 
         # 2. PERMANENT INDEXING
         self.vector_store.insert_video(
@@ -136,7 +142,7 @@ class VidChain:
         docs = self.vector_store.get_video_context(video_id)
         if not docs:
             return f"[ERROR] No data found in storage for Video ID: {video_id}"
-        return self.summarizer.generate(docs, mode=depth)
+        return self.summarizer.generate(docs, mode=depth)# type: ignore
 
     # ------------------------------------------------------------------
     # DEVELOPER UTILITIES
@@ -156,7 +162,6 @@ class VidChain:
 
     def list_indexed_videos(self) -> List[str]:
         """Returns all video IDs currently residing in the persistent database."""
-        # Using a list comprehension to ensure we only get unique IDs
         return list(set(self.vector_store.list_videos()))
 
     def purge_storage(self, video_id: Optional[str] = None):
@@ -164,6 +169,5 @@ class VidChain:
         if video_id:
             self.vector_store.delete_video(video_id)
         else:
-            # Dangerous utility: nukes the entire collection
             self.vector_store.client.delete_collection(self.config["collection_name"])
             print("[vidchain] Local storage purged.")

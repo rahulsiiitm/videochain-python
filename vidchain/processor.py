@@ -2,7 +2,7 @@
 vidchain/processor.py
 ---------------------
 Titan-Grade Multimodal Processor.
-Fuses Audio, Vision, OCR, Emotion, and Temporal Tracking
+Fuses Audio, Vision, OCR, Emotion, Scene Context, and Temporal Tracking
 into a single Unified Timeline using Adaptive Keyframe Extraction.
 """
 
@@ -22,6 +22,7 @@ from vidchain.processors.tracker import TemporalTracker
 
 # ── Tunable Constants ──────────────────────────────────────────────────────
 OCR_INTERVAL_SECONDS  = 5.0   # min gap between OCR calls
+SCENE_INTERVAL_SECONDS= 10.0  # min gap between CLIP scene classifications
 CHANGE_THRESHOLD      = 8.0   # % pixel change to trigger keyframe processing
 BLUR_KERNEL           = (21, 21)  # Gaussian blur kernel (noise suppression)
 DIFF_INTENSITY_CUTOFF = 50    # pixel intensity delta to count as "changed"
@@ -47,6 +48,9 @@ class VideoProcessor:
         print("[VidChain] Loading Temporal Tracker...")
         self.tracker = TemporalTracker()
 
+        print("[VidChain] All engines initialized.")
+        self.audio_loader = AudioLoader()
+
     # ------------------------------------------------------------------
     # Audio
     # ------------------------------------------------------------------
@@ -68,6 +72,7 @@ class VideoProcessor:
         self,
         yolo_engine,
         action_engine,
+        scene_engine: Optional[Any] = None,
         on_progress: Optional[Callable[[float], None]] = None
     ) -> List[Dict[str, Any]]:
         """
@@ -76,7 +81,7 @@ class VideoProcessor:
         Steps:
           1. Whisper ASR on extracted WAV
           2. Adaptive keyframe extraction (Gaussian blur + frame differencing)
-          3. Per-keyframe: YOLO + MobileNet + OCR + Emotion + TemporalTracker
+          3. Per-keyframe: YOLO + MobileNet + CLIP (Scene) + OCR + Emotion + Tracker
           4. Multimodal fusion (audio snapped to visual timestamps)
           5. Temporal smoothing + semantic scene compression
         """
@@ -90,7 +95,7 @@ class VideoProcessor:
 
         print("[VidChain] Running Adaptive Audio Filter...")
         y_audio, _ = librosa.load(wav_path, sr=16000)
-        audio_result = self.audio_loader.process_segments(raw_segments, y_audio)
+        audio_result = self.audio_loader.process_segments(raw_segments, y_audio) # type: ignore
 
         audio_segments = audio_result["segments"]
         self._audio_anomalies = audio_result["anomalies"]
@@ -111,8 +116,13 @@ class VideoProcessor:
 
         raw_events: List[Dict[str, Any]] = []
         prev_gray: Optional[np.ndarray] = None
+        
+        # Rate-limiting state trackers
         last_ocr_time = -OCR_INTERVAL_SECONDS
+        last_scene_time = -SCENE_INTERVAL_SECONDS
+        current_scene_label = None
         last_emotion: Optional[str] = None
+        
         frame_idx = 0
         keyframes_processed = 0
 
@@ -132,6 +142,15 @@ class VideoProcessor:
                 continue
 
             timestamp = round(frame_idx / fps, 2)
+
+            # ── Scene Classification (Zero-Shot CLIP) ──────────────────
+            # Rate-limited to prevent heavy VRAM/Compute usage
+            if scene_engine and (timestamp - last_scene_time) >= SCENE_INTERVAL_SECONDS:
+                scene_label = scene_engine.predict(frame)
+                if scene_label:
+                    current_scene_label = scene_label
+                    last_scene_time = timestamp
+                    print(f"   🌍 Scene at {timestamp}s: {current_scene_label}")
 
             # ── Gaussian blur frame differencing ──────────────────────
             curr_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -184,6 +203,7 @@ class VideoProcessor:
 
             raw_events.append({
                 "time":     timestamp,
+                "scene":    current_scene_label, # Attached context from CLIP
                 "objects":  objects,
                 "action":   action.upper(),
                 "emotion":  last_emotion,
@@ -264,6 +284,7 @@ class VideoProcessor:
             if not any(abs(anomaly["time"] - vt) < 0.5 for vt in visual_times):
                 fused.append({
                     "time":          anomaly["time"],
+                    "scene":         None, # Anomalies have no visual scene context
                     "objects":       "no significant objects",
                     "action":        "NORMAL",
                     "emotion":       None,
@@ -311,6 +332,7 @@ class VideoProcessor:
                 and next_evt["objects"] == curr["objects"]
                 and next_evt["emotion"] == curr["emotion"]
                 and next_evt["camera"]  == curr["camera"]
+                and next_evt.get("scene") == curr.get("scene") # Ensures we don't merge across CLIP environment changes
             )
             if same_scene:
                 curr["duration"] = round(next_evt["time"] - curr["time"], 2)
