@@ -14,16 +14,17 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["HF_HUB_DISABLE_IMPLICIT_TOKEN"] = "1"
 
 from vidchain.client import VidChain
-from vidchain.vision import VisionEngine as YoloEngine
-from vidchain.processors.vision_model import VisionEngine as ActionEngine
 
-def print_hardware_status(step=""):
+def print_hardware_status():
     """Prints current GPU status and VRAM usage."""
     if torch.cuda.is_available():
+        gpu_name = torch.cuda.get_device_name(0)
+        vram_total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
         allocated = torch.cuda.memory_allocated(0) / (1024 ** 2)
-        print(f"🖥️  [GPU] {step} | VRAM Used: {allocated:.1f} MB")
+        print(f"[SYSTEM] Hardware Engine: GPU Active ({gpu_name})")
+        print(f"🖥️  [VRAM] Total: {vram_total:.1f} GB | Currently Used: {allocated:.1f} MB")
     else:
-        print(f"🖥️  [CPU] {step} | (CUDA NOT DETECTED)")
+        print("[SYSTEM] ⚠️ Hardware Engine: CPU ONLY. (CUDA NOT DETECTED)")
 
 def main():
     parser = argparse.ArgumentParser(description="vidchain: Multimodal RAG CLI")
@@ -42,41 +43,37 @@ def main():
     print("-" * 50)
 
     # ── Hardware Check ─────────────────────────────────────
-    if torch.cuda.is_available():
-        gpu_name = torch.cuda.get_device_name(0)
-        vram_total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-        print(f"[SYSTEM] Hardware Engine: GPU Active ({gpu_name} - {vram_total:.1f} GB VRAM)")
-    else:
-        print("[SYSTEM] ⚠️ Hardware Engine: CPU ONLY. PyTorch cannot find your NVIDIA GPU.")
+    print_hardware_status()
 
     # ── Initialize VidChain Orchestrator ───────────────────
-    # This handles RAG, VectorStore, and Summarizer setup
+    # Zero-Config: Engines (YOLO/Action) are NOT loaded yet.
     vc = VidChain(config={
         "llm_provider": args.llm,
         "db_path": "./vidchain_storage"
     })
 
-    # ── Vision models ──────────────────────────────────────
-    print("\n[INFO] Booting Dual-Vision Models...")
-    yolo_model = YoloEngine(model_path="yolov8s.pt", confidence_threshold=0.25)
-    action_model = ActionEngine(model_path="models/vidchain_vision.pth")
-    print_hardware_status("Vision Models Loaded")
+    # ── Progress Callback ──────────────────────────────────
+    def progress_callback(percent):
+        """Simple ASCII progress bar for the CLI."""
+        bar_length = 40
+        filled_length = int(bar_length * percent // 100)
+        bar = '█' * filled_length + '-' * (bar_length - filled_length)
+        sys.stdout.write(f'\r[SYSTEM] Scanning: |{bar}| {percent}% Complete')
+        sys.stdout.flush()
 
     # ── Extraction & Ingestion ──────────────────────────────
-    print("\n[INFO] Running Multimodal Extraction & Semantic Fusion...")
+    print("\n[INFO] Initializing Multimodal Extraction & Semantic Fusion...")
     
-    # ingest() now internally calls processor.extract_context and saves to ChromaDB
-    # It returns a unique video_id for the session
     try:
+        # We no longer pass engines here—VidChain handles lazy loading internally.
         video_id = vc.ingest(
             video_source=args.video_path,
-            yolo_engine=yolo_model,
-            action_engine=action_model,
-            ocr_languages=args.ocr_lang
+            ocr_languages=args.ocr_lang,
+            on_progress=progress_callback
         )
-        print_hardware_status("Ingestion & Indexing Complete")
+        print(f"\n\n[SUCCESS] Ingestion Complete. Video ID: {video_id}")
     except Exception as e:
-        print(f"[ERROR] Ingestion failed: {e}")
+        print(f"\n\n[ERROR] Ingestion failed: {e}")
         sys.exit(1)
 
     print("-" * 50)
@@ -87,7 +84,6 @@ def main():
     # ── Single-shot query mode ─────────────────────────────
     if args.query:
         print(f"\n[QUERY] {args.query}")
-        # Using vc.ask ensures the Agentic Intent Router is used
         print(f"AI: {vc.ask(args.query)}")
         return
 
@@ -107,7 +103,7 @@ def main():
             print(f"AI: {response}")
             
         except KeyboardInterrupt:
-            print("\n(┬┬﹏┬┬) Session terminated.")
+            print("\n\n(┬┬﹏┬┬) Session terminated.")
             break
         except Exception as e:
             print(f"[ERROR] {e}")

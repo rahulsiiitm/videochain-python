@@ -2,7 +2,7 @@
 vidchain/client.py
 ------------------
 Titan-Class Orchestration Layer.
-Fixed: Handled unified multimodal fusion stream from VideoProcessor.
+Features: Zero-Config Ingestion, Lazy Model Loading, and Lifecycle Callbacks.
 """
 
 import os
@@ -15,31 +15,31 @@ from vidchain.vectorstores.chroma import ChromaStore
 
 class VidChain:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Standardizes initialization. 
-        Devs can pass a dict to override anything from LLM choice to DB persistence.
-        """
+        
         self.config = {
-            "llm_provider": "ollama/llama3",
-            "embedding_provider": "BAAI/bge-base-en-v1.5",
-            "db_path": "./vidchain_storage",
-            "collection_name": "global_video_index",
-            "processing_device": "cuda", # 'cuda', 'cpu', or 'mps'
+            "llm_provider": "gemini/gemini-2.5-flash",
+            "embedding_provider": "BAAI/bge-base-en-v1.5",  # <--- ADD THIS LINE
+            "persistent": False,
+            "db_path": None,
+            "collection_name": "temp_index",
             "verbose": True
         }
         if config:
             self.config.update(config)
 
-        # 1. Memory Layer (Persistent ChromaDB)
+        # Initialize Memory based on the 'persistent' flag
+        db_path = self.config["db_path"] if self.config["persistent"] else None
+        
+        # 1. Memory Layer (ChromaDB)
         self.vector_store = ChromaStore(
-            persist_dir=self.config["db_path"], 
+            persist_dir=db_path, 
             collection_name=self.config["collection_name"]
         )
-        
-        # 2. Reasoning Layer (RAG Engine with Intent Routing)
+
+        # 2. Reasoning Layer (RAG Engine with Intent Routing)   
         self.rag_engine = RAGEngine(
             model_name=self.config["llm_provider"], 
-            vector_store=self.vector_store, # type: ignore
+            vector_store=self.vector_store,
             embedding_model=self.config["embedding_provider"]
         )
         
@@ -48,6 +48,31 @@ class VidChain:
             model_name=self.config["llm_provider"]
         )
 
+        # Engine Placeholders for Lazy Loading
+        self.yolo_engine = None
+        self.action_engine = None
+
+    # ------------------------------------------------------------------
+    # INTERNAL ENGINE MANAGEMENT
+    # ------------------------------------------------------------------
+
+    def _init_engines(self):
+        """
+        Lazy-loads heavy vision models only when ingestion starts.
+        This prevents consuming VRAM if the user only wants to chat/summarize.
+        """
+        if self.yolo_engine is None:
+            from vidchain.vision import VisionEngine as YoloEngine
+            if self.config["verbose"]:
+                print("[vidchain] Initializing default Vision Engine (YOLOv8)...")
+            self.yolo_engine = YoloEngine(model_path="yolov8s.pt")
+
+        if self.action_engine is None:
+            from vidchain.processors.vision_model import VisionEngine as ActionEngine
+            if self.config["verbose"]:
+                print("[vidchain] Initializing default Action Engine...")
+            self.action_engine = ActionEngine(model_path="models/vidchain_vision.pth")
+
     # ------------------------------------------------------------------
     # CORE PIPELINE
     # ------------------------------------------------------------------
@@ -55,61 +80,62 @@ class VidChain:
     def ingest(
         self, 
         video_source: str, 
-        yolo_engine: Any, 
-        action_engine: Any,
         video_id: Optional[str] = None, 
         on_progress: Optional[Callable[[float], None]] = None,
-        **processor_kwargs
+        **kwargs
     ) -> str:
         """
-        High-level ingestion. Now handles the FUSED timeline output.
+        Full Pipeline: Extraction -> Fusion -> Vector Indexing.
         """
         v_id = video_id or str(uuid.uuid4())[:8]
+        
         if self.config["verbose"]:
-            print(f"[VidChain] Pipeline Start -> ID: {v_id} | Source: {video_source}")
+            print(f"\n[VidChain] Pipeline Start -> ID: {v_id}")
+            print(f"[VidChain] Source: {video_source}")
 
-        # Initialize the Fused Processor
-        processor = VideoProcessor(
-            video_source, 
-            **processor_kwargs
-        )
-        
-        # FIX: The processor now returns ONE fused timeline object
-        # This prevents the "ValueError: too many values to unpack"
-        print("[VidChain] Executing Multimodal Fusion (Vision + Audio + OCR + Emotion)...")
+        self._init_engines()
+        processor = VideoProcessor(video_source, **kwargs)
+
+        # --- FIX: CALL THIS ONLY ONCE ---
+        if self.config["verbose"]:
+            print("[VidChain] Executing Multimodal Fusion (Vision + Audio + OCR + Emotion)...")
+            
+        # This one call handles everything and returns the fused timeline
         fused_timeline = processor.extract_context(
-            yolo_engine=yolo_engine, 
-            action_engine=action_engine
+            yolo_engine=self.yolo_engine, 
+            action_engine=self.action_engine,
+            on_progress=on_progress
         )
-        
-        # Multi-modal Injection into Vector DB
-        # We serialize each fused entry so the RAG engine can read it as text
-        self.vector_store.insert_video( # type: ignore
+        # --------------------------------
+
+        # 2. PERMANENT INDEXING
+        self.vector_store.insert_video(
             video_id=v_id, 
             chunk_texts=[self.rag_engine._serialize_entry(e) for e in fused_timeline],
             metadata=fused_timeline
         )
         
-        # Set RAG engine to ready since data is now indexed
         self.rag_engine.is_ready = True
         
         if self.config["verbose"]:
-            print(f"[VidChain] Ingestion Complete. {len(fused_timeline)} semantic events indexed.")
+            print(f"[VidChain] Ingestion Complete. {len(fused_timeline)} semantic scenes indexed.")
             
         return v_id
 
-    def ask(self, query: str, stream: bool = False, **kwargs) -> Any:
+    def ask(self, query: str, stream: bool = False, **kwargs) -> str:
         """
-        The Entry Point for QA. Supports Agentic Routing.
+        The Entry Point for QA. Supports Agentic Routing between 
+        Video Search and Conversational Memory.
         """
-        return self.rag_engine.query(query, stream=stream, **kwargs) # type: ignore
+        return self.rag_engine.query(query, stream=stream, **kwargs)
 
     def summarize_video(self, video_id: str, depth: str = "concise") -> str:
         """
-        Advanced Summarization using the persistent DB context.
+        Fetches the persistent context for a video and generates a forensic narrative.
         """
-        # Fetching context from ChromaDB for the specific video
-        docs = self.vector_store.get_video_context(video_id) # type: ignore
+        docs = self.vector_store.get_video_context(video_id)
+        if not docs:
+            return f"[ERROR] No data found in storage for Video ID: {video_id}"
         return self.summarizer.generate(docs, mode=depth)
 
     # ------------------------------------------------------------------
@@ -117,18 +143,27 @@ class VidChain:
     # ------------------------------------------------------------------
 
     def set_llm(self, model_identifier: str):
-        """Hot-swap the LLM engine (e.g., switch from Llama3 to Gemini)."""
+        """
+        Titan Upgrade: Hot-swaps the Reasoning and Narrative engines.
+        Useful for multi-model forensic benchmarking.
+        """
+        if self.config["verbose"]:
+            print(f"[vidchain] Switching LLM Engine to: {model_identifier}")
+            
         self.config["llm_provider"] = model_identifier
         self.rag_engine.model_name = model_identifier
         self.summarizer.model_name = model_identifier
 
     def list_indexed_videos(self) -> List[str]:
-        """Returns all video IDs currently in the persistent database."""
-        return self.vector_store.list_videos()
+        """Returns all video IDs currently residing in the persistent database."""
+        # Using a list comprehension to ensure we only get unique IDs
+        return list(set(self.vector_store.list_videos()))
 
     def purge_storage(self, video_id: Optional[str] = None):
-        """Clear specific video or nuke the entire library."""
+        """Clears specific video data or nukes the entire local database."""
         if video_id:
             self.vector_store.delete_video(video_id)
         else:
-            self.vector_store.nuke_database() # type: ignore
+            # Dangerous utility: nukes the entire collection
+            self.vector_store.client.delete_collection(self.config["collection_name"])
+            print("[vidchain] Local storage purged.")
