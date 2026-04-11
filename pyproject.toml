@@ -12,9 +12,8 @@ authors = [{ name = "Rahul Sharma", email = "rahulsharma.hps@gmail.com" }]
 license = { text = "MIT" }
 keywords = ["video-rag", "multimodal", "ai", "computer-vision", "whisper", "ollama", "yolo"]
 
-# Detailed Classifiers for PyPI
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
@@ -22,29 +21,50 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
-# Core Dependencies
 dependencies = [
+    # ── Core Vision ──────────────────────────────────────────
     "opencv-python",
-    "scenedetect",
-    "openai-whisper", # Provides the 'whisper' import
-    "sentence-transformers",
-    "faiss-cpu",
-    "litellm", # Added for your 'gemini/gemini-2.5-flash' routing
-    "google-generativeai",
-    "moviepy",
-    "pillow<12.0", # 🛑 PINNED: Fixes the MoviePy incompatibility crash
-    "torch", # 🛑 UNPINNED: Allows users to install their own cu118/cu121 versions
-    "torchvision", # 🛑 UNPINNED: Prevents pip from forcing a CPU downgrade
-    "torchaudio", # Added to complete the PyTorch hardware triad
+    "ultralytics",              # YOLO object detection
+    "torch",                    # Unpinned: let users install CUDA variant
+    "torchvision",
+    "torchaudio",
+    "pillow<12.0",              # Pinned: MoviePy incompatibility above 12
+
+    # ── Audio ─────────────────────────────────────────────────
+    "openai-whisper",           # Speech transcription
+    "moviepy",                  # Video/audio I/O
+    "imageio-ffmpeg",           # Bundled FFmpeg (no system install needed)
+    "librosa",                  # Audio energy analysis
+    "soundfile",                # Fast WAV loading (replaces audioread)
+
+    # ── OCR ───────────────────────────────────────────────────
+    "easyocr",                  # Scene text extraction
+
+    # ── Emotion ───────────────────────────────────────────────
+    "deepface",                 # Facial emotion analysis
+    "tf-keras",                 # Required by deepface with TF 2.x
+
+    # ── RAG & Vector Store ────────────────────────────────────
+    "sentence-transformers",    # BGE embedder + CrossEncoder reranker
+    "chromadb",                 # Persistent vector database
+    "faiss-cpu",                # Fallback FAISS index
+
+    # ── LLM Routing ───────────────────────────────────────────
+    "litellm",                  # Unified LLM API (Gemini, Ollama, OpenAI)
+    "google-generativeai",      # Gemini backend
+    "python-dotenv",            # .env API key loading
+
+    # ── Utilities ─────────────────────────────────────────────
     "numpy",
     "tqdm",
-    "python-dotenv",
-    "ultralytics", # YOLO-based Noun Engine
-    "librosa", # Audio energy extraction
-    "easyocr", # GPU-accelerated text extraction
 ]
 
-# --- CONSOLIDATED CLI ENTRY POINTS ---
+[project.optional-dependencies]
+# Install with: pip install vidchain[clip]
+clip = [
+    "transformers",             # CLIP scene understanding (optional enrichment)
+]
+
 [project.scripts]
 vidchain-analyze = "vidchain.cli:main"
 vidchain-train = "scripts.train_vision:main"
@@ -60,6 +80,6 @@ include = ["vidchain*"]
 [tool.setuptools.package-data]
 vidchain = ["py.typed"]
 
-# UV specific configuration for CUDA-enabled Torch
+# UV: CUDA-accelerated PyTorch index
 [[tool.uv.index]]
 url = "https://download.pytorch.org/whl/cu121"

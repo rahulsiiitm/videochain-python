@@ -7,135 +7,189 @@
 
 ## Overview
 
-vidchain v0.2.0 is a lightweight, modular framework that combines computer vision, smart OCR, speech recognition, and LLM reasoning into a unified **late-fusion pipeline**. Designed to run efficiently on consumer-grade GPUs (tested on NVIDIA RTX 3050), it extracts human-readable stories from raw sensor data, making on-device video intelligence practical without massive cloud dependency.
+VidChain v0.3.0 is a lightweight, modular framework that combines computer vision, OCR, speech recognition, emotion analysis, and LLM reasoning into a unified **late-fusion pipeline**. Designed to run on consumer-grade GPUs (tested on NVIDIA RTX 3050 4GB), it makes on-device video intelligence practical without cloud dependency.
 
-At the heart of the framework is **B.A.B.U.R.A.O.** (*Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation*), an elite AI copilot that uses abductive reasoning to translate raw, flickering object/action logs into flowing, conversational narratives.
+At the heart is **B.A.B.U.R.A.O.** (*Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation*) — a conversational AI copilot that translates raw sensor logs into human-readable narratives using abductive reasoning.
 
 ---
 
 ## Core Pipeline
-```text
-Video Input → Adaptive Keyframes → Dual-Brain Vision (YOLO + MobileNet) + OCR → Audio Transcription → Semantic Chunking → FAISS Vector DB → B.A.B.U.R.A.O. RAG
-````
 
------
+```
+Video → WAV Extraction → Whisper ASR → Frame Loop →
+  ├── YOLO (Objects)
+  ├── MobileNetV3 (Action)
+  ├── EasyOCR (Screen Text)
+  ├── DeepFace (Emotion, threaded)
+  └── TemporalTracker (Object Persistence + Camera Motion)
+→ Semantic Fusion → ChromaDB → B.A.B.U.R.A.O. RAG
+```
+
+---
 
 ## Key Capabilities
 
-### 🧠 Dual-Brain Vision Engine
+### Dual-Brain Vision Engine
+- **YOLO (Nouns):** Detects objects with bounding boxes — `"1 person, 1 laptop"`
+- **MobileNetV3 (Verbs):** Classifies scene intent — `NORMAL / SUSPICIOUS / VIOLENCE / EMERGENCY`
 
-Instead of basic classification, vidchain uses a two-pronged visual approach:
+### Context-Aware OCR
+EasyOCR runs only when YOLO detects readable surfaces (laptop, monitor, whiteboard) — saves compute while capturing ground-truth text.
 
-  * **The "Noun" Engine (YOLOv8):** Detects specific objects (e.g., "1 person, 2 laptops").
-  * **The "Verb" Engine (MobileNetV3):** Classifies the intent or state of the scene (e.g., NORMAL, SUSPICIOUS, VIOLENCE).
+### 😶 Threaded Emotion Analysis
+DeepFace runs on CPU in a background thread so it never competes with YOLO/MobileNet for VRAM.
 
-### 🔤 Context-Aware OCR
+### Temporal Tracking
+- **Object Persistence:** IoU tracker assigns persistent IDs across frames (`person #1 present 12s, moving left`)
+- **Camera Motion:** Lucas-Kanade optical flow detects pan, tilt, zoom, static
+- **Scene Cut Detection:** HSV histogram correlation resets trackers on hard cuts
 
-Powered by EasyOCR, the system intelligently scans for text *only* when YOLO detects readable surfaces (monitors, laptops, books, whiteboards), saving massive compute power while capturing ground-truth data (e.g., reading the brand "ASUS Vivobook" off a laptop).
+### B.A.B.U.R.A.O. RAG Engine
+- **BGE embedder** (`BAAI/bge-base-en-v1.5`) for domain-specific retrieval
+- **Cross-encoder reranker** for precision before LLM call
+- **Intent routing** — distinguishes video search from conversational follow-ups
+- **Chat memory** — maintains context across multi-turn conversations
 
-### B.A.B.U.R.A.O. RAG Engine (Conversational)
-
-Unlike standard RAGs that read out robotic timelines, B.A.B.U.R.A.O. acts as a human copilot:
-
-  * **Abductive Reasoning:** If it sees a "laptop" and a "keyboard", it deduces the scene is a "computer desk."
-  * **Sensor Filtering:** Automatically ignores momentary hardware glitches/hallucinations (e.g., a TV briefly misidentified as an oven).
-  * **Natural Translation:** Translates raw model labels like `VIOLENCE` into contextual human behaviors like "the person became visibly frustrated and hit the desk."
-
-### Edge-First GPU Optimization
-
-Engineered to prevent VRAM crashes. Smart memory routing disables PyTorch's buggy layer fusion during YOLO inference and safely manages VRAM across concurrent vision, audio, and language models.
-
------
+---
 
 ## Installation
 
 ```bash
-# 1. Install the core package
 pip install vidchain
 
-# 2. IMPORTANT: Install GPU-accelerated PyTorch (CUDA 12.1 recommended)
-pip install torch torchvision torchaudio --index-url [https://download.pytorch.org/whl/cu121](https://download.pytorch.org/whl/cu121) --force-reinstall
+# GPU-accelerated PyTorch (recommended)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 --force-reinstall
 ```
 
-> ⚠️ **Requirement:** NVIDIA drivers and CUDA are strongly recommended. To verify your hardware is correctly mapped, run the built-in diagnostic script: `python scripts/check_gpu.py`
+> Run `python scripts/check_gpu.py` to verify CUDA is detected.
 
------
+---
 
 ## Quick Start
 
-### 1 — Analyze a Video (Build Knowledge Base)
+### Python API (Library)
 
-Analyze a video file, extract multimodal context, and generate a structured JSON timeline:
+```python
+from vidchain import VidChain
 
-```bash
-vidchain-analyze sample.mp4
+# Initialize
+vc = VidChain(config={
+    "llm_provider": "gemini/gemini-2.5-flash",  # or "ollama/llama3" for offline
+    "db_path": "./vidchain_storage"              # omit for in-memory (no persistence)
+})
+
+# Ingest a video
+video_id = vc.ingest("surveillance.mp4")
+
+# Query
+print(vc.ask("what happened in the video?"))
+print(vc.ask("was anyone acting suspiciously?"))
+
+# Multi-video: scope query to a specific video
+vc.ingest("cam1.mp4", video_id="cam1")
+vc.ingest("cam2.mp4", video_id="cam2")
+print(vc.ask("did anyone enter the room?", video_id="cam1"))
 ```
 
-*This command automatically builds a FAISS index and drops you into the interactive B.A.B.U.R.A.O. chat terminal.*
-
-### 2 — Train the Action Engine
-
-Fine-tune the MobileNetV3 "Verb" classifier on your domain-specific dataset:
+### CLI
 
 ```bash
+# Analyze and chat
+vidchain-analyze video.mp4
+
+# Single-shot query
+vidchain-analyze video.mp4 --query "what happened at the desk?"
+
+# Offline with Ollama
+vidchain-analyze video.mp4 --llm ollama/llama3
+
+# Multilingual OCR
+vidchain-analyze video.mp4 --ocr-lang en fr
+```
+
+### Train Custom Action Engine
+
+```bash
+# Place labeled images in data/train/<class>/
 vidchain-train
 ```
 
-Place labeled training images under `data/train/` before running.
-
------
+---
 
 ## Knowledge Base Schema
 
-The framework utilizes **Semantic Chunking** to compress repetitive frames. The `knowledge_base.json` outputs a clean, fused timeline:
+Each fused timeline entry contains all modalities at that moment:
 
 ```json
 {
-    "time": 0.97,
-    "type": "ocr",
-    "content": "ASUS Vivabook"
-},
-{
-    "time": 3.87,
-    "type": "visual",
-    "content": "Duration: [3.87s - 6.77s] | Subjects: 1 laptop, 1 tv | Action State: SUSPICIOUS"
-},
-{
-    "time": 19.34,
-    "type": "visual",
-    "content": "Duration: [19.34s - 19.34s] | Subjects: 1 tv | Action State: VIOLENCE"
+    "time": 5.8,
+    "duration": 3.2,
+    "objects": "1 person, 1 laptop",
+    "action": "SUSPICIOUS",
+    "emotion": "visibly agitated",
+    "ocr": "ASUS Vivobook",
+    "audio": "I told you this would happen",
+    "camera": "static",
+    "tracking": ["person #1 (present 4.8s), moving left", "laptop #2 (present 5.8s)"],
+    "audio_anomaly": "NORMAL"
 }
 ```
 
------
+---
 
 ## Tech Stack
 
 | Component | Technology |
 |---|---|
-| Object Detection (Nouns) | YOLOv8s |
-| Intent Classification (Verbs) | MobileNetV3 (Custom fine-tuned) |
-| Text Extraction (OCR) | EasyOCR |
-| ASR (Audio) | OpenAI Whisper (Base) |
-| Vector Database | FAISS + Sentence-Transformers (`all-MiniLM-L6-v2`) |
+| Object Detection | YOLOv8s (Ultralytics) |
+| Action Classification | MobileNetV3 (custom fine-tuned) |
+| Speech Recognition | OpenAI Whisper (base) |
+| OCR | EasyOCR |
+| Emotion Analysis | DeepFace (opencv backend) |
+| Temporal Tracking | IoU tracker + Lucas-Kanade optical flow |
+| Embedder | `BAAI/bge-base-en-v1.5` |
+| Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
+| Vector Store | ChromaDB (persistent) |
 | LLM Routing | LiteLLM (`gemini-2.5-flash` default, Ollama supported) |
-| GPU Runtime | CUDA 12.1 (Optimized for 4GB+ VRAM) |
+| GPU Runtime | CUDA 12.1 (4GB+ VRAM, RTX 30-series tested) |
 
------
+---
+
+## Developer Utilities
+
+```python
+# List all indexed videos
+vc.list_indexed_videos()
+
+# Generate a narrative summary
+vc.summarize_video(video_id, depth="concise")  # or "detailed"
+
+# Hot-swap LLM
+vc.set_llm("ollama/llama3")
+
+# Purge a specific video
+vc.purge_storage(video_id="cam1")
+
+# Purge everything
+vc.purge_storage()
+```
+
+---
 
 ## Roadmap
 
-  - [ ] **Real-time streaming pipeline** — live ingestion and indexing with low-latency event detection.
-  - [ ] **Advanced temporal reasoning** — multi-clip reasoning and cross-camera subject tracking.
-  - [ ] **Interactive Dashboard** — PyQt5 HUD for video playback, timeline visualization, and KB exploration.
+- [ ] **Real-time streaming** — live camera ingestion with low-latency indexing
+- [ ] **Cross-video subject tracking** — link the same person across multiple camera feeds
+- [ ] **CLIP scene understanding** — environment classification (`office`, `kitchen`, `street`)
+- [ ] **Export to JSON/CSV** — structured timeline export for downstream analysis
 
------
+---
 
 ## Contributing
 
-Contributions, issues, and feature requests are highly welcome\! Open a GitHub issue or submit a pull request.
+Contributions, issues, and feature requests are welcome. Open a GitHub issue or submit a pull request.
 
------
+---
 
 ## Author
 
@@ -143,4 +197,4 @@ Contributions, issues, and feature requests are highly welcome\! Open a GitHub i
 
 ## License
 
-Distributed under the [MIT License](https://www.google.com/search?q=LICENSE).
+Distributed under the [MIT License](LICENSE).

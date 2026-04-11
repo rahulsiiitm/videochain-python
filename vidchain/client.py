@@ -18,7 +18,7 @@ class VidChain:
         
         self.config = {
             "llm_provider": "gemini/gemini-2.5-flash",
-            "embedding_provider": "BAAI/bge-base-en-v1.5",  # <--- ADD THIS LINE
+            "embedding_provider": "BAAI/bge-base-en-v1.5", 
             "persistent": False,
             "db_path": None,
             "collection_name": "temp_index",
