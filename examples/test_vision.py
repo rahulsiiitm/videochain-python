@@ -1,43 +1,50 @@
-import torch
+"""
+examples/test_vision.py
+-------------------------
+Tests YOLO + MobileNet vision engines independently.
+"""
+
 import os
-from vidchain.loaders.video_loader import VideoLoader
-from vidchain.processors.vision_model import VisionEngine
+import cv2
+import torch
+from vidchain.vision import VisionEngine as YoloEngine
+from vidchain.processors.vision_model import VisionEngine as ActionEngine
 
-def test_vision():
+def main():
     VIDEO_PATH = "sample.mp4"
-    
+
     if not os.path.exists(VIDEO_PATH):
-        print(f"❌ Error: {VIDEO_PATH} not found.")
+        print(f"Error: {VIDEO_PATH} not found.")
         return
 
-    # 1. Initialize
-    loader = VideoLoader(output_dir="temp_frames")
-    proc = VisionEngine() # This should print "Vision using device: cuda"
+    print("=== Vision Pipeline Test ===\n")
 
-    # 2. Extract Keyframes (Adaptive Sampling)
-    print(f"\n[Step 1] Extracting keyframes from {VIDEO_PATH}...")
-    keyframes = loader.extract_keyframes(VIDEO_PATH)
-    
-    if not keyframes:
-        print("❌ No keyframes extracted. Check your video file.")
-        return
+    yolo   = YoloEngine(model_path="yolov8s.pt", confidence_threshold=0.25)
+    action = ActionEngine(model_path="models/vidchain_vision.pth")
 
-    # 3. Run Inference on GPU
-    print(f"\n[Step 2] Running Vision Inference on {len(keyframes)} frames...")
-    
-    for i, frame in enumerate(keyframes):
-        # We run the actual model here
-        label, confidence = proc.predict(frame['path'])
-        
-        print(f"Frame {i+1}: Time {frame['timestamp']:.2f}s | Result: {label} (Confidence: {confidence:.2f}%)")
-        
-        # Monitor GPU Memory every 5 frames
-        if i % 5 == 0 and torch.cuda.is_available():
-            vram = torch.cuda.memory_allocated(0) / 1024**2
-            print(f"   📊 GPU VRAM in use: {vram:.2f} MB")
+    cap = cv2.VideoCapture(VIDEO_PATH)
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+    frame_idx = 0
+    results = []
 
-    print("\n✅ Vision Test Complete!")
-    print(f"Check the 'temp_frames' folder to see the extracted .jpg files.")
+    while cap.isOpened() and frame_idx < int(fps * 10):  # test first 10s
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if frame_idx % int(fps) == 0:  # 1 per second
+            timestamp = round(frame_idx / fps, 2)
+            objects, conf, _ = yolo.predict(frame)
+            act, act_conf    = action.predict(frame)
+            results.append((timestamp, objects, act))
+            print(f"  [{timestamp}s] Objects: {objects} | Action: {act} ({act_conf*100:.1f}%)")
+
+            if torch.cuda.is_available():
+                vram = torch.cuda.memory_allocated(0) / 1024**2
+                print(f"         VRAM: {vram:.1f} MB")
+        frame_idx += 1
+
+    cap.release()
+    print(f"\nProcessed {len(results)} frames. Vision pipeline working correctly.")
 
 if __name__ == "__main__":
-    test_vision()
+    main()

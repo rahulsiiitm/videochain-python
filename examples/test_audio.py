@@ -1,55 +1,56 @@
+"""
+examples/test_audio.py
+------------------------
+Tests the Adaptive AudioLoader independently.
+"""
+
 import os
-import sys
-
-# --- FORCED FFMPEG PATH INJECTION ---
-ffmpeg_bin = r"C:\Users\Rahul Sharma\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin"
-
-if ffmpeg_bin not in os.environ["PATH"]:
-    os.environ["PATH"] += os.pathsep + ffmpeg_bin
-    print(f"🛠️ System path updated with FFmpeg: {ffmpeg_bin}")
-    
-# ------------------------------------
+import numpy as np
+import librosa
+import whisper
 from vidchain.loaders.audio_loader import AudioLoader
-from vidchain.processors.audio_model import AudioProcessor
+from vidchain.processor import VideoProcessor
 
 def main():
-    # 1. Configuration
-    VIDEO_FILE = "sample.mp4"  # Ensure this file exists in your root folder!
-    
+    VIDEO_FILE = "sample.mp4"
+
     if not os.path.exists(VIDEO_FILE):
-        print(f"❌ Error: {VIDEO_FILE} not found in the root directory.")
-        print("Please place a small .mp4 file here and rename it to 'sample.mp4'.")
+        print(f"Error: {VIDEO_FILE} not found.")
         return
 
-    # 2. Initialize components
-    # Using 'tiny' for the first test as it's lightning fast
+    print("=== Adaptive Audio Pipeline Test ===\n")
+
+    # Extract WAV
+    processor = VideoProcessor.__new__(VideoProcessor)
+    processor.video_path = VIDEO_FILE
+    processor._errors = []
+    wav_path = processor._extract_wav()
+    print(f"WAV extracted: {wav_path}")
+
+    # Load audio signal
+    y_audio, sr = librosa.load(wav_path, sr=16000)
+    print(f"Audio loaded: {len(y_audio)/sr:.1f}s at {sr}Hz")
+
+    # Transcribe
+    print("\nTranscribing with Whisper...")
+    model = whisper.load_model("base")
+    result = model.transcribe(wav_path, fp16=False)
+    raw_segments = result.get("segments", [])
+    print(f"Raw segments: {len(raw_segments)}")
+
+    # Adaptive filter
     loader = AudioLoader()
-    processor = AudioProcessor(model_size="tiny")
+    output = loader.process_segments(raw_segments, y_audio, verbose=True)
 
-    print("🚀 Starting Audio Pipeline Test...")
-    print("-" * 30)
+    print("\n--- Clean Segments ---")
+    for seg in output["segments"]:
+        print(f"  [{seg['start']}s - {seg['end']}s] (RMS: {seg['energy']}) {seg['text']}")
 
-    try:
-        # Step A: Extract Audio
-        audio_path = loader.extract_audio(VIDEO_FILE)
-        print(f"✅ Audio extracted to: {audio_path}")
+    print(f"\n--- Acoustic Anomalies ---")
+    for a in output["anomalies"]:
+        print(f"  [{a['time']}s] {a['type']} (energy: {a['energy']})")
 
-        # Step B: Transcribe
-        segments = processor.transcribe(audio_path)
-
-        # 3. Display Results (The "Research Proof")
-        print("\n--- 🎤 Transcription Results ---")
-        for i, segment in enumerate(segments[:10]):  # Show first 10 segments
-            print(f"[{segment['start']:>5}s - {segment['end']:>5}s] | {segment['text']}")
-        
-        if len(segments) > 10:
-            print(f"... and {len(segments) - 10} more segments.")
-            
-        print("-" * 30)
-        print("🎉 SUCCESS: Audio-Temporal indexing is functional!")
-
-    except Exception as e:
-        print(f"❌ Pipeline failed: {str(e)}")
+    print(f"\nStats: {output['stats']}")
 
 if __name__ == "__main__":
     main()

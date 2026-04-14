@@ -7,7 +7,7 @@
 
 ## Overview
 
-VidChain v0.3.0 is a lightweight, modular framework that combines computer vision, OCR, speech recognition, emotion analysis, and LLM reasoning into a unified **late-fusion pipeline**. Designed to run on consumer-grade GPUs (tested on NVIDIA RTX 3050 4GB), it makes on-device video intelligence practical without cloud dependency.
+VidChain v0.2.0 is a lightweight, modular framework that combines computer vision, OCR, speech recognition, emotion analysis, and LLM reasoning into a unified **late-fusion pipeline**. Designed to run on consumer-grade GPUs (tested on NVIDIA RTX 3050 4GB), it makes on-device video intelligence practical without cloud dependency.
 
 At the heart is **B.A.B.U.R.A.O.** (*Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation*) — a conversational AI copilot that translates raw sensor logs into human-readable narratives using abductive reasoning.
 
@@ -29,22 +29,22 @@ Video → WAV Extraction → Whisper ASR → Frame Loop →
 
 ## Key Capabilities
 
-### Dual-Brain Vision Engine
+### 🧠 Dual-Brain Vision Engine
 - **YOLO (Nouns):** Detects objects with bounding boxes — `"1 person, 1 laptop"`
 - **MobileNetV3 (Verbs):** Classifies scene intent — `NORMAL / SUSPICIOUS / VIOLENCE / EMERGENCY`
 
-### Context-Aware OCR
+### 🔤 Context-Aware OCR
 EasyOCR runs only when YOLO detects readable surfaces (laptop, monitor, whiteboard) — saves compute while capturing ground-truth text.
 
 ### 😶 Threaded Emotion Analysis
 DeepFace runs on CPU in a background thread so it never competes with YOLO/MobileNet for VRAM.
 
-### Temporal Tracking
+### 📡 Temporal Tracking
 - **Object Persistence:** IoU tracker assigns persistent IDs across frames (`person #1 present 12s, moving left`)
 - **Camera Motion:** Lucas-Kanade optical flow detects pan, tilt, zoom, static
 - **Scene Cut Detection:** HSV histogram correlation resets trackers on hard cuts
 
-### B.A.B.U.R.A.O. RAG Engine
+### 🗣️ B.A.B.U.R.A.O. RAG Engine
 - **BGE embedder** (`BAAI/bge-base-en-v1.5`) for domain-specific retrieval
 - **Cross-encoder reranker** for precision before LLM call
 - **Intent routing** — distinguishes video search from conversational follow-ups
@@ -151,6 +151,7 @@ Each fused timeline entry contains all modalities at that moment:
 | Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
 | Vector Store | ChromaDB (persistent) |
 | LLM Routing | LiteLLM (`gemini-2.5-flash` default, Ollama supported) |
+| Scene Understanding | CLIP (`openai/clip-vit-base-patch32`) |
 | GPU Runtime | CUDA 12.1 (4GB+ VRAM, RTX 30-series tested) |
 
 ---
@@ -178,10 +179,13 @@ vc.purge_storage()
 
 ## Roadmap
 
+- [x] **CLIP scene understanding** — zero-shot environment classification (v0.3.0)
+- [x] **Adaptive audio filtering** — energy gating, anomaly detection, segment merging (v0.3.0)
+- [x] **Multi-video scoped queries** — `vc.ask(query, video_id="cam1")` (v0.3.0)
+- [x] **Graceful degradation** — every engine fails independently (v0.3.0)
 - [ ] **Real-time streaming** — live camera ingestion with low-latency indexing
 - [ ] **Cross-video subject tracking** — link the same person across multiple camera feeds
-- [ ] **CLIP scene understanding** — environment classification (`office`, `kitchen`, `street`)
-- [ ] **Export to JSON/CSV** — structured timeline export for downstream analysis
+- [ ] **Export to CSV** — structured timeline export for downstream analysis
 
 ---
 

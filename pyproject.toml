@@ -1,85 +1,145 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "VidChain"
 version = "0.3.0"
-description = "A Lightweight Video RAG Framework for Multimodal Reasoning"
+description = "Edge-optimized multimodal RAG framework for video understanding"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Rahul Sharma", email = "rahulsharma.hps@gmail.com" }]
-license = "MIT"
-license-files = ["LICENSE"]
-keywords = ["video-rag", "multimodal", "ai", "computer-vision", "whisper", "ollama", "yolo"]
-
+license = { text = "MIT" }
+keywords = [
+    "video-rag", "multimodal", "ai", "computer-vision",
+    "whisper", "yolo", "ollama", "surveillance", "nlp"
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
+# ── Core dependencies ─────────────────────────────────────────────────────
+# NOTE: torch/torchvision/torchaudio are intentionally unpinned.
+# Users should install the CUDA variant manually:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 dependencies = [
-    # ── Core Vision ──────────────────────────────────────────
-    "opencv-python",
-    "ultralytics",              # YOLO object detection
-    "torch",                    # Unpinned: let users install CUDA variant
-    "torchvision",
-    "torchaudio",
-    "pillow<12.0",              # Pinned: MoviePy incompatibility above 12
+    # Vision
+    "opencv-python>=4.8.0",
+    "ultralytics>=8.0.0",
+    "torch>=2.1.0",
+    "torchvision>=0.16.0",
+    "torchaudio>=2.1.0",
+    "pillow>=9.0.0,<12.0.0",    # <12 required by moviepy
 
-    # ── Audio ─────────────────────────────────────────────────
-    "openai-whisper",           # Speech transcription
-    "moviepy",                  # Video/audio I/O
-    "imageio-ffmpeg",           # Bundled FFmpeg (no system install needed)
-    "librosa",                  # Audio energy analysis
-    "soundfile",                # Fast WAV loading (replaces audioread)
+    # Audio
+    "openai-whisper>=20231117",
+    "moviepy>=2.0.0",
+    "imageio-ffmpeg>=0.4.9",    # bundled FFmpeg — no system install needed
+    "librosa>=0.10.0",
+    "soundfile>=0.12.0",        # fast WAV I/O replacing deprecated audioread
 
-    # ── OCR ───────────────────────────────────────────────────
-    "easyocr",                  # Scene text extraction
+    # OCR
+    "easyocr>=1.7.0",
 
-    # ── Emotion ───────────────────────────────────────────────
-    "deepface",                 # Facial emotion analysis
-    "tf-keras",                 # Required by deepface with TF 2.x
+    # Emotion
+    "deepface>=0.0.90",
+    "tf-keras>=2.16.0",         # required by deepface with TensorFlow 2.x
 
-    # ── RAG & Vector Store ────────────────────────────────────
-    "sentence-transformers",    # BGE embedder + CrossEncoder reranker
-    "chromadb",                 # Persistent vector database
-    "faiss-cpu",                # Fallback FAISS index
+    # RAG & Vector Store
+    "sentence-transformers>=2.7.0",
+    "chromadb>=0.5.0",
+    "faiss-cpu>=1.7.4",
 
-    # ── LLM Routing ───────────────────────────────────────────
-    "litellm",                  # Unified LLM API (Gemini, Ollama, OpenAI)
-    "google-generativeai",      # Gemini backend
-    "python-dotenv",            # .env API key loading
+    # LLM Routing
+    "litellm>=1.30.0",
+    "google-generativeai>=0.5.0",
+    "python-dotenv>=1.0.0",
 
-    # ── Utilities ─────────────────────────────────────────────
-    "numpy",
-    "tqdm",
+    # Utilities
+    "numpy>=1.24.0",
+    "tqdm>=4.65.0",
 ]
 
+# ── Optional extras ───────────────────────────────────────────────────────
 [project.optional-dependencies]
-# Install with: pip install vidchain[clip]
+
+# Scene understanding via CLIP (recommended, ~400MB download)
 clip = [
-    "transformers",             # CLIP scene understanding (optional enrichment)
+    "transformers>=4.40.0",
 ]
 
+# Full install: pip install vidchain[clip]
+full = [
+    "transformers>=4.40.0",
+]
+
+# Development tools
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+]
+
+# ── CLI entry points ───────────────────────────────────────────────────────
 [project.scripts]
 vidchain-analyze = "vidchain.cli:main"
-vidchain-train = "scripts.train_vision:main"
+vidchain-train   = "scripts.train_vision:main"
 
+# ── Project URLs ───────────────────────────────────────────────────────────
 [project.urls]
-"Homepage" = "https://github.com/rahulsiiitm/videochain-python"
-"Bug Tracker" = "https://github.com/rahulsiiitm/videochain-python/issues"
+"Homepage"     = "https://github.com/rahulsiiitm/videochain-python"
+"Bug Tracker"  = "https://github.com/rahulsiiitm/videochain-python/issues"
+"Changelog"    = "https://github.com/rahulsiiitm/videochain-python/blob/main/CHANGELOG.md"
 
+# ── Package discovery ──────────────────────────────────────────────────────
 [tool.setuptools.packages.find]
-where = ["."]
+where   = ["."]
 include = ["vidchain*"]
+exclude = ["tests*", "examples*", "scripts*"]
 
 [tool.setuptools.package-data]
-vidchain = ["py.typed"]
+vidchain = [
+    "py.typed",          # PEP 561 marker — signals this package has type hints
+    "models/classes.txt",
+]
 
-# UV: CUDA-accelerated PyTorch index
+# ── UV: CUDA PyTorch index ─────────────────────────────────────────────────
 [[tool.uv.index]]
 url = "https://download.pytorch.org/whl/cu121"
+
+# ── Ruff linter config ────────────────────────────────────────────────────
+[tool.ruff]
+line-length    = 100
+target-version = "py311"
+select         = ["E", "F", "W", "I"]
+ignore         = ["E501"]   # line too long — handled by black
+
+# ── Black formatter config ────────────────────────────────────────────────
+[tool.black]
+line-length    = 100
+target-version = ["py311"]
+
+# ── Pytest config ─────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths    = ["tests"]
+python_files = ["test_*.py"]
+addopts      = "-v --tb=short"
+
+# ── Mypy config ───────────────────────────────────────────────────────────
+[tool.mypy]
+python_version         = "3.11"
+ignore_missing_imports = true
+warn_return_any        = false
