@@ -1,286 +1,384 @@
 {
     "metadata": {
-        "total_frames_analyzed": 21,
-        "audio_segments": 3,
-        "ocr_events": 2,
-        "total_timeline_entries": 21
+        "video_id": "638ef212",
+        "source": "sample.mp4",
+        "total_events": 26
     },
     "timeline": [
         {
-            "time": 0.97,
-            "duration": "[0.97s - 2.9s]",
+            "time": 0.3,
+            "scene": null,
             "objects": "1 laptop",
-            "action": "NORMAL | Tracking: laptop #1",
+            "action": "SUSPICIOUS",
             "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
+            "ocr": "ASUS Vivobook",
+            "camera": "static",
+            "tracking": [
                 "laptop #1"
             ],
-            "ocr": "ASUS Vivabook",
-            "audio": "1-Laf\u518d\u5df4"
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
         },
         {
-            "time": 3.87,
-            "duration": "[3.87s - 3.87s]",
-            "objects": "1 laptop, 1 tv",
-            "action": "SUSPICIOUS | Camera: moving | Tracking: laptop #1 (present 2.9s), tv #2",
-            "emotion": null,
-            "camera_motion": "moving",
-            "tracked_subjects": [
-                "laptop #1 (present 2.9s)",
-                "tv #2"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 4.83,
-            "duration": "[4.83s - 4.83s]",
-            "objects": "1 laptop, 1 tv",
-            "action": "SUSPICIOUS | Tracking: laptop #1 (present 3.9s), tv #2",
-            "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
-                "laptop #1 (present 3.9s)",
-                "tv #2"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 5.8,
-            "duration": "[5.8s - 5.8s]",
+            "time": 13.5,
+            "scene": null,
             "objects": "1 laptop",
-            "action": "SUSPICIOUS | Camera: moving | Tracking: laptop #1 (present 4.8s)",
+            "action": "NORMAL",
             "emotion": null,
-            "camera_motion": "moving",
-            "tracked_subjects": [
-                "laptop #1 (present 4.8s)"
-            ],
             "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 6.77,
-            "duration": "[6.77s - 6.77s]",
-            "objects": "1 laptop",
-            "action": "SUSPICIOUS | Tracking: laptop #1 (present 5.8s)",
-            "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
-                "laptop #1 (present 5.8s)"
+            "camera": "zooming in",
+            "tracking": [
+                "laptop #1 (present 13.2s)"
             ],
-            "ocr": "ASUS Vivobook",
-            "audio": "1-Laf\u518d\u5df4"
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
         },
         {
-            "time": 7.73,
-            "duration": "[7.73s - 8.7s]",
-            "objects": "1 laptop",
-            "action": "NORMAL | Tracking: laptop #1 (present 6.8s)",
-            "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
-                "laptop #1 (present 6.8s)"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 9.67,
-            "duration": "[9.67s - 9.67s]",
-            "objects": "1 laptop, 1 tv",
-            "action": "NORMAL | Tracking: laptop #1 (present 8.7s), tv #2 (present 5.8s)",
-            "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
-                "laptop #1 (present 8.7s)",
-                "tv #2 (present 5.8s)"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 10.64,
-            "duration": "[10.64s - 10.64s]",
-            "objects": "1 laptop",
-            "action": "NORMAL | Tracking: laptop #1 (present 9.7s)",
-            "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
-                "laptop #1 (present 9.7s)"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 11.6,
-            "duration": "[11.6s - 11.6s]",
-            "objects": "1 laptop, 1 tv",
-            "action": "NORMAL | Tracking: laptop #1 (present 10.6s), tv #2 (present 7.7s)",
-            "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
-                "laptop #1 (present 10.6s)",
-                "tv #2 (present 7.7s)"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 12.57,
-            "duration": "[12.57s - 12.57s]",
-            "objects": "1 laptop",
-            "action": "SUSPICIOUS | Tracking: laptop #1 (present 11.6s)",
-            "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
-                "laptop #1 (present 11.6s)"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 13.54,
-            "duration": "[13.54s - 13.54s]",
-            "objects": "1 laptop, 1 keyboard",
-            "action": "SUSPICIOUS | Camera: zooming in | Tracking: laptop #1 (present 12.6s), keyboard #3",
-            "emotion": null,
-            "camera_motion": "zooming in",
-            "tracked_subjects": [
-                "laptop #1 (present 12.6s)",
-                "keyboard #3"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 14.5,
-            "duration": "[14.5s - 14.5s]",
-            "objects": "1 chair",
-            "action": "NORMAL | Camera: SCENE CUT DETECTED | Tracking: All previous tracks reset.",
-            "emotion": null,
-            "camera_motion": "SCENE CUT DETECTED",
-            "tracked_subjects": [
-                "All previous tracks reset."
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 15.47,
-            "duration": "[15.47s - 15.47s]",
-            "objects": "no significant objects",
-            "action": "NORMAL | Camera: SCENE CUT DETECTED | Tracking: All previous tracks reset.",
-            "emotion": null,
-            "camera_motion": "SCENE CUT DETECTED",
-            "tracked_subjects": [
-                "All previous tracks reset."
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 16.44,
-            "duration": "[16.44s - 16.44s]",
+            "time": 13.8,
+            "scene": null,
             "objects": "no significant objects",
             "action": "NORMAL",
             "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [],
             "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
+            "camera": "zooming out",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 14.1,
+            "scene": null,
+            "objects": "1 chair",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "chair #2"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 14.4,
+            "scene": null,
+            "objects": "1 chair",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "SCENE CUT DETECTED",
+            "tracking": [
+                "All previous tracks reset."
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 14.7,
+            "scene": null,
+            "objects": "1 chair",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "static",
+            "tracking": [
+                "chair #3"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 15.0,
+            "scene": null,
+            "objects": "1 chair",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "chair #4"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 15.3,
+            "scene": null,
+            "objects": "1 refrigerator",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "SCENE CUT DETECTED",
+            "tracking": [
+                "All previous tracks reset."
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 15.6,
+            "scene": null,
+            "objects": "no significant objects",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "static",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 15.9,
+            "scene": null,
+            "objects": "no significant objects",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 16.2,
+            "scene": null,
+            "objects": "no significant objects",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming in",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 16.5,
+            "scene": null,
+            "objects": "no significant objects",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
         },
         {
             "time": 17.4,
-            "duration": "[17.4s - 17.4s]",
+            "scene": null,
+            "objects": "1 toilet",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "toilet #5"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 17.7,
+            "scene": null,
             "objects": "no significant objects",
-            "action": "NORMAL | Camera: zooming out",
+            "action": "NORMAL",
             "emotion": null,
-            "camera_motion": "zooming out",
-            "tracked_subjects": [],
             "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
+            "camera": "zooming in",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
         },
         {
-            "time": 18.37,
-            "duration": "[18.37s - 18.37s]",
-            "objects": "2 tv",
-            "action": "NORMAL | Camera: zooming out | Tracking: tv #4, tv #5",
-            "emotion": null,
-            "camera_motion": "zooming out",
-            "tracked_subjects": [
-                "tv #4",
-                "tv #5"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 19.34,
-            "duration": "[19.34s - 19.34s]",
-            "objects": "1 tv",
-            "action": "VIOLENCE | Camera: zooming out | Tracking: tv #4, moving right",
-            "emotion": null,
-            "camera_motion": "zooming out",
-            "tracked_subjects": [
-                "tv #4, moving right"
-            ],
-            "ocr": null,
-            "audio": "1-Laf\u518d\u5df4"
-        },
-        {
-            "time": 20.3,
-            "duration": "[20.3s - 20.3s]",
+            "time": 18.3,
+            "scene": null,
             "objects": "no significant objects",
-            "action": "NORMAL | Camera: zooming out",
+            "action": "NORMAL",
             "emotion": null,
-            "camera_motion": "zooming out",
-            "tracked_subjects": [],
             "ocr": null,
-            "audio": "4-3"
+            "camera": "zooming out",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.3
         },
         {
-            "time": 21.27,
-            "duration": "[21.27s - 21.27s]",
+            "time": 18.9,
+            "scene": null,
             "objects": "no significant objects",
-            "action": "NORMAL | Camera: SCENE CUT DETECTED | Tracking: All previous tracks reset.",
+            "action": "NORMAL",
             "emotion": null,
-            "camera_motion": "SCENE CUT DETECTED",
-            "tracked_subjects": [
-                "All previous tracks reset."
-            ],
             "ocr": null,
-            "audio": "8-4"
+            "camera": "zooming in",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
         },
         {
-            "time": 22.24,
-            "duration": "[22.24s - 22.24s]",
-            "objects": "1 person, 1 book",
-            "action": "VIOLENCE | Tracking: person #6, book #7",
+            "time": 19.2,
+            "scene": null,
+            "objects": "no significant objects",
+            "action": "NORMAL",
             "emotion": null,
-            "camera_motion": "static",
-            "tracked_subjects": [
-                "person #6",
-                "book #7"
-            ],
             "ocr": null,
-            "audio": "8-4"
+            "camera": "tilting down",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
         },
         {
-            "time": 23.2,
-            "duration": "[23.2s - 23.2s]",
-            "objects": "1 person, 1 laptop, 1 oven",
-            "action": "NORMAL | Camera: zooming out | Tracking: person #6, moving up, laptop #8, oven #9",
+            "time": 19.5,
+            "scene": null,
+            "objects": "1 oven",
+            "action": "NORMAL",
             "emotion": null,
-            "camera_motion": "zooming out",
-            "tracked_subjects": [
-                "person #6, moving up",
-                "laptop #8",
-                "oven #9"
-            ],
             "ocr": null,
-            "audio": "8-4"
+            "camera": "zooming out",
+            "tracking": [
+                "oven #6"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 20.4,
+            "scene": null,
+            "objects": "1 suitcase",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "suitcase #7"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 20.7,
+            "scene": null,
+            "objects": "1 fork",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "fork #8"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 21.0,
+            "scene": null,
+            "objects": "no significant objects",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.6
+        },
+        {
+            "time": 21.9,
+            "scene": null,
+            "objects": "2 book",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "book #9",
+                "book #10"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 22.2,
+            "scene": null,
+            "objects": "1 person, 2 laptop, 1 tv",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "person #11",
+                "laptop #12, moving up",
+                "laptop #12, moving up",
+                "tv #13"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 22.5,
+            "scene": null,
+            "objects": "1 person",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "person #11, moving right and moving up"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 23.4,
+            "scene": null,
+            "objects": "1 person, 1 oven",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "zooming out",
+            "tracking": [
+                "person #11 (present 1.2s), moving up",
+                "oven #6 (present 3.9s), moving right"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
+        },
+        {
+            "time": 23.7,
+            "scene": null,
+            "objects": "1 oven",
+            "action": "NORMAL",
+            "emotion": null,
+            "ocr": null,
+            "camera": "tilting up",
+            "tracking": [
+                "oven #6 (present 4.2s), moving right and moving up"
+            ],
+            "audio": "1.5kg de bambi 2.5kg de bambi 2.5kg de bambi 2.5kg de bambi.",
+            "audio_anomaly": "NORMAL",
+            "duration": 0.0
         }
     ]
 }

@@ -4,19 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "VidChain"
-version = "0.2.0"
+version = "0.3.0"
 description = "A Lightweight Video RAG Framework for Multimodal Reasoning"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Rahul Sharma", email = "rahulsharma.hps@gmail.com" }]
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["video-rag", "multimodal", "ai", "computer-vision", "whisper", "ollama", "yolo"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
