@@ -17,10 +17,9 @@ from vidchain.vectorstores.graph import TemporalKnowledgeGraph
 
 
 class VidChain:
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-
+    def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         self.config = {
-            "llm_provider":       "gemini/gemini-2.5-flash",
+            "llm_provider":       "ollama/llama3",
             "embedding_provider": "BAAI/bge-base-en-v1.5",
             "db_path":            None,   # None = ephemeral; path = persistent
             "collection_name":    "video_index",
@@ -30,6 +29,10 @@ class VidChain:
         }
         if config:
             self.config.update(config)
+        
+        # Merge keyword arguments into config
+        if kwargs:
+            self.config.update(kwargs)
 
         # Persistence: if db_path is provided, persist to disk
         db_path = self.config.get("db_path")
