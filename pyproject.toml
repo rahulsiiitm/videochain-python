@@ -63,6 +63,8 @@ dependencies = [
     "google-generativeai>=0.5.0",
     "python-dotenv>=1.0.0",
     "ollama>=0.1.0",
+    "customtkinter>=5.2.2",
+    "requests>=2.31.0",
 
     # Utilities
     "numpy>=1.24.0",
@@ -100,6 +102,7 @@ dev = [
 vidchain-analyze = "vidchain.cli:main"
 vidchain-train   = "scripts.train_vision:main"
 vidchain-serve   = "vidchain.serve:main_cli"
+vidchain-studio  = "vidchain.ui.desktop:main_app"
 
 # ── Project URLs ───────────────────────────────────────────────────────────
 [project.urls]

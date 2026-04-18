@@ -48,6 +48,7 @@ class VideoChain:
                         "audio_path": audio_path,
                         "current_frame": frame,
                         "current_time": current_time,
+                        "time": current_time,  # Normalized key for RAG compatibility
                         "frame_idx": frame_idx
                     }
                     

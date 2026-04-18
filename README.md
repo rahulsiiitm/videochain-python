@@ -1,5 +1,5 @@
-# VidChain: Video Intelligence RAG Framework
-> Edge-optimized multimodal RAG framework for video understanding — transforms raw footage into a structured, queryable knowledge base.
+# VidChain: The "LangChain for Videos"
+> Edge-optimized, local-first multimodal RAG framework for video intelligence — compose modular nodes into custom pipelines, deploy as a microservice, or query with a conversational AI.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-beta-orange) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
 
@@ -7,48 +7,60 @@
 
 ## Overview
 
-VidChain v0.2.0 is a lightweight, modular framework that combines computer vision, OCR, speech recognition, emotion analysis, and LLM reasoning into a unified **late-fusion pipeline**. Designed to run on consumer-grade GPUs (tested on NVIDIA RTX 3050 4GB), it makes on-device video intelligence practical without cloud dependency.
+VidChain v0.5.0 is a modular, composable framework for on-device multimodal video understanding. Inspired by LangChain's node-based design, it lets developers snap together processing components — Vision, Audio, OCR, VLM — into custom pipelines that run entirely on your local GPU.
 
 At the heart is **B.A.B.U.R.A.O.** (*Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation*) — a conversational AI copilot that translates raw sensor logs into human-readable narratives using abductive reasoning.
 
 ---
 
-## Core Pipeline
+## What's New in v0.5.0 🚀
 
+### Composable Node Architecture
+VidChain now works like LangChain — build your own pipelines by snapping together modular nodes:
+
+```python
+from vidchain import VidChain
+from vidchain.pipeline import VideoChain
+from vidchain.nodes import YoloNode, WhisperNode, OcrNode, AdaptiveKeyframeNode
+from vidchain.nodes import LlavaNode  # New: Vision Language Model node
+
+# Build a fully custom pipeline
+my_chain = VideoChain(nodes=[
+    AdaptiveKeyframeNode(change_threshold=5.0),  # Skip identical frames
+    LlavaNode(model_name="moondream"),           # Deep scene captioning
+    WhisperNode(),                               # Speech transcription
+    OcrNode(),                                   # Screen text extraction
+])
+
+vc = VidChain()
+video_id = vc.ingest("surveillance.mp4", chain=my_chain)
+print(vc.ask("Was anyone at the desk?"))
 ```
-Video → WAV Extraction → Whisper ASR → Frame Loop →
-  ├── YOLO (Objects)
-  ├── MobileNetV3 (Action)
-  ├── EasyOCR (Screen Text)
-  ├── DeepFace (Emotion, threaded)
-  └── TemporalTracker (Object Persistence + Camera Motion)
-→ Semantic Fusion → ChromaDB → B.A.B.U.R.A.O. RAG
+
+### VLM Vision Node (`LlavaNode`)
+Replace blind YOLO object tags with rich, contextual scene descriptions powered by a local Vision Language Model:
+
+- **Before (YOLO):** `"1 person, 1 laptop"`
+- **After (LlavaNode):** `"A person is typing Python code in VS Code. A terminal window is open showing a running script. The screen displays file explorer with project files visible."`
+
+Supports any Ollama-compatible VLM model (recommended: `moondream` for speed, `llava:7b` for detail).
+
+### Adaptive Keyframe Firewall
+The `AdaptiveKeyframeNode` acts as a compute firewall. It computes a Gaussian-blurred frame delta to detect visual change — identical frames are instantly rejected before reaching heavy models like YOLO or LLaVA, dramatically reducing GPU load.
+
+### FastAPI Edge Server (`vidchain-serve`)
+Deploy VidChain as a local microservice accessible from any app or language:
+
+```bash
+# Terminal 1: Start the Edge Server
+vidchain-serve
+
+# Terminal 2: Ingest + Query via REST API
+Invoke-RestMethod -Uri "http://localhost:8000/api/ingest" -Method Post -ContentType "application/json" -Body '{"video_source": "sample.mp4"}'
+Invoke-RestMethod -Uri "http://localhost:8000/api/query" -Method Post -ContentType "application/json" -Body '{"query": "Summarize the video"}'
 ```
 
----
-
-## Key Capabilities
-
-### 🧠 Dual-Brain Vision Engine
-- **YOLO (Nouns):** Detects objects with bounding boxes — `"1 person, 1 laptop"`
-- **MobileNetV3 (Verbs):** Classifies scene intent — `NORMAL / SUSPICIOUS / VIOLENCE / EMERGENCY`
-
-### 🔤 Context-Aware OCR
-EasyOCR runs only when YOLO detects readable surfaces (laptop, monitor, whiteboard) — saves compute while capturing ground-truth text.
-
-### 😶 Threaded Emotion Analysis
-DeepFace runs on CPU in a background thread so it never competes with YOLO/MobileNet for VRAM.
-
-### 📡 Temporal Tracking
-- **Object Persistence:** IoU tracker assigns persistent IDs across frames (`person #1 present 12s, moving left`)
-- **Camera Motion:** Lucas-Kanade optical flow detects pan, tilt, zoom, static
-- **Scene Cut Detection:** HSV histogram correlation resets trackers on hard cuts
-
-### 🗣️ B.A.B.U.R.A.O. RAG Engine
-- **BGE embedder** (`BAAI/bge-base-en-v1.5`) for domain-specific retrieval
-- **Cross-encoder reranker** for precision before LLM call
-- **Intent routing** — distinguishes video search from conversational follow-ups
-- **Chat memory** — maintains context across multi-turn conversations
+Interactive Swagger UI available at **http://localhost:8000/docs**
 
 ---
 
@@ -59,6 +71,11 @@ pip install vidchain
 
 # GPU-accelerated PyTorch (recommended)
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 --force-reinstall
+
+# For LlavaNode (VLM support)
+# Install Ollama: https://ollama.com
+ollama pull moondream   # Fast edge VLM (~1.7GB, fits 4GB VRAM)
+ollama pull llava       # High quality VLM (~4.7GB, requires 8GB+ VRAM)
 ```
 
 > Run `python scripts/check_gpu.py` to verify CUDA is detected.
@@ -74,11 +91,11 @@ from vidchain import VidChain
 
 # Initialize
 vc = VidChain(config={
-    "llm_provider": "gemini/gemini-2.5-flash",  # or "ollama/llama3" for offline
-    "db_path": "./vidchain_storage"              # omit for in-memory (no persistence)
+    "llm_provider": "ollama/llama3",   # Fully offline
+    "db_path": "./vidchain_storage"
 })
 
-# Ingest a video
+# Ingest a video (uses legacy YOLO pipeline by default)
 video_id = vc.ingest("surveillance.mp4")
 
 # Query
@@ -89,6 +106,28 @@ print(vc.ask("was anyone acting suspiciously?"))
 vc.ingest("cam1.mp4", video_id="cam1")
 vc.ingest("cam2.mp4", video_id="cam2")
 print(vc.ask("did anyone enter the room?", video_id="cam1"))
+```
+
+### Composable Node Pipeline
+
+```python
+from vidchain import VidChain
+from vidchain.pipeline import VideoChain
+from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode, WhisperNode
+
+# Build a VLM-powered pipeline with adaptive keyframing
+chain = VideoChain(
+    nodes=[
+        AdaptiveKeyframeNode(change_threshold=5.0),
+        LlavaNode(model_name="moondream"),
+        WhisperNode(),
+    ],
+    frame_skip=15  # 2 FPS extraction
+)
+
+vc = VidChain()
+vc.ingest("video.mp4", chain=chain)
+print(vc.ask("describe what is on the screen"))
 ```
 
 ### CLI
@@ -103,36 +142,38 @@ vidchain-analyze video.mp4 --query "what happened at the desk?"
 # Offline with Ollama
 vidchain-analyze video.mp4 --llm ollama/llama3
 
-# Multilingual OCR
-vidchain-analyze video.mp4 --ocr-lang en fr
-```
+# Start Edge API Server
+vidchain-serve
 
-### Train Custom Action Engine
-
-```bash
-# Place labeled images in data/train/<class>/
+# Train Custom Action Engine
 vidchain-train
 ```
 
 ---
 
-## Knowledge Base Schema
+## Available Nodes
 
-Each fused timeline entry contains all modalities at that moment:
+| Node | Description |
+|---|---|
+| `YoloNode` | YOLOv8 object detection — outputs class labels and counts |
+| `WhisperNode` | Whisper speech-to-text transcription |
+| `OcrNode` | EasyOCR screen text extraction (triggered on readable surfaces) |
+| `ActionNode` | MobileNetV3 action intent classification (NORMAL/SUSPICIOUS/VIOLENCE) |
+| `LlavaNode` | Ollama VLM node — deep contextual scene captioning (NEW in v0.5.0) |
+| `AdaptiveKeyframeNode` | Frame-delta firewall — skips visually identical frames (NEW in v0.5.0) |
 
-```json
-{
-    "time": 5.8,
-    "duration": 3.2,
-    "objects": "1 person, 1 laptop",
-    "action": "SUSPICIOUS",
-    "emotion": "visibly agitated",
-    "ocr": "ASUS Vivobook",
-    "audio": "I told you this would happen",
-    "camera": "static",
-    "tracking": ["person #1 (present 4.8s), moving left", "laptop #2 (present 5.8s)"],
-    "audio_anomaly": "NORMAL"
-}
+---
+
+## Core Pipeline (Legacy)
+
+```
+Video → WAV Extraction → Whisper ASR → Frame Loop →
+  ├── YOLO (Objects)
+  ├── MobileNetV3 (Action)
+  ├── EasyOCR (Screen Text)
+  ├── DeepFace (Emotion, threaded)
+  └── TemporalTracker (Object Persistence + Camera Motion)
+→ Semantic Fusion → ChromaDB → B.A.B.U.R.A.O. RAG
 ```
 
 ---
@@ -142,6 +183,7 @@ Each fused timeline entry contains all modalities at that moment:
 | Component | Technology |
 |---|---|
 | Object Detection | YOLOv8s (Ultralytics) |
+| VLM Vision | LLaVA / Moondream (via Ollama) — NEW |
 | Action Classification | MobileNetV3 (custom fine-tuned) |
 | Speech Recognition | OpenAI Whisper (base) |
 | OCR | EasyOCR |
@@ -150,8 +192,8 @@ Each fused timeline entry contains all modalities at that moment:
 | Embedder | `BAAI/bge-base-en-v1.5` |
 | Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
 | Vector Store | ChromaDB (persistent) |
-| LLM Routing | LiteLLM (`gemini-2.5-flash` default, Ollama supported) |
-| Scene Understanding | CLIP (`openai/clip-vit-base-patch32`) |
+| LLM Routing | LiteLLM (`ollama/llama3` default, Gemini supported) |
+| Edge API | FastAPI + Uvicorn — NEW |
 | GPU Runtime | CUDA 12.1 (4GB+ VRAM, RTX 30-series tested) |
 
 ---
@@ -179,13 +221,17 @@ vc.purge_storage()
 
 ## Roadmap
 
+- [x] **Dual-Brain Vision Engine** — YOLO + MobileNetV3 (v0.2.0)
 - [x] **CLIP scene understanding** — zero-shot environment classification (v0.3.0)
-- [x] **Adaptive audio filtering** — energy gating, anomaly detection, segment merging (v0.3.0)
-- [x] **Multi-video scoped queries** — `vc.ask(query, video_id="cam1")` (v0.3.0)
-- [x] **Graceful degradation** — every engine fails independently (v0.3.0)
-- [ ] **Real-time streaming** — live camera ingestion with low-latency indexing
-- [ ] **Cross-video subject tracking** — link the same person across multiple camera feeds
-- [ ] **Export to CSV** — structured timeline export for downstream analysis
+- [x] **Adaptive audio filtering** — energy gating, anomaly detection (v0.3.0)
+- [x] **Multi-video scoped queries** (v0.3.0)
+- [x] **Composable Node Architecture** — LangChain-style pipelines (v0.5.0)
+- [x] **VLM Node** — LLaVA/Moondream contextual captioning (v0.5.0)
+- [x] **Adaptive Keyframe Firewall** — GPU compute optimization (v0.5.0)
+- [x] **FastAPI Edge Microservice** — `vidchain-serve` (v0.5.0)
+- [ ] **GraphRAG** — temporal entity tracking with NetworkX (v0.6.0)
+- [ ] **VidChain Studio** — native desktop application (v0.6.0)
+- [ ] **Real-time streaming** — live camera ingestion
 
 ---
 

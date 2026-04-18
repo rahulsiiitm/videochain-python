@@ -65,7 +65,9 @@ class RAGEngine:
     @staticmethod
     def _serialize_entry(e: dict) -> str:
         """Standardizes how video events look to the LLM."""
-        parts = [f"[{e.get('time', e.get('timestamp', 0))}s]"]
+        # Support both legacy ('time'/'timestamp') and new pipeline ('current_time') keys
+        ts = e.get('time') or e.get('current_time') or e.get('timestamp', 0)
+        parts = [f"[{ts}s]"]
         
         # NEW: Inject CLIP Scene Environment context
         if e.get("scene"): parts.append(f"Environment: {e['scene']}")

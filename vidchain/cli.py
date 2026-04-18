@@ -32,6 +32,12 @@ def main():
     parser.add_argument("--llm", default="gemini/gemini-2.5-flash", help="LLM backend")
     parser.add_argument("--ocr-lang", nargs="+", default=["en"], help="OCR languages")
     parser.add_argument("--query", help="Single-shot query", default=None)
+    parser.add_argument(
+        "--vlm",
+        default=None,
+        metavar="MODEL",
+        help="Use VLM-powered pipeline instead of YOLO. Specify Ollama model name (e.g. moondream, llava)"
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.video_path):
@@ -61,15 +67,29 @@ def main():
         sys.stdout.write(f'\r[SYSTEM] Scanning: |{bar}| {percent}% Complete')
         sys.stdout.flush()
 
+    # ── Build pipeline chain (optional) ───────────────────
+    chain = None
+    if args.vlm:
+        from vidchain.pipeline import VideoChain
+        from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode
+        print(f"[INFO] VLM Mode: Building VideoChain with AdaptiveKeyframing + {args.vlm}...")
+        chain = VideoChain(
+            nodes=[
+                AdaptiveKeyframeNode(change_threshold=5.0),
+                LlavaNode(model_name=args.vlm),
+            ],
+            frame_skip=15  # 2 FPS
+        )
+    
     # ── Extraction & Ingestion ──────────────────────────────
     print("\n[INFO] Initializing Multimodal Extraction & Semantic Fusion...")
     
     try:
-        # We no longer pass engines here—VidChain handles lazy loading internally.
         video_id = vc.ingest(
             video_source=args.video_path,
             ocr_languages=args.ocr_lang,
-            on_progress=progress_callback
+            on_progress=progress_callback,
+            chain=chain
         )
         print(f"\n\n[SUCCESS] Ingestion Complete. Video ID: {video_id}")
     except Exception as e:
