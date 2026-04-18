@@ -7,9 +7,11 @@
 
 ## Overview
 
-VidChain v0.5.0 is a modular, composable framework for on-device multimodal video understanding. Inspired by LangChain's node-based design, it lets developers snap together processing components — Vision, Audio, OCR, VLM — into custom pipelines that run entirely on your local GPU.
+VidChain v0.6.0 is a modular, composable framework for on-device multimodal video understanding. Inspired by LangChain's node-based design, it lets developers snap together processing components — Vision Language Models, Audio, OCR — into custom pipelines running entirely on your local GPU.
 
-At the heart is **B.A.B.U.R.A.O.** (*Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation*) — a conversational AI copilot that translates raw sensor logs into human-readable narratives using abductive reasoning.
+**VLM-First by design** — Moondream runs by default, delivering rich contextual descriptions (*"a red Honda Civic with a dented bumper"*) instead of blind YOLO tags (*"car"*). Use `--fast` for legacy YOLO when speed matters on long videos.
+
+At the heart is **B.A.B.U.R.A.O.** (*Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation*) — a conversational AI copilot that combines ChromaDB vector search with a **Temporal Knowledge Graph** (GraphRAG) to answer multi-hop temporal questions about video content.
 
 ---
 
@@ -133,17 +135,23 @@ print(vc.ask("describe what is on the screen"))
 ### CLI
 
 ```bash
-# Analyze and chat
+# Default: Moondream VLM pipeline (rich descriptions)
 vidchain-analyze video.mp4
 
-# Single-shot query
-vidchain-analyze video.mp4 --query "what happened at the desk?"
+# Single-shot query with VLM
+vidchain-analyze video.mp4 --query "describe the car in detail"
 
-# Offline with Ollama
-vidchain-analyze video.mp4 --llm ollama/llama3
+# Switch VLM model (e.g. LLaVA for higher quality)
+vidchain-analyze video.mp4 --vlm llava --query "what brand is the laptop?"
+
+# Fast mode: Legacy YOLO pipeline (for long videos where speed > detail)
+vidchain-analyze video.mp4 --fast
 
 # Start Edge API Server
 vidchain-serve
+
+# Launch Desktop UI
+vidchain-studio
 
 # Train Custom Action Engine
 vidchain-train
@@ -229,8 +237,9 @@ vc.purge_storage()
 - [x] **VLM Node** — LLaVA/Moondream contextual captioning (v0.5.0)
 - [x] **Adaptive Keyframe Firewall** — GPU compute optimization (v0.5.0)
 - [x] **FastAPI Edge Microservice** — `vidchain-serve` (v0.5.0)
-- [ ] **GraphRAG** — temporal entity tracking with NetworkX (v0.6.0)
-- [ ] **VidChain Studio** — native desktop application (v0.6.0)
+- [x] **VLM-First default pipeline** — Moondream as default, YOLO via `--fast` (v0.6.0)
+- [x] **GraphRAG + Temporal Knowledge Graph** — entity tracking with NetworkX (v0.6.0)
+- [x] **VidChain Studio** — native `CustomTkinter` desktop application (v0.6.0)
 - [ ] **Real-time streaming** — live camera ingestion
 
 ---

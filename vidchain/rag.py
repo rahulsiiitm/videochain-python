@@ -183,9 +183,17 @@ class RAGEngine:
         )
         
         if context_str:
-            return base_prompt + f"\n## RAW SENSOR LOGS (Grounded Context):\n{context_str}"
+            base = base_prompt + f"\n## RAW SENSOR LOGS (Grounded Context):\n{context_str}"
         else:
-            return base_prompt + "\n## LOGS:\nNo video logs available for this query. Reply using conversational memory."
+            base = base_prompt + "\n## LOGS:\nNo video logs available for this query. Reply using conversational memory."
+        return base
+
+    @staticmethod
+    def _inject_graph_context(prompt: str, graph_context: str) -> str:
+        """Append GraphRAG temporal facts to the prompt if available."""
+        if not graph_context:
+            return prompt
+        return prompt + f"\n\n## TEMPORAL KNOWLEDGE GRAPH (Entity Tracking Facts):\n{graph_context}"
         
     # ------------------------------------------------------------------
     # Public Query Interface
@@ -206,8 +214,12 @@ class RAGEngine:
         else:
             print(f"[INFO] Intent: {intent} -> Using Conversational Memory...")
 
-        # 3. LLM Generation
+        # 3. Optionally inject GraphRAG temporal context
+        graph_context = kwargs.get("graph_context", "")
+
+        # 4. LLM Generation
         system_prompt = self._build_system_prompt(context_str)
+        system_prompt = self._inject_graph_context(system_prompt, graph_context)
         
         messages = [{"role": "system", "content": system_prompt}]
         if self.chat_history:

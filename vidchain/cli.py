@@ -22,9 +22,9 @@ def print_hardware_status():
         vram_total = torch.cuda.get_device_properties(0).total_memory / (1024**3)
         allocated = torch.cuda.memory_allocated(0) / (1024 ** 2)
         print(f"[SYSTEM] Hardware Engine: GPU Active ({gpu_name})")
-        print(f"🖥️  [VRAM] Total: {vram_total:.1f} GB | Currently Used: {allocated:.1f} MB")
+        print(f"[VRAM] Total: {vram_total:.1f} GB | Currently Used: {allocated:.1f} MB")
     else:
-        print("[SYSTEM] ⚠️ Hardware Engine: CPU ONLY. (CUDA NOT DETECTED)")
+        print("[SYSTEM] Hardware Engine: CPU ONLY. (CUDA NOT DETECTED)")
 
 def main():
     parser = argparse.ArgumentParser(description="vidchain: Multimodal RAG CLI")
@@ -34,9 +34,14 @@ def main():
     parser.add_argument("--query", help="Single-shot query", default=None)
     parser.add_argument(
         "--vlm",
-        default=None,
+        default="moondream",
         metavar="MODEL",
-        help="Use VLM-powered pipeline instead of YOLO. Specify Ollama model name (e.g. moondream, llava)"
+        help="Ollama VLM model for visual captioning (default: moondream). Use --fast to skip VLM."
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Use legacy YOLO pipeline instead of VLM. Faster for long videos but less descriptive."
     )
     args = parser.parse_args()
 
@@ -44,7 +49,7 @@ def main():
         print(f"[ERROR] Video file not found: {args.video_path}")
         sys.exit(1)
 
-    print(f"\n[INFO] vidchain Analysis — {args.video_path}")
+    print(f"\n[INFO] VidChain Analysis — {args.video_path}")
     print(f"[INFO] LLM: {args.llm} | OCR languages: {args.ocr_lang}")
     print("-" * 50)
 
@@ -67,19 +72,22 @@ def main():
         sys.stdout.write(f'\r[SYSTEM] Scanning: |{bar}| {percent}% Complete')
         sys.stdout.flush()
 
-    # ── Build pipeline chain (optional) ───────────────────
+    # ── Build pipeline chain ──────────────────────────────
     chain = None
-    if args.vlm:
+    if not args.fast:
+        vlm_model = args.vlm  # defaults to "moondream"
         from vidchain.pipeline import VideoChain
         from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode
-        print(f"[INFO] VLM Mode: Building VideoChain with AdaptiveKeyframing + {args.vlm}...")
+        print(f"[INFO] VLM Mode: {vlm_model} + AdaptiveKeyframing (use --fast for YOLO)")
         chain = VideoChain(
             nodes=[
                 AdaptiveKeyframeNode(change_threshold=5.0),
-                LlavaNode(model_name=args.vlm),
+                LlavaNode(model_name=vlm_model),
             ],
             frame_skip=15  # 2 FPS
         )
+    else:
+        print("[INFO] Fast Mode: Legacy YOLO pipeline enabled.")
     
     # ── Extraction & Ingestion ──────────────────────────────
     print("\n[INFO] Initializing Multimodal Extraction & Semantic Fusion...")

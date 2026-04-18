@@ -4,6 +4,27 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [0.6.0] — 2026-04-18
+
+### Added
+- **VidChain Studio** (`vidchain/ui/desktop.py`) — Native `CustomTkinter` desktop application. Launches via `vidchain-studio`. Features live server status indicator, video file browser, pipeline selector (moondream / llava / yolo), ingestion progress bar, and full B.A.B.U.R.A.O. chat interface backed by the FastAPI edge server.
+- **GraphRAG: Temporal Knowledge Graph** (`vidchain/vectorstores/graph.py`) — `TemporalKnowledgeGraph` built automatically on every `vc.ingest()` call using NetworkX. Tracks entity first/last seen timestamps, co-occurrence edges, and OCR text nodes. Graph context is silently injected into every `vc.ask()` call to enable multi-hop temporal reasoning.
+- **`vc.graph_query(entity)`** — Direct structured entity lookup that returns appearance timeline, co-occurrence data, and graph-level summary without touching the LLM.
+- **VLM-First default pipeline** — `vidchain-analyze` now defaults to Moondream (`--vlm moondream`) instead of YOLO. No flags needed for rich visual descriptions.
+- **`--fast` CLI flag** — Explicitly opt-in to the legacy YOLO pipeline for speed on long videos.
+
+### Changed
+- `cli.py`: `--vlm` defaults to `moondream`. `--fast` replaces the old "no VLM" behavior.
+- `client.ask()` now automatically injects `graph_context` from `TemporalKnowledgeGraph` into every RAG query.
+- `client.ingest()` automatically builds the knowledge graph after every ingestion.
+- `rag.py`: Added `_inject_graph_context()` static method to cleanly append graph facts to the system prompt.
+
+### Architecture Impact
+- VidChain is now a fully VLM-first framework. YOLO is a fallback, not the primary engine.
+- Every query to B.A.B.U.R.A.O. is enriched by both ChromaDB semantic search AND structured graph entity facts simultaneously.
+
+---
+
 ## [0.5.0] — 2026-04-18
 
 ### Added

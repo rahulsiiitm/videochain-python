@@ -13,6 +13,7 @@ from vidchain.processor import VideoProcessor
 from vidchain.core.summarizer import VideoSummarizer
 from vidchain.rag import RAGEngine
 from vidchain.vectorstores.chroma import ChromaStore
+from vidchain.vectorstores.graph import TemporalKnowledgeGraph
 
 
 class VidChain:
@@ -52,6 +53,9 @@ class VidChain:
         self.yolo_engine   = None
         self.action_engine = None
         self.scene_engine  = None
+        
+        # GraphRAG knowledge graph (built automatically on every ingest)
+        self.knowledge_graph = TemporalKnowledgeGraph()
 
     # ------------------------------------------------------------------
     # Internal engine management
@@ -119,6 +123,11 @@ class VidChain:
             metadata=fused_timeline
         )
         self.rag_engine.is_ready = True
+        
+        # ── Build GraphRAG Knowledge Graph ────────────────────────────
+        self.knowledge_graph.build_from_timeline(fused_timeline)
+        if self.config["verbose"]:
+            print(f"[VidChain] {self.knowledge_graph.describe()}")
 
         # ── Write knowledge_base.json ─────────────────────────────────
         if self.config.get("save_kb_json", True):
@@ -142,7 +151,21 @@ class VidChain:
         return v_id
 
     def ask(self, query: str, stream: bool = False, **kwargs) -> str:
+        # Auto-inject GraphRAG temporal context if the graph is built
+        if self.knowledge_graph._is_built and "graph_context" not in kwargs:
+            kwargs["graph_context"] = self.knowledge_graph.get_graph_context(query)
         return self.rag_engine.query(query, stream=stream, **kwargs)
+
+    def graph_query(self, entity: str) -> Dict[str, Any]:
+        """Direct knowledge graph lookup for a specific entity."""
+        if not self.knowledge_graph._is_built:
+            return {"error": "Graph not built yet. Run ingest() first."}
+        return {
+            "entity": entity,
+            "timeline": self.knowledge_graph.get_entity_timeline(entity),
+            "all_entities": self.knowledge_graph.get_all_entities(),
+            "graph_summary": self.knowledge_graph.describe()
+        }
 
     def summarize_video(self, video_id: str, depth: str = "concise") -> str:
         docs = self.vector_store.get_video_context(video_id)

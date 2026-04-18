@@ -9,7 +9,7 @@ from vidchain.client import VidChain
 app = FastAPI(
     title="VidChain Edge Server",
     description="Local 'LangChain for Videos' API",
-    version="0.5.0"
+    version="0.6.0"
 )
 
 # Singleton global instance mapped upon startup
