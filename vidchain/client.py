@@ -85,6 +85,7 @@ class VidChain:
         video_source: str,
         video_id: Optional[str] = None,
         on_progress: Optional[Callable[[float], None]] = None,
+        chain: Optional[Any] = None,
         **kwargs
     ) -> str:
         v_id = video_id or str(uuid.uuid4())[:8]
@@ -93,18 +94,23 @@ class VidChain:
             print(f"\n[VidChain] Pipeline Start -> ID: {v_id}")
             print(f"[VidChain] Source: {video_source}")
 
-        self._init_engines()
-        processor = VideoProcessor(video_source, **kwargs)
+        if chain:
+            if self.config["verbose"]:
+                print("[VidChain] Executing Custom VideoChain...")
+            fused_timeline = chain.run(video_source)
+        else:
+            self._init_engines()
+            processor = VideoProcessor(video_source, **kwargs)
 
-        if self.config["verbose"]:
-            print("[VidChain] Executing Multimodal Fusion...")
+            if self.config["verbose"]:
+                print("[VidChain] Executing Legacy Multimodal Fusion...")
 
-        fused_timeline = processor.extract_context(
-            yolo_engine=self.yolo_engine,
-            action_engine=self.action_engine,
-            scene_engine=self.scene_engine,
-            on_progress=on_progress
-        )
+            fused_timeline = processor.extract_context(
+                yolo_engine=self.yolo_engine,
+                action_engine=self.action_engine,
+                scene_engine=self.scene_engine,
+                on_progress=on_progress
+            )
 
         # ── Index into ChromaDB ───────────────────────────────────────
         self.vector_store.insert_video(

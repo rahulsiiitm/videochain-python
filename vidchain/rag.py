@@ -42,8 +42,8 @@ class RAGEngine:
         vector_store: Any = None,
         embedding_model: str = "BAAI/bge-base-en-v1.5",
         reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
-        top_k: int = 15,          
-        rerank_top_k: int = 6,    
+        top_k: int = 40,          
+        rerank_top_k: int = 25,    
         temporal_window: int = 2, 
     ):
         self.model_name = model_name
