@@ -165,7 +165,7 @@ class RAGEngine:
             
             "## CORE DIRECTIVES:\n"
             "- **Zero Fluff:** Do not use conversational filler. Start the analysis immediately.\n"
-            "- **Filter Noise:** The audio/OCR sensors may pick up raw phantom text and Vision might detect false positive objects. Use logic to filter these: if a data point makes NO sense in the scene, IGNORE IT.\n"
+            "- **Trust the Sensors:** Accept the provided logs as ground truth. Even if the video cuts or objects appear discontinuous (e.g., '1 laptop' followed by '1 chair' seconds later), DO NOT ignore them. Synthesize what is there.\n"
             "- **Cross-Modal Deduction:** You MUST combine sensors. If Vision detects '1 laptop' and OCR detects 'ASUS Vivobook', explicitly conclude 'an ASUS Vivobook laptop'. Connect text, objects, and audio together to form unified subjects.\n"
             "- **State Management:** Track the state of objects accurately over time.\n\n"
 
