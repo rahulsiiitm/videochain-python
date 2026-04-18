@@ -84,7 +84,7 @@ def main():
     # ── Single-shot query mode ─────────────────────────────
     if args.query:
         print(f"\n[QUERY] {args.query}")
-        print(f"AI: {vc.ask(args.query)}")
+        print(f"AI: {vc.ask(args.query, video_id=video_id)}")
         return
 
     # ── Interactive chat ───────────────────────────────────
@@ -99,7 +99,7 @@ def main():
                 continue
             
             # vc.ask handles both video search and conversational memory
-            response = vc.ask(user_input)
+            response = vc.ask(user_input, video_id=video_id)
             print(f"AI: {response}")
             
         except KeyboardInterrupt:

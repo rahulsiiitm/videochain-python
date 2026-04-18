@@ -111,15 +111,17 @@ class RAGEngine:
     # Retrieval (Now using ChromaStore)
     # ------------------------------------------------------------------
 
-    def _retrieve(self, question: str) -> str:
+    def _retrieve(self, question: str, video_id: Optional[str] = None) -> str:
         """Retrieves, reranks, and chronologically sorts video events from ChromaDB."""
         if not self.vector_store:
             return ""
 
         # Search ChromaDB
+        where_filter = {"video_id": video_id} if video_id else None
         results = self.vector_store.collection.query(
             query_texts=[question],
             n_results=self.top_k,
+            where=where_filter,
             include=["documents", "metadatas"]
         )
 
@@ -162,26 +164,20 @@ class RAGEngine:
             "high-fidelity narratives. You prioritize evidence over speculation.\n\n"
             
             "## CORE DIRECTIVES:\n"
-            "- **Zero Fluff:** Do not use conversational filler, greetings, or detective-style metaphors. "
-            "Start the analysis or summary immediately.\n"
-            "- **Environmental Anchoring:** Use OCR and Object context to define the setting. "
-            "(e.g., Laptop + Code Editor = Technical Workstation; Wardrobe + Bed = Residential Room).\n"
-            "- **State Management:** Track the state of objects. If an object is introduced in Phase 1 "
-            "and missing in Phase 2, explicitly note the transition.\n\n"
+            "- **Zero Fluff:** Do not use conversational filler. Start the analysis immediately.\n"
+            "- **Filter Noise:** The audio/OCR sensors may pick up raw phantom text and Vision might detect false positive objects. Use logic to filter these: if a data point makes NO sense in the scene, IGNORE IT.\n"
+            "- **Cross-Modal Deduction:** You MUST combine sensors. If Vision detects '1 laptop' and OCR detects 'ASUS Vivobook', explicitly conclude 'an ASUS Vivobook laptop'. Connect text, objects, and audio together to form unified subjects.\n"
+            "- **State Management:** Track the state of objects accurately over time.\n\n"
 
             "## NARRATIVE SYNTHESIS PROTOCOL:\n"
-            "- **Phase Grouping:** Automatically group raw logs into logical 'Acts' or 'Phases' based on "
-            "timestamps and scene cuts. Describe the global objective of each phase.\n"
-            "- **Relation Mapping:** Do not just list objects. Explain their interaction. "
-            "(e.g., 'The subject is interacting with a VS Code environment on an ASUS laptop' "
-            "rather than 'I see a laptop and a person').\n"
-            "- **Long-Form Logic:** For movies or long clips, prioritize the 'Story Arc'. Identify "
-            "introductions, climaxes, and shifts in environment.\n\n"
+            "- **Phase Grouping:** Group raw logs into logical 'Acts' or 'Phases' based on timestamps. Describe the broader objective of each phase.\n"
+            "- **Relation Mapping:** Do not just list disjointed objects. You must explain their interaction and what they mean together (e.g., 'The person is sitting at a desk operating a laptop').\n"
+            "- **Long-Form Logic:** Synthesize a cohesive narrative. Do not just echo bullet points. Tell the forensic story of the video clip.\n\n"
 
             "## OUTPUT STANDARDS:\n"
-            "- Use clinical, objective language (e.g., 'Forensic data indicates...', 'Transition detected at...').\n"
+            "- Use clinical, high-fidelity narrative language.\n"
+            "- Respond with exactly two sections: 'Global Plot Summary' followed by 'Detailed Phase Breakdown'.\n"
             "- If logs are ambiguous, state: 'Sensor data is inconclusive at [Timestamp]'.\n"
-            "- Provide a 'Global Plot Summary' followed by a 'Detailed Phase Breakdown' when asked for a summary.\n"
         )
         
         if context_str:
@@ -193,7 +189,7 @@ class RAGEngine:
     # Public Query Interface
     # ------------------------------------------------------------------
 
-    def query(self, user_question: str, stream: bool = False) -> str:
+    def query(self, user_question: str, stream: bool = False, **kwargs) -> str:
         if is_chitchat(user_question):
             return BABURAO_INTRO
 
@@ -204,7 +200,7 @@ class RAGEngine:
         context_str = ""
         if intent == "VIDEO_SEARCH":
             print(f"[INFO] Intent: {intent} -> Searching Vector Database...")
-            context_str = self._retrieve(user_question)
+            context_str = self._retrieve(user_question, video_id=kwargs.get("video_id"))
         else:
             print(f"[INFO] Intent: {intent} -> Using Conversational Memory...")
 

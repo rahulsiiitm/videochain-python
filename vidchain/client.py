@@ -62,7 +62,7 @@ class VidChain:
             from vidchain.vision import VisionEngine as YoloEngine
             if self.config["verbose"]:
                 print("[VidChain] Initializing YOLO Vision Engine...")
-            self.yolo_engine = YoloEngine(model_path="yolov8s.pt")
+            self.yolo_engine = YoloEngine(model_path="yolov8s.pt", confidence_threshold=0.6)
 
         if self.action_engine is None:
             from vidchain.processors.vision_model import VisionEngine as ActionEngine

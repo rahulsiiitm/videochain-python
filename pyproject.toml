@@ -9,7 +9,6 @@ description = "Edge-optimized multimodal RAG framework for video understanding"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Rahul Sharma", email = "rahulsharma.hps@gmail.com" }]
-license = { text = "MIT" }
 keywords = [
     "video-rag", "multimodal", "ai", "computer-vision",
     "whisper", "yolo", "ollama", "surveillance", "nlp"
@@ -105,6 +104,9 @@ vidchain-train   = "scripts.train_vision:main"
 "Changelog"    = "https://github.com/rahulsiiitm/videochain-python/blob/main/CHANGELOG.md"
 
 # ── Package discovery ──────────────────────────────────────────────────────
+[tool.setuptools]
+license-files = []
+
 [tool.setuptools.packages.find]
 where   = ["."]
 include = ["vidchain*"]

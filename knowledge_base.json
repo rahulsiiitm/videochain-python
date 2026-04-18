@@ -1,22 +1,22 @@
 {
     "metadata": {
-        "video_id": "82131bec",
+        "video_id": "15e5e1f7",
         "source": "sample.mp4",
-        "total_events": 26
+        "total_events": 19
     },
     "timeline": [
         {
             "time": 0.3,
             "scene": null,
             "objects": "1 laptop",
-            "action": "SUSPICIOUS",
+            "action": "NORMAL",
             "emotion": null,
             "ocr": "ASUS Vivobook",
             "camera": "static",
             "tracking": [
                 "laptop #1"
             ],
-            "audio": "4-4-14-14.",
+            "audio": null,
             "audio_anomaly": "NORMAL",
             "duration": 0.0
         },
@@ -46,22 +46,7 @@
             "tracking": [],
             "audio": null,
             "audio_anomaly": "NORMAL",
-            "duration": 0.0
-        },
-        {
-            "time": 14.1,
-            "scene": null,
-            "objects": "1 chair",
-            "action": "NORMAL",
-            "emotion": null,
-            "ocr": null,
-            "camera": "zooming out",
-            "tracking": [
-                "chair #2"
-            ],
-            "audio": null,
-            "audio_anomaly": "NORMAL",
-            "duration": 0.0
+            "duration": 0.3
         },
         {
             "time": 14.4,
@@ -87,7 +72,7 @@
             "ocr": null,
             "camera": "static",
             "tracking": [
-                "chair #3"
+                "chair #2"
             ],
             "audio": null,
             "audio_anomaly": "NORMAL",
@@ -102,7 +87,7 @@
             "ocr": null,
             "camera": "zooming out",
             "tracking": [
-                "chair #4"
+                "chair #3"
             ],
             "audio": null,
             "audio_anomaly": "NORMAL",
@@ -111,7 +96,7 @@
         {
             "time": 15.3,
             "scene": null,
-            "objects": "1 refrigerator",
+            "objects": "no significant objects",
             "action": "NORMAL",
             "emotion": null,
             "ocr": null,
@@ -173,22 +158,7 @@
             "tracking": [],
             "audio": null,
             "audio_anomaly": "NORMAL",
-            "duration": 0.0
-        },
-        {
-            "time": 17.4,
-            "scene": null,
-            "objects": "1 toilet",
-            "action": "NORMAL",
-            "emotion": null,
-            "ocr": null,
-            "camera": "zooming out",
-            "tracking": [
-                "toilet #5"
-            ],
-            "audio": null,
-            "audio_anomaly": "NORMAL",
-            "duration": 0.0
+            "duration": 0.9
         },
         {
             "time": 17.7,
@@ -245,50 +215,34 @@
         {
             "time": 19.5,
             "scene": null,
-            "objects": "1 oven",
+            "objects": "no significant objects",
             "action": "NORMAL",
             "emotion": null,
             "ocr": null,
             "camera": "zooming out",
-            "tracking": [
-                "oven #6"
-            ],
+            "tracking": [],
             "audio": null,
             "audio_anomaly": "NORMAL",
-            "duration": 0.0
+            "duration": 2.4
         },
         {
-            "time": 20.4,
+            "time": 22.2,
             "scene": null,
-            "objects": "1 suitcase",
+            "objects": "1 person, 1 laptop",
             "action": "NORMAL",
             "emotion": null,
             "ocr": null,
             "camera": "zooming out",
             "tracking": [
-                "suitcase #7"
+                "person #4",
+                "laptop #5"
             ],
             "audio": null,
             "audio_anomaly": "NORMAL",
             "duration": 0.0
         },
         {
-            "time": 20.7,
-            "scene": null,
-            "objects": "1 fork",
-            "action": "NORMAL",
-            "emotion": null,
-            "ocr": null,
-            "camera": "zooming out",
-            "tracking": [
-                "fork #8"
-            ],
-            "audio": null,
-            "audio_anomaly": "NORMAL",
-            "duration": 0.0
-        },
-        {
-            "time": 21.0,
+            "time": 22.5,
             "scene": null,
             "objects": "no significant objects",
             "action": "NORMAL",
@@ -298,84 +252,17 @@
             "tracking": [],
             "audio": null,
             "audio_anomaly": "NORMAL",
-            "duration": 0.6
-        },
-        {
-            "time": 21.9,
-            "scene": null,
-            "objects": "2 book",
-            "action": "NORMAL",
-            "emotion": null,
-            "ocr": null,
-            "camera": "zooming out",
-            "tracking": [
-                "book #9",
-                "book #10"
-            ],
-            "audio": null,
-            "audio_anomaly": "NORMAL",
-            "duration": 0.0
-        },
-        {
-            "time": 22.2,
-            "scene": null,
-            "objects": "1 person, 2 laptop, 1 tv",
-            "action": "NORMAL",
-            "emotion": null,
-            "ocr": null,
-            "camera": "zooming out",
-            "tracking": [
-                "person #11",
-                "laptop #12, moving up",
-                "laptop #12, moving up",
-                "tv #13"
-            ],
-            "audio": null,
-            "audio_anomaly": "NORMAL",
-            "duration": 0.0
-        },
-        {
-            "time": 22.5,
-            "scene": null,
-            "objects": "1 person",
-            "action": "NORMAL",
-            "emotion": null,
-            "ocr": null,
-            "camera": "zooming out",
-            "tracking": [
-                "person #11, moving right and moving up"
-            ],
-            "audio": null,
-            "audio_anomaly": "NORMAL",
-            "duration": 0.0
-        },
-        {
-            "time": 23.4,
-            "scene": null,
-            "objects": "1 person, 1 oven",
-            "action": "NORMAL",
-            "emotion": null,
-            "ocr": null,
-            "camera": "zooming out",
-            "tracking": [
-                "person #11 (present 1.2s), moving up",
-                "oven #6 (present 3.9s), moving right"
-            ],
-            "audio": null,
-            "audio_anomaly": "NORMAL",
-            "duration": 0.0
+            "duration": 0.9
         },
         {
             "time": 23.7,
             "scene": null,
-            "objects": "1 oven",
+            "objects": "no significant objects",
             "action": "NORMAL",
             "emotion": null,
             "ocr": null,
             "camera": "tilting up",
-            "tracking": [
-                "oven #6 (present 4.2s), moving right and moving up"
-            ],
+            "tracking": [],
             "audio": null,
             "audio_anomaly": "NORMAL",
             "duration": 0.0
