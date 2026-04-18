@@ -7,6 +7,7 @@ enabling multi-hop detective queries that flat ChromaDB cannot answer.
 """
 
 import re
+import pickle
 from typing import List, Dict, Any, Optional, Tuple
 from collections import defaultdict
 
@@ -189,6 +190,36 @@ class TemporalKnowledgeGraph:
             f"{self.G.number_of_edges()} edges, "
             f"{len(entities)} distinct entities tracked over {self.timeline_length:.1f}s"
         )
+
+    # ──────────────────────────────────────────────────────
+    # Persistence
+    # ──────────────────────────────────────────────────────
+
+    def save_to_disk(self, file_path: str):
+        """Pickles the graph and metadata to disk."""
+        data = {
+            "G": self.G,
+            "entity_timestamps": dict(self.entity_timestamps),
+            "timeline_length": self.timeline_length
+        }
+        with open(file_path, "wb") as f:
+            pickle.dump(data, f)
+        print(f"[GraphRAG] Persistent index saved -> {file_path}")
+
+    def load_from_disk(self, file_path: str) -> bool:
+        """Loads a pickled graph from disk. Returns True on success."""
+        try:
+            with open(file_path, "rb") as f:
+                data = pickle.load(f)
+                self.G = data["G"]
+                self.entity_timestamps = defaultdict(list, data["entity_timestamps"])
+                self.timeline_length = data["timeline_length"]
+                self._is_built = True
+            print(f"[GraphRAG] Persistent index loaded from -> {file_path}")
+            return True
+        except Exception as e:
+            print(f"[GraphRAG] Load failed (normal if first run): {e}")
+            return False
 
     # ──────────────────────────────────────────────────────
     # Parsers

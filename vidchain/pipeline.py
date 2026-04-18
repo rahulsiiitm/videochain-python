@@ -38,7 +38,8 @@ class VideoChain:
                 ret, frame = cap.read()
                 if not ret:
                     break
-                    
+                
+                # Check if we should process this specific frame based on frame_skip
                 if frame_idx % self.frame_skip == 0:
                     current_time = round(frame_idx / fps, 2)
                     
@@ -53,20 +54,20 @@ class VideoChain:
                     }
                     
                     # Sequentially execute each node
+                    skip_entire_frame = False
                     for node in self.nodes:
                         context = node.process(context)
                         if context.get("skip_frame", False):
+                            skip_entire_frame = True
                             break
-                            
-                    if context.get("skip_frame", False):
-                        continue
-                        
-                    # Clean up memory-heavy items before saving to timeline
-                    if "current_frame" in context:
-                        del context["current_frame"]
-                        
-                    timeline.append(context)
                     
+                    if not skip_entire_frame:
+                        # Clean up memory-heavy items before saving to timeline
+                        if "current_frame" in context:
+                            del context["current_frame"]
+                        timeline.append(context)
+                
+                # ALWAYS increment index to maintain real-world temporal sync
                 frame_idx += 1
                 
         finally:

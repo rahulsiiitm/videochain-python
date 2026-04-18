@@ -68,6 +68,8 @@ dependencies = [
 
     # Utilities
     "numpy>=1.24.0",
+    "networkx>=3.0",
+    "darkdetect>=0.8.0",
     "tqdm>=4.65.0",
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",

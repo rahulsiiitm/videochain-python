@@ -77,12 +77,13 @@ def main():
     if not args.fast:
         vlm_model = args.vlm  # defaults to "moondream"
         from vidchain.pipeline import VideoChain
-        from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode
+        from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode, OcrNode, ActionNode
         print(f"[INFO] VLM Mode: {vlm_model} + AdaptiveKeyframing (use --fast for YOLO)")
         chain = VideoChain(
             nodes=[
                 AdaptiveKeyframeNode(change_threshold=5.0),
                 LlavaNode(model_name=vlm_model),
+                OcrNode(languages=args.ocr_lang),
             ],
             frame_skip=15  # 2 FPS
         )

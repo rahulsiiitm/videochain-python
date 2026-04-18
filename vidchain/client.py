@@ -56,6 +56,13 @@ class VidChain:
         
         # GraphRAG knowledge graph (built automatically on every ingest)
         self.knowledge_graph = TemporalKnowledgeGraph()
+        
+        # Load graph if database is persistent
+        if db_path:
+            self.graph_path = os.path.join(db_path, "knowledge_graph.pkl")
+            self.knowledge_graph.load_from_disk(self.graph_path)
+        else:
+            self.graph_path = None
 
     # ------------------------------------------------------------------
     # Internal engine management
@@ -128,6 +135,10 @@ class VidChain:
         self.knowledge_graph.build_from_timeline(fused_timeline)
         if self.config["verbose"]:
             print(f"[VidChain] {self.knowledge_graph.describe()}")
+            
+        # ── Save Graph if persistent ──────────────────────────────────
+        if self.graph_path:
+            self.knowledge_graph.save_to_disk(self.graph_path)
 
         # ── Write knowledge_base.json ─────────────────────────────────
         if self.config.get("save_kb_json", True):

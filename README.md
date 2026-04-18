@@ -11,7 +11,18 @@ VidChain v0.6.0 is a modular, composable framework for on-device multimodal vide
 
 **VLM-First by design** — Moondream runs by default, delivering rich contextual descriptions (*"a red Honda Civic with a dented bumper"*) instead of blind YOLO tags (*"car"*). Use `--fast` for legacy YOLO when speed matters on long videos.
 
-At the heart is **B.A.B.U.R.A.O.** (*Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation*) — a conversational AI copilot that combines ChromaDB vector search with a **Temporal Knowledge Graph** (GraphRAG) to answer multi-hop temporal questions about video content.
+### 🧠 Intelligence Layer: GraphRAG
+VidChain v0.6.0 introduces **Temporal Knowledge Graphs**. While standard RAG searches for disjoint frames, GraphRAG maps entities (people, laptops, OCR text) and their relationships across time.
+
+- **Entity Persistence:** Automatically tracks when a person or object was first/last seen.
+- **Cross-Video Tracking:** Maps co-occurrences (e.g., "Person A and Person B appeared together at 12s").
+- **Forensic Deductions:** Merges VLM descriptions with OCR text for high-fidelity evidence reconstruction.
+
+---
+
+### 🖥️ VidChain Studio (Desktop)
+A native, glassmorphism-inspired desktop application for monitoring and chatting with your video archives.
+`vidchain-studio`
 
 ---
 
@@ -237,10 +248,20 @@ vc.purge_storage()
 - [x] **VLM Node** — LLaVA/Moondream contextual captioning (v0.5.0)
 - [x] **Adaptive Keyframe Firewall** — GPU compute optimization (v0.5.0)
 - [x] **FastAPI Edge Microservice** — `vidchain-serve` (v0.5.0)
-- [x] **VLM-First default pipeline** — Moondream as default, YOLO via `--fast` (v0.6.0)
-- [x] **GraphRAG + Temporal Knowledge Graph** — entity tracking with NetworkX (v0.6.0)
-- [x] **VidChain Studio** — native `CustomTkinter` desktop application (v0.6.0)
-- [ ] **Real-time streaming** — live camera ingestion
+- [x] **VLM-First default pipeline** — Moondream as default, YOLO via `--fast`
+
+## [0.6.0] — 2026-04-18
+### Added
+- **GraphRAG Engine:** Temporal Knowledge Graph (NetworkX) for multi-hop forensic reasoning.
+- **Persistent Intelligence:** Graphs now save to `knowledge_graph.pkl` alongside ChromaDB.
+- **VidChain Studio:** Native Desktop UI with live server monitoring and interactive chat.
+- **B.A.B.U.R.A.O. 2.0:** Refined system persona as an "Intelligent Video Storyteller".
+- **Modular Nodes:** Official `OcrNode` and `ActionNode` for customizable pipelines.
+
+### Fixed
+- **Timeline Drift:** Resolved "Stall Bug" where skipped frames would cause timestamp misalignment.
+- **Scaling Errors:** Fixed UI scaling issues on High-DPI Windows displays in Studio.
+- **Unicode Support:** Sanitized CLI outputs for better compatibility with Windows terminals.
 
 ---
 

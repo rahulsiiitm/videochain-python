@@ -1,8 +1,8 @@
 {
     "metadata": {
-        "video_id": "3b48ce14",
+        "video_id": "5cc7dd4e",
         "source": "sample.mp4",
-        "total_events": 22
+        "total_events": 21
     },
     "timeline": [
         {
@@ -12,196 +12,208 @@
             "time": 0.0,
             "frame_idx": 0,
             "skip_frame": false,
-            "objects": "The image shows a laptop screen displaying a webpage with various lines of code written on it. The laptop is open to the Chrome browser, which has a windowed interface. The code displayed on the screen appears to be in a programming language such as JavaScript or Python. The laptop's keyboard and trackpad are visible underneath the screen, indicating that the user is actively engaged with the software."
+            "objects": "The image shows a laptop screen displaying a webpage with various lines of code written on it. The laptop is open to the Chrome browser, which has a windowed interface. The code displayed on the screen appears to be in a programming language such as JavaScript or Python. The laptop's keyboard and trackpad are visible underneath the screen, indicating that the user is actively engaged with the software.",
+            "ocr": "ASUS Vivobook"
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 0.5,
-            "time": 0.5,
-            "frame_idx": 15,
+            "current_time": 13.5,
+            "time": 13.5,
+            "frame_idx": 405,
             "skip_frame": false,
-            "objects": "The image shows a laptop screen displaying a webpage with various elements such as text, images, and icons. The laptop is open to the Firefox browser, which has multiple tabs visible on its window. The screen also displays some code or text that appears to be in a programming language, suggesting that the user might be working on a project related to web development or computer science.\n\nThe laptop's keyboard can be seen in front of it, indicating that the user is actively typing and interacting with the webpage. There are several other tabs open on the browser window as well, which could indicate multitasking or browsing multiple websites simultaneously."
+            "objects": "The image shows a laptop screen displaying a code editor window with various lines of code written on it. The code is in white text against the black background of the screen. The laptop has a keyboard located to its right side, suggesting that the user might be working on a programming project or software development task.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 1.0,
-            "time": 1.0,
-            "frame_idx": 30,
+            "current_time": 14.0,
+            "time": 14.0,
+            "frame_idx": 420,
             "skip_frame": false,
-            "objects": "The image shows a person wearing a black jacket standing next to a large flat screen TV that is turned on. The TV is placed against the wall with a shelf above it holding various items such as a box, a suitcase, and some books. A computer monitor can also be seen in the room."
+            "objects": "The image shows a room with a black desk positioned against the wall. On top of the desk is an open refrigerator, which appears to be white. The room also contains various items such as books scattered around the floor, a computer monitor on the desk, and a keyboard nearby. A person can be seen in the background, but their face is not visible due to the angle of the shot.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 1.5,
-            "time": 1.5,
-            "frame_idx": 45,
+            "current_time": 14.5,
+            "time": 14.5,
+            "frame_idx": 435,
             "skip_frame": false,
-            "objects": "The image shows a room with light beige walls and a dark brown floor. In the center of the room is a desk with a computer monitor on it. A red chair is positioned next to the desk. On the desk, there are two books and a white paper towel dispenser. The door in the background has a window that lets in natural light."
+            "objects": "The image shows a room with a desk positioned against the wall on the left side of the frame. The desk is cluttered with various items such as books, papers, and a computer mouse. A chair can be seen in front of the desk, suggesting that it might serve as an office or study area. On the right side of the image, there's a door leading to another room, indicating that this space could be part of a larger living or working environment.\n\nThe room is well-lit and features white walls, giving it a clean and organized appearance. The presence of multiple books on the desk suggests that the person using this space might be engaged in academic or professional work.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 2.0,
-            "time": 2.0,
-            "frame_idx": 60,
+            "current_time": 15.0,
+            "time": 15.0,
+            "frame_idx": 450,
             "skip_frame": false,
-            "objects": "The image shows a room with white walls and a wooden floor. There is a red chair positioned near the left side of the room, and a desk located on the right side. A window can be seen through the door in the center of the room, allowing natural light to enter. The room appears to be empty at the moment, with no visible text or actions taking place."
+            "objects": "The image shows a room with white walls and a wooden floor. There is a red door on the left side of the room that appears to be slightly open. In front of the door, there is a desk with a chair positioned next to it. On the right side of the room, there are two white cabinets standing against the wall. The room also contains various objects such as books scattered around and a computer monitor placed on top of one of the desks.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 2.5,
-            "time": 2.5,
-            "frame_idx": 75,
+            "current_time": 15.5,
+            "time": 15.5,
+            "frame_idx": 465,
             "skip_frame": false,
-            "objects": "The image shows a room with white walls and a pink door that is slightly open on the right side of the frame. The room appears to be empty apart from the pink door. There are no visible texts or actions taking place in this scene."
+            "objects": "The image shows a room with white walls and a brown door on the left side of the frame. The door is slightly open, revealing a glimpse of what's inside. On the right side of the frame, there are two white cabinets standing against the wall. In front of these cabinets, there is a bed covered in white sheets. A window can be seen on the far right side of the image, allowing natural light to enter the room.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 3.0,
-            "time": 3.0,
-            "frame_idx": 90,
+            "current_time": 16.0,
+            "time": 16.0,
+            "frame_idx": 480,
             "skip_frame": false,
-            "objects": "The image shows a room with a wooden door on the left side of the frame. The door is slightly open, allowing light to enter the space. On the right side of the frame, there's a window that lets in natural light. In front of the window, there are two chairs - one blue and one red. A green sign can be seen hanging from the ceiling above the chairs. There are also several bottles scattered around the room, with some placed on the floor near the chairs."
+            "objects": "The image shows a room with white walls and a wooden floor. A green sign is hanging on the wall next to a red suitcase. The suitcase appears to be open, revealing its contents inside. There are also several other items in the room, including a black backpack placed against one of the walls, a pair of scissors resting on top of it, and a white box with a green label sitting on another surface.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 3.5,
-            "time": 3.5,
-            "frame_idx": 105,
+            "current_time": 16.5,
+            "time": 16.5,
+            "frame_idx": 495,
             "skip_frame": false,
-            "objects": "The image shows a room with a white door on the left side of the frame. The door is slightly open, revealing a glimpse of what's inside. On the right side of the door, there are two shelves holding various items such as books and bottles. A blue backpack can be seen resting against one of the shelves. In front of the door, there is a white countertop with a green book placed on it. The room also contains other objects like a toothbrush and a bottle, which are scattered around the space."
+            "objects": "The image shows a room with a pink door on the left side of the frame. The door is slightly open, revealing a glimpse of what's inside. On the right side of the frame, there are two white doors that appear to be closed. In front of these doors, there is a desk with various items on it, including a green notebook and a blue backpack. A computer mouse can also be seen near the bottom edge of the image.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 4.0,
-            "time": 4.0,
-            "frame_idx": 120,
+            "current_time": 17.0,
+            "time": 17.0,
+            "frame_idx": 510,
             "skip_frame": false,
-            "objects": "The image shows a room with a white door on the left side of the frame, painted red. The door is slightly open, revealing a glimpse of what's inside the room beyond it. On the right side of the frame, there is a desk with various items on top of it, including a green notebook and a blue backpack. A computer mouse can be seen near the bottom edge of the image."
+            "objects": "The image shows a room with a white door on the left side of the frame. The door is painted red and has two windows above it. On the right side of the door, there's a gray refrigerator. In front of the door, there are three books placed vertically against the wall. A blue chair can be seen in the background, positioned next to the door.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 4.5,
-            "time": 4.5,
-            "frame_idx": 135,
+            "current_time": 17.5,
+            "time": 17.5,
+            "frame_idx": 525,
             "skip_frame": false,
-            "objects": "The image shows a room with a wooden door on the left side of the frame. The door is slightly open, revealing a hallway outside. On the right side of the frame, there's a desk with various items on it, including a book, a backpack, and several cups scattered around. A person can be seen in the background, possibly entering or leaving the room."
+            "objects": "The image shows a room with white walls and a wooden floor. In the center of the room is a pink door that stands out against the neutral tones of the space. On top of the door, there's a window that allows natural light to enter the room. The room also contains various objects such as a green book on a surface near the right side of the image and several cups scattered around the room.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 5.0,
-            "time": 5.0,
-            "frame_idx": 150,
+            "current_time": 18.0,
+            "time": 18.0,
+            "frame_idx": 540,
             "skip_frame": false,
-            "objects": "The image shows a room with a white door on the left side of the frame. The door is painted pink and has a window above it. On the right side of the door, there's a blue chair positioned against the wall. In front of the door, there are two books placed next to each other. A computer mouse can be seen in the lower part of the image, suggesting that this room might serve as an office or workspace."
+            "objects": "The image shows a room with a white door on the left side of the frame. The door is slightly open, revealing a glimpse of what's inside the room beyond it. On the right side of the door, there are two doors - one red and one pink. These doors stand out against the white wall behind them.\n\nIn front of these doors, there is a desk with various items on it. A computer mouse can be seen near the center of the image, while a keyboard is placed to its right side. There's also a blue chair positioned in front of the desk. The room appears to be well-organized and functional, with each object having its own designated space.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 5.5,
-            "time": 5.5,
-            "frame_idx": 165,
+            "current_time": 18.5,
+            "time": 18.5,
+            "frame_idx": 555,
             "skip_frame": false,
-            "objects": "The image shows a room with white walls and a wooden floor. In the center of the room is a desk with various items on it, including a computer monitor, keyboard, mouse, and several books scattered across its surface. A chair can be seen in front of the desk, suggesting that this space could be used for work or study purposes.\n\nThe room also contains other objects such as a TV mounted on the wall above the desk, a backpack placed near the center of the room, and a suitcase located towards the right side of the image. The scene conveys an atmosphere of organization and productivity, with each item in its designated place."
+            "objects": "The image shows a room with a pink door on the left side of the frame. The room is filled with various items scattered around, including a green backpack placed near the center-right area, a blue chair positioned towards the right side, and several books spread across the floor in different parts of the room. These objects create an impression of a lived-in space where someone's belongings are casually strewn about.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 6.0,
-            "time": 6.0,
-            "frame_idx": 180,
+            "current_time": 19.0,
+            "time": 19.0,
+            "frame_idx": 570,
             "skip_frame": false,
-            "objects": "The image shows a room with a pink door on the left side of the frame, contrasting against the white walls. The door is slightly open, revealing a glimpse of what's inside. On the right side of the frame, there is a desk with various items scattered across it, including a blue backpack and several books. A computer mouse can be seen near the center of the image, suggesting that this room might serve as an office or workspace."
+            "objects": "The image shows a room with a pink door on the left side of the frame, contrasting against the white walls. The door is slightly open, revealing a glimpse of what's inside. On the right side of the frame, there are two windows that allow natural light to enter the space. In front of the window, there is a desk holding various items such as papers and books. A blue trash can is also present in the room.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 6.5,
-            "time": 6.5,
-            "frame_idx": 195,
+            "current_time": 19.5,
+            "time": 19.5,
+            "frame_idx": 585,
             "skip_frame": false,
-            "objects": "The image shows a room with a pink door on the left side of the frame, contrasting against the white walls. The door is slightly open, revealing an unseen interior. On the right side of the frame, there's a desk with various items on it, including a book and a computer mouse. A chair can be seen in front of the desk, suggesting that this room might serve as a workspace or study area."
+            "objects": "The image shows a room with a pink door on the left side of the frame, contrasting against the white wall behind it. The door is slightly open, revealing an unseen hallway beyond. On the right side of the frame, there's a desk with various items on it, including a book and a computer mouse. A chair can be seen in front of the desk, suggesting that this room might serve as a workspace or study area.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 7.0,
-            "time": 7.0,
-            "frame_idx": 210,
+            "current_time": 20.5,
+            "time": 20.5,
+            "frame_idx": 615,
             "skip_frame": false,
-            "objects": "The image shows a room with two doors on the left side of the frame. The door is painted red and has a window above it. On the right side of the frame, there's another door that appears to be white in color. Both doors have windows above them as well. In front of these doors, there are shelves filled with various items such as books and papers. A chair can also be seen placed near one of the doors. The room has a simple and functional design, with each door serving its purpose while contributing to the overall aesthetic of the space."
+            "objects": "The image shows a room with a white door on the left side of the frame, a red chair positioned to the right of the door, and a green sign hanging above it. The walls are painted yellow, creating a warm atmosphere in the space. On the floor near the chair, there is a stack of papers and a book.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 7.5,
-            "time": 7.5,
-            "frame_idx": 225,
+            "current_time": 21.0,
+            "time": 21.0,
+            "frame_idx": 630,
             "skip_frame": false,
-            "objects": "The image shows a room with white walls and a brown wooden floor. A window is located on the right side of the room, allowing natural light to enter. In the center of the room, there are two chairs - one red and one blue. On the left wall, there is an air conditioning unit mounted above it. The room also contains various objects such as books scattered around, a TV placed in front of the window, and a computer monitor on the right side of the image."
+            "objects": "The image shows a room with white walls and a gray floor. In the center of the room is a bed covered by a red blanket. On one side of the room, there are two chairs - one black and one red. A desk can be seen in the background, along with a computer monitor on it. The room also contains various objects such as a suitcase, a book, and a TV mounted on the wall.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 8.0,
-            "time": 8.0,
-            "frame_idx": 240,
+            "current_time": 21.5,
+            "time": 21.5,
+            "frame_idx": 645,
             "skip_frame": false,
-            "objects": "The image shows a room with a gray refrigerator on the right side of the frame, which is open to reveal its interior. The refrigerator has a red seat at the back, adding a pop of color to the otherwise monochrome appliance. To the left of the refrigerator, there's a white shelf holding various items such as bottles and other objects. On the opposite wall from the refrigerator, there's a computer monitor displaying an image or text on its screen. A backpack is placed against this wall, suggesting that someone might be working in this room."
+            "objects": "The image shows a room with a desk that has two laptops on it - one is black and the other is purple. A keyboard and mouse are also present on the desk. There's a backpack placed next to the desk, suggesting someone might be working or studying in this space. The room appears to have a window, indicating natural light could enter the area during daytime hours.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 8.5,
-            "time": 8.5,
-            "frame_idx": 255,
+            "current_time": 22.0,
+            "time": 22.0,
+            "frame_idx": 660,
             "skip_frame": false,
-            "objects": "The image shows a room with a desk against the wall featuring two computer monitors displaying vibrant colors of red and purple. On top of the desk are three keyboards and a mouse, suggesting that it is used for work or gaming purposes. A person can be seen in the background, possibly working on their own tasks at the desk. The room also contains a chair placed near the desk, indicating a workspace setup."
+            "objects": "The image depicts a person sitting at a desk with two computer monitors on either side of them. The individual is using one monitor while the other remains blank. On the desk, there are also two keyboards and mice, suggesting that they might be working on multiple tasks simultaneously or using different devices for specific purposes.\n\nIn addition to the main subject, there are three more people in the image who appear to be engaged in various activities around the room. A chair is visible near one of them, indicating a seating area within the space. The overall atmosphere suggests that this could be an office environment or a shared workspace where multiple individuals collaborate and work on their respective projects.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 9.0,
-            "time": 9.0,
-            "frame_idx": 270,
+            "current_time": 22.5,
+            "time": 22.5,
+            "frame_idx": 675,
             "skip_frame": false,
-            "objects": "The image depicts a man sitting at a desk with two computer monitors placed side by side on the table. The monitor on the left is turned off while the one on the right displays an open webpage. A keyboard and mouse are positioned in front of the second monitor, suggesting that it serves as a dual-monitor setup for increased productivity or multitasking. \n\nIn addition to the main computer setup, there's another monitor placed behind the man, possibly serving as a secondary display. The room features a window on one side, allowing natural light into the space and providing an outdoor view. A chair is situated in front of the desk, ready for use by the person working at the computers."
+            "objects": "The image depicts a room with two people working at desks. One person is sitting on the left side of the desk using a laptop, while another person stands behind them holding a mouse and keyboard, likely engaged in some form of computer work or gaming activity. The room features a window that allows natural light to enter, creating a comfortable workspace atmosphere.\n\nOn the desk, there are two monitors displaying different colors - one is pinkish-purple with a white background, while the other has a black background and displays an image of a person's face. There are also three keyboards in front of each person, indicating that they might be working on multiple tasks simultaneously or using separate computers for their work.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 9.5,
-            "time": 9.5,
-            "frame_idx": 285,
+            "current_time": 23.0,
+            "time": 23.0,
+            "frame_idx": 690,
             "skip_frame": false,
-            "objects": "The image depicts a man sitting at a desk with two computer monitors on either side of him. The monitor on the left is turned off, while the one on the right displays a vibrant red screen. In front of the man's desk, there are three keyboards - one in front of him and two others placed further back. A laptop can be seen resting on his lap. \n\nThe room has a window with white blinds that allows natural light to enter the space. There is also a chair positioned near the desk, suggesting it might be used for additional seating or as an alternative workspace."
+            "objects": "The image depicts a person sitting at a desk with three computer monitors arranged in front of them. The monitor on the left is turned off, while the other two are displaying vibrant colors. A keyboard and mouse can be seen next to the monitors, suggesting that the individual may be working on a computer-related task or project. \n\nIn addition to the main person at the desk, there's another person partially visible in the background, possibly observing or assisting with the work being done. The scene also includes a chair and a TV mounted on the wall above it.",
+            "ocr": null
         },
         {
             "video_path": "sample.mp4",
             "audio_path": null,
-            "current_time": 10.0,
-            "time": 10.0,
-            "frame_idx": 300,
+            "current_time": 23.5,
+            "time": 23.5,
+            "frame_idx": 705,
             "skip_frame": false,
-            "objects": "The image depicts a man sitting at a desk with two computer monitors placed on it. The monitor on the left is turned off while the one on the right displays a vibrant pink screen. In front of him, there are three keyboards and a mouse, suggesting he might be working on multiple tasks simultaneously or using different software applications. A laptop can also be seen in the background, indicating that this workspace may be used for various purposes. The man appears to be focused on his work, possibly engaged in a task related to computer programming or graphic design."
-        },
-        {
-            "video_path": "sample.mp4",
-            "audio_path": null,
-            "current_time": 10.5,
-            "time": 10.5,
-            "frame_idx": 315,
-            "skip_frame": false,
-            "objects": "The image depicts a person sitting at a desk with two computer monitors on either side of them. The monitor on the left is turned off, while the one on the right displays a vibrant red screen. In front of the person, there are three keyboards and a mouse, suggesting that they might be working on multiple tasks simultaneously or using different software applications. A laptop can also be seen in the background, indicating that this workspace may be used for various purposes. The room has a window with white blinds, allowing natural light to enter the space."
+            "objects": "The image depicts a man sitting at a desk with two computer monitors on either side of him. The monitor on the left is turned off, while the one on the right displays an active screen. In front of the man's desk, there are three keyboards - one in front of him and two others placed further away from his workspace. A laptop can be seen resting on a surface near the center of the scene. The room has white walls that reflect light, creating a bright atmosphere.",
+            "ocr": null
         }
     ]
 }
