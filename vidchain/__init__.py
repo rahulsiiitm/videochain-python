@@ -19,16 +19,10 @@ def __getattr__(name):
     if name == "VidChain":
         from vidchain.client import VidChain
         return VidChain
-    if name == "VideoEvent":
-        from vidchain.schema import VideoEvent
-        return VideoEvent
-    if name == "VideoAnalysisResult":
-        from vidchain.schema import VideoAnalysisResult
-        return VideoAnalysisResult
     raise AttributeError(f"module 'vidchain' has no attribute '{name}'")
 
 
-__version__ = "0.3.0"
+__version__ = "0.5.0"
 __author__  = "Rahul Sharma"
 __license__ = "MIT"
-__all__     = ["VidChain", "VideoEvent", "VideoAnalysisResult"] # type: ignore
+__all__     = ["VidChain"] # type: ignore

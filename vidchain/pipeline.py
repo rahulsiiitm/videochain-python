@@ -54,6 +54,11 @@ class VideoChain:
                     # Sequentially execute each node
                     for node in self.nodes:
                         context = node.process(context)
+                        if context.get("skip_frame", False):
+                            break
+                            
+                    if context.get("skip_frame", False):
+                        continue
                         
                     # Clean up memory-heavy items before saving to timeline
                     if "current_frame" in context:
