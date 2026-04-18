@@ -23,17 +23,17 @@ ctk.set_default_color_theme("blue")
 API_BASE = "http://localhost:8000"
 
 COLORS = {
-    "bg_deep":    "#0D0F14",
-    "bg_panel":   "#13161E",
-    "bg_card":    "#1A1E2A",
-    "accent":     "#00C2FF",
-    "accent2":    "#7B61FF",
-    "success":    "#00E5A0",
+    "bg_deep":    "#0A0D12",  # Deep Midnight
+    "bg_panel":   "#1A1F2B",  # Navy shadow
+    "bg_card":    "#242B3D",  # Suit Blue
+    "accent":     "#E23636",  # Heroic Red
+    "accent2":    "#0047AB",  # Navy Blue
+    "success":    "#FDCB58",  # Spider-Yellow
     "warning":    "#FF9500",
     "danger":     "#FF4560",
     "text_main":  "#E8ECFF",
-    "text_dim":   "#6B7280",
-    "border":     "#252A3A",
+    "text_dim":   "#6B7281",
+    "border":     "#31394D",
 }
 
 
@@ -41,7 +41,7 @@ class VidChainStudio(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("VidChain Studio")
+        self.title("🕸️ SPIDEY-CHAIN HQ")
         self.geometry("1200x780")
         self.minsize(1000, 650)
         self.configure(fg_color=COLORS["bg_deep"])
@@ -65,13 +65,13 @@ class VidChainStudio(ctk.CTk):
         topbar.pack_propagate(False)
 
         ctk.CTkLabel(
-            topbar, text="⛓  VidChain Studio",
+            topbar, text="🕸️  SPIDEY-CHAIN HQ",
             font=ctk.CTkFont(family="Segoe UI", size=18, weight="bold"),
             text_color=COLORS["accent"]
         ).pack(side="left", padx=20, pady=12)
 
         ctk.CTkLabel(
-            topbar, text="B.A.B.U.R.A.O. Intelligence Interface",
+            topbar, text="Stark-Tech Multimodal Observation Engine",
             font=ctk.CTkFont(size=11),
             text_color=COLORS["text_dim"]
         ).pack(side="left", padx=4)
@@ -144,10 +144,10 @@ class VidChainStudio(ctk.CTk):
 
         # Ingest button
         self.ingest_btn = ctk.CTkButton(
-            left, text="⚡  Index Video",
+            left, text="🕸️  Launch Web-Scan",
             command=self._start_ingest,
-            fg_color=COLORS["accent"], hover_color="#009FD4",
-            text_color="#000000", font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color=COLORS["accent"], hover_color="#B22222",
+            text_color="#FFFFFF", font=ctk.CTkFont(size=13, weight="bold"),
             height=44, corner_radius=10
         )
         self.ingest_btn.pack(fill="x", padx=14, pady=(0, 4))
@@ -214,8 +214,8 @@ class VidChainStudio(ctk.CTk):
 
         # Welcome message
         self._append_chat("B.A.B.U.R.A.O.", 
-            "System online. Index a video using the left panel and I will begin monitoring it.\n"
-            "I can answer questions about objects, people, screen content, actions, and audio.",
+            "🕷️ Web-Net Secure. Narrative interface ready for feed analysis.\n"
+            "Status: Scanning for forensic evidence and entity relationships.",
             color=COLORS["accent"])
 
     def _section_label(self, parent, text):

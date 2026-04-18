@@ -1,6 +1,7 @@
 import os
 import uvicorn
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
@@ -10,6 +11,15 @@ app = FastAPI(
     title="VidChain Edge Server",
     description="Local 'LangChain for Videos' API",
     version="0.6.0"
+)
+
+# Enable CORS for the web frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Singleton global instance mapped upon startup
