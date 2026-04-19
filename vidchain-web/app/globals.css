@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0A0D12;
+  --foreground: #E8ECFF;
+  --spider-red: #D80032;
+  --stark-navy: #1A1F2B;
+  --stark-card: #242B3D;
+  --stark-border: #31394D;
+  --stark-gold: #FDCB58;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-spider-red: var(--spider-red);
+  --color-stark-navy: var(--stark-navy);
+  --color-stark-card: var(--stark-card);
+  --color-stark-border: var(--stark-border);
+  --color-stark-gold: var(--stark-gold);
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-montserrat), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Stark-Tech Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--stark-border);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--spider-red);
+}
