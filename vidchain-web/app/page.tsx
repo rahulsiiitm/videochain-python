@@ -12,6 +12,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)); }
 
@@ -29,6 +31,11 @@ type Message = {
   video_id?: string | null;
   msgType?: MsgType;
   confidence?: number;
+  telemetry?: {
+    cpu_score?: number;
+    gpu_score?: number;
+    latency?: number;
+  };
   tags?: string[];
 };
 
@@ -79,22 +86,58 @@ function threatColor(level?: Session["threat_level"]) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function ConfidenceMeter({ value }: { value: number }) {
-  const pct = Math.round(value * 100);
+function ConfidenceMeter({ value, telemetry }: { value: number, telemetry?: Message["telemetry"] }) {
+  const pct = Math.round(value);
   const color = pct > 80 ? "#4ade80" : pct > 50 ? "#facc15" : "#f87171";
+  
+  const cpu = telemetry?.cpu_score ?? 0;
+  const gpu = telemetry?.gpu_score ?? 0;
+
   return (
-    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stark-border/40">
-      <span className="text-[8px] text-gray-600 uppercase tracking-widest font-bold shrink-0">Confidence</span>
-      <div className="flex-1 h-1 bg-stark-card rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="h-full rounded-full"
-          style={{ backgroundColor: color }}
-        />
+    <div className="mt-2 pt-2 border-t border-stark-border/40 space-y-2.5">
+      {/* Hardware HUD */}
+      <div className="flex items-center gap-4">
+        {/* CPU Bar */}
+        <div className="flex-1 flex items-center gap-2">
+          <span className="text-[7px] text-gray-500 uppercase font-black tracking-tighter w-6">CPU</span>
+          <div className="flex-1 h-1 bg-stark-card rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(cpu, 100)}%` }}
+              className="h-full bg-stark-gold/40 shadow-[0_0_5px_rgba(250,204,21,0.2)] rounded-full"
+            />
+          </div>
+          <span className="text-[7px] text-stark-gold/60 font-mono italic">{cpu}%</span>
+        </div>
+
+        {/* GPU Bar */}
+        <div className="flex-1 flex items-center gap-2">
+          <span className="text-[7px] text-gray-500 uppercase font-black tracking-tighter w-6">GPU</span>
+          <div className="flex-1 h-1 bg-stark-card rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(gpu, 100)}%` }}
+              className="h-full bg-spider-red/40 shadow-[0_0_5px_rgba(216,0,50,0.2)] rounded-full"
+            />
+          </div>
+          <span className="text-[7px] text-spider-red/60 font-mono italic">{gpu}%</span>
+        </div>
       </div>
-      <span className="text-[9px] font-black shrink-0" style={{ color }}>{pct}%</span>
+
+      {/* Confidence Score */}
+      <div className="flex items-center gap-2">
+        <span className="text-[8px] text-gray-600 uppercase tracking-widest font-bold shrink-0">Confidence radar</span>
+        <div className="flex-1 h-1 bg-stark-card rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="h-full rounded-full"
+            style={{ backgroundColor: color, boxShadow: `0 0 5px ${color}44` }}
+          />
+        </div>
+        <span className="text-[9px] font-black shrink-0" style={{ color }}>{pct}%</span>
+      </div>
     </div>
   );
 }
@@ -408,15 +451,13 @@ export default function SpideyChainDashboard() {
     if (!activeSessionId) return;
     const active = sessions.find(s => s.id === activeSessionId);
     const header = [
-      `# ╔══════════════════════════════════════════╗`,
-      `# ║  VIDCHAIN FORENSIC INTELLIGENCE REPORT  ║`,
-      `# ╚══════════════════════════════════════════╝`,
-      `#`,
-      `# Session : ${active?.title ?? activeSessionId}`,
-      `# ID      : ${activeSessionId}`,
-      `# Date    : ${new Date().toLocaleString()}`,
-      `# Operator: B.A.B.U.R.A.O. v0.6`,
-      `# Class   : CONFIDENTIAL`,
+      `# 🕵️‍♂️ VIDCHAIN FORENSIC INTELLIGENCE REPORT`,
+      `# ----------------------------------------`,
+      `# Session  : ${active?.title ?? activeSessionId}`,
+      `# ID       : ${activeSessionId}`,
+      `# Date     : ${new Date().toLocaleString()}`,
+      `# Engine   : B.A.B.U.R.A.O. v0.7.3-Elite`,
+      `# Security : CONFIDENTIAL // EYES ONLY`,
       ``, `---`, ``,
     ].join("\n");
     const body = messages.map(m =>
@@ -572,7 +613,8 @@ export default function SpideyChainDashboard() {
         text: data.response ?? "No data reconstructed.",
         timestamp: timeStr(),
         msgType: data.response?.includes("[") ? "evidence" : "text",
-        confidence: 0.70 + Math.random() * 0.29,
+        confidence: data.confidence ?? 75,
+        telemetry: data.telemetry ?? { cpu_score: 0, gpu_score: 0, latency: 0 },
         tags: data.tags ?? [],
       };
       setMessages(prev => [...prev, aiMsg]);
@@ -618,6 +660,68 @@ export default function SpideyChainDashboard() {
       }
       return part;
     });
+  };
+
+  /**
+   * ForensicMarkdown: High-fidelity intelligence renderer.
+   * Bridges structured reports with our interactive jump-to-evidence logic.
+   */
+  const ForensicMarkdown = ({ content }: { content: string }) => {
+    return (
+      <div className="w-full break-words">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            p: ({ children }) => (
+              <p className="mb-2 last:mb-0 leading-relaxed font-medium">
+                {React.Children.map(children, (child) => 
+                  typeof child === "string" ? renderMessageText(child) : child
+                )}
+              </p>
+            ),
+          h1: ({ children }) => (
+            <h1 className="text-sm font-black uppercase tracking-[0.2em] text-spider-red mt-4 mb-2 border-b border-spider-red/10 pb-1 first:mt-0 italic">
+              {children}
+            </h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="text-xs font-black uppercase tracking-wider text-white mt-4 mb-2 flex items-center gap-2 first:mt-0">
+              <span className="w-1.5 h-1.5 bg-spider-red rounded-full" /> {children}
+            </h2>
+          ),
+          ul: ({ children }) => <ul className="space-y-1.5 mb-3 list-none">{children}</ul>,
+          ol: ({ children }) => <ol className="space-y-1.5 mb-3 list-decimal pl-4 text-gray-400">{children}</ol>,
+          li: ({ children }) => (
+            <li className="flex gap-2 text-[11px] text-gray-300">
+              <span className="text-spider-red font-black">•</span>
+              <div>{React.Children.map(children, (child) => typeof child === "string" ? renderMessageText(child) : child)}</div>
+            </li>
+          ),
+          code: ({ children }) => (
+            <code className="text-[10px] bg-stark-card px-1.5 py-0.5 rounded border border-stark-border text-stark-gold font-mono leading-none">
+              {children}
+            </code>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-2 border-spider-red/40 bg-spider-red/5 px-3 py-2 my-2 italic text-gray-400 rounded-r">
+              {children}
+            </blockquote>
+          ),
+          strong: ({ children }) => <strong className="font-black text-white px-0.5">{children}</strong>,
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-4 rounded-lg border border-stark-border bg-stark-card/40">
+              <table className="w-full text-left text-[11px] border-collapse">{children}</table>
+            </div>
+          ),
+          thead: ({ children }) => <thead className="bg-spider-red/10 text-spider-red uppercase tracking-wider font-black border-b border-spider-red/20">{children}</thead>,
+          th: ({ children }) => <th className="px-3 py-2 border-r border-stark-border/30 last:border-0">{children}</th>,
+          td: ({ children }) => <td className="px-3 py-2 border-r border-stark-border/30 last:border-0 border-b border-stark-border/10">{children}</td>,
+        }}
+      >
+        {content}
+        </ReactMarkdown>
+      </div>
+    );
   };
 
   const copyMessage = (text: string) => {
@@ -968,9 +1072,9 @@ export default function SpideyChainDashboard() {
                         ? "border border-dashed border-stark-gold/25 text-stark-gold/70 italic text-[11px] px-4 py-2.5"
                         : "bg-stark-card border border-stark-border border-l-2 border-l-spider-red text-gray-100 rounded-tl-sm"
                   )}>
-                    {msg.text.split("\n").map((line, i) => (
-                      <p key={i} className={i > 0 ? "mt-2" : ""}>{renderMessageText(line)}</p>
-                    ))}
+                    <div className="w-full">
+                      <ForensicMarkdown content={msg.text} />
+                    </div>
 
                     {/* Tags */}
                     {msg.tags && msg.tags.length > 0 && (
@@ -981,7 +1085,7 @@ export default function SpideyChainDashboard() {
 
                     {/* Confidence meter — AI messages only */}
                     {msg.sender === "baburao" && msg.confidence !== undefined && (
-                      <ConfidenceMeter value={msg.confidence} />
+                      <ConfidenceMeter value={msg.confidence} telemetry={msg.telemetry} />
                     )}
 
                     {/* Copy on hover */}

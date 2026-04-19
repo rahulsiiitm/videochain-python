@@ -4,6 +4,7 @@ import time
 import numpy as np
 import traceback
 from typing import Any, List, Dict, Optional
+from vidchain.telemetry import HardwareMonitor
 from sentence_transformers import CrossEncoder
 from dotenv import load_dotenv
 from litellm import completion
@@ -82,25 +83,25 @@ class RAGEngine:
 
     @staticmethod
     def _build_system_prompt(context: str) -> str:
-        """Constructs the high-fidelity B.A.B.U.R.A.O. forensic persona."""
+        """Constructs an Objective Video Observer persona (Summarizer-First)."""
         return f"""
         You are B.A.B.U.R.A.O. (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation).
-        You are an elite forensic intelligence system. 
+        You are an Objective Video Observer and High-Fidelity Summarizer.
 
-        CORE MISSION:
-        Analyze multimodal surveillance logs and provide high-fidelity detective reasoning.
-        
-        SENSOR HIERARCHY (GROUND TRUTH):
-        1. Speech (Whisper): What was said is 100% accurate.
-        2. Screen Text (OCR): What was seen on screens is 100% accurate.
-        3. Actions: Situational behaviors (e.g., 'suspicious', 'normal').
-        4. Objects: Visual detections (Llava/VLM).
+        YOUR MISSION:
+        Capture and report ground-truth observations from video sensor logs.
+        Focus on "What happened" based on Speech, OCR, and Actions.
 
-        TEMPORAL REASONING:
-        - If a Knowledge Graph is provided, use it as your PRIMARY source for 'When' or 'Who' questions.
-        - Always provide exact timestamps (e.g., [12.5s]) when citing evidence.
+        OPERATIONAL RULES:
+        1. OBJECTIVITY FIRST: Describe what is recorded in the logs without assuming intent or "playing detective" initially.
+        2. CHRONOLOGICAL SUMMARIZATION: When summarizing, tell the story of the video from start to finish.
+        3. DEDUCTION ON-DEMAND: Only use your internal "mind" to assume, guess, or analyze deep intent if the user asks a specific question requiring reasoning (e.g., "Why...", "Is it suspicious...").
+        4. SENSOR GROUND TRUTH: 
+           - Speech (Whisper) and Screen Text (OCR) are 100% accurate.
+           - Visuals/Llava: Describe identified objects and actions.
+        5. CITATION: Always provide exact timestamps (e.g., [12.5s]) when citing events.
 
-        CONTEXT LOGS:
+        SENSOR LOG DATA:
         {context}
         """
 
@@ -189,6 +190,36 @@ class RAGEngine:
             print(f"[WARNING] Agentic Router failed: {e}. Defaulting to VIDEO_SEARCH.")
             return "VIDEO_SEARCH"
 
+    def _assess_confidence(self, answer: str, context: str) -> int:
+        """
+        Neural Verification Pulse: Self-evaluates certainty based on evidence.
+        """
+        if not context: return 30 # Hallucination risk is high with zero context
+        
+        prompt = f"""Rate your confidence in this forensic deduction from 0 to 100.
+        Evidence Context: {context[:500]}...
+        Your Answer: {answer}
+        
+        Consider: relevance, specificity, and factual alignment with logs.
+        Output ONLY the numerical score."""
+        
+        try:
+            api_base = "http://localhost:11434" if "ollama" in self.model_name.lower() else None
+            response = completion(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=10,
+                temperature=0.0,
+                api_base=api_base
+            )
+            score_text = response.choices[0].message.content.strip() #type: ignore
+            # Extract first number found
+            import re
+            match = re.search(r'\d+', score_text)
+            return int(match.group()) if match else 75
+        except:
+            return 75 # Default "High-Probability" fallback
+
     # ------------------------------------------------------------------
     # Public Agent Interface
     # ------------------------------------------------------------------
@@ -247,19 +278,36 @@ class RAGEngine:
             messages.extend(active_history[-4:]) # Context window for memory
         messages.append({"role": "user", "content": user_question})
 
-        try:
-            print(f"[Agentic AI] Consulting LLM ({self.model_name})...")
-            # Force local Ollama endpoint connection
-            api_base = "http://localhost:11434" if "ollama" in self.model_name.lower() else None
-            response = completion(model=self.model_name, messages=messages, api_base=api_base)
-            answer = response.choices[0].message.content.strip() #type: ignore
+        # ── NEURAL HUD & TELEMETRY ─────────────────────────────────────
+        telemetry_stats = {}
+        with HardwareMonitor() as hud:
+            try:
+                print(f"[Agentic AI] Consulting LLM ({self.model_name})...")
+                # Force local Ollama endpoint connection
+                api_base = "http://localhost:11434" if "ollama" in self.model_name.lower() else None
+                response = completion(model=self.model_name, messages=messages, api_base=api_base)
+                answer = response.choices[0].message.content.strip() #type: ignore
+                
+                # Update history only if we are using instance memory
+                if history is None:
+                    self.chat_history.append({"role": "user", "content": user_question})
+                    self.chat_history.append({"role": "assistant", "content": answer})
+                
+                # ── NEURAL VERIFICATION PULSE ───────────────────────────────
+                confidence = self._assess_confidence(answer, context_str)
+            except Exception as e:
+                traceback.print_exc()
+                answer = f"[ERROR] B.A.B.U.R.A.O. logic failure: {e}"
+                confidence = 0
             
-            # Update history only if we are using instance memory
-            if history is None:
-                self.chat_history.append({"role": "user", "content": user_question})
-                self.chat_history.append({"role": "assistant", "content": answer})
-            
-            return answer
-        except Exception as e:
-            traceback.print_exc()
-            return f"[ERROR] B.A.B.U.R.A.O. logic failure: {e}"
+            telemetry_stats = hud.get_stats()
+
+        # Return the rich forensic payload
+        if "return_raw" in kwargs: # Support for unified API relay
+            return {
+                "answer": answer,
+                "telemetry": telemetry_stats,
+                "confidence": confidence
+            }
+        
+        return answer

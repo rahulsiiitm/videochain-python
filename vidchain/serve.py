@@ -15,7 +15,7 @@ from vidchain.client import VidChain
 app = FastAPI(
     title="VidChain Edge Server",
     description="Local 'LangChain for Videos' API — Persistent Edition",
-    version="0.7.2"
+    version="0.7.5"
 )
 
 # ── Secure Media Streaming ────────────────────────────────────────────────────
@@ -230,18 +230,35 @@ def query_video(req: QueryRequest):
         # Prepare arguments: only pass timeline if we actually found one
         ask_kwargs = {
             "video_id": video_id,
-            "history": history
+            "history": history,
+            "return_raw": True # NEW: Request high-fidelity telemetry payload
         }
         if timeline:
             ask_kwargs["timeline"] = timeline
 
-        response = vc.ask(req.query, **ask_kwargs)
+        # Run engine with Neural HUD monitoring
+        result = vc.ask(req.query, **ask_kwargs)
         
-        # 3. Save the interaction
+        # Extract structured intel
+        answer = result.get("answer", "")
+        telemetry = result.get("telemetry", {})
+        confidence = result.get("confidence", 75)
+        
+        # 3. Save the interaction with telemetry metadata
         _append_message(session_id, "user",    req.query,  video_id)
-        _append_message(session_id, "baburao", response,   video_id)
+        msg = _append_message(session_id, "baburao", answer, video_id)
         
-        return {"response": response, "session_id": session_id}
+        # Enrich stored message with neural scores
+        msg["telemetry"]  = telemetry
+        msg["confidence"] = confidence
+        _save_session(_load_session(session_id)) # Final persistence lock
+        
+        return {
+            "response": answer, 
+            "session_id": session_id,
+            "telemetry": telemetry,
+            "confidence": confidence
+        }
     except Exception as e:
         import traceback
         traceback.print_exc()

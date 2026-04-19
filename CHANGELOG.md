@@ -4,6 +4,18 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [0.7.5] — 2026-04-19
+
+### Changed
+- **Objective Intelligence** — Re-aligned the AI persona to act as an objective video observer/summarizer. Prioritizes sensor-ground-truth and chronological summaries over deductive reasoning.
+- **Peak Hardware Telemetry** — Upgraded the telemetry monitor to use background polling, capturing absolute CPU/GPU stress peaks during processing.
+
+## [0.7.3] — 2026-04-19
+
+### Added
+- **Formatted Intelligence** — Integrated `react-markdown` and `remark-gfm` into the Spider-Net Portal. Every forensic deduction is now broadcast with high-fidelity formatting (headers, lists, bold text, etc.).
+- **Hybrid Marker Synthesis** — Custom markdown renderers that detect `[00.0s]` patterns, maintaining interactive "Jump-to-Evidence" capabilities within structured reports.
+
 ## [0.7.2] — 2026-04-19
 
 ### Added

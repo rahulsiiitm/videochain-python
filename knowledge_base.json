@@ -1,6 +1,6 @@
 {
     "metadata": {
-        "video_id": "7eedded1",
+        "video_id": "c87db4c7",
         "source": "sample.mp4",
         "video_path": "sample.mp4",
         "audio_path": "sample_pipeline_temp.wav",
@@ -14,7 +14,7 @@
             "time": 0.0,
             "frame_idx": 0,
             "skip_frame": false,
-            "audio": "Nguyen empowering political speech",
+            "audio": "Kepach кажется sain",
             "objects": "The image shows a laptop screen displaying a webpage with various lines of code written on it. The laptop is open to the Chrome browser, which has a windowed interface. The code displayed on the screen appears to be in a programming language such as JavaScript or Python. The laptop's keyboard and trackpad are visible underneath the screen, indicating that the user is actively engaged with the software.",
             "ocr": "ASUS Vivobook"
         },
@@ -80,7 +80,7 @@
             "time": 16.0,
             "frame_idx": 480,
             "skip_frame": false,
-            "audio": "Shotspots",
+            "audio": null,
             "objects": "The image shows a room with white walls and a wooden floor. A green sign is hanging on the wall next to a red suitcase. The suitcase appears to be open, revealing its contents inside. There are also several other items in the room, including a black backpack placed against one of the walls, a pair of scissors resting on top of it, and a white box with a green label sitting on another surface.",
             "ocr": null
         },
@@ -91,7 +91,7 @@
             "time": 16.5,
             "frame_idx": 495,
             "skip_frame": false,
-            "audio": "Shotspots",
+            "audio": null,
             "objects": "The image shows a room with a pink door on the left side of the frame. The door is slightly open, revealing a glimpse of what's inside. On the right side of the frame, there are two white doors that appear to be closed. In front of these doors, there is a desk with various items on it, including a green notebook and a blue backpack. A computer mouse can also be seen near the bottom edge of the image.",
             "ocr": null
         },
@@ -102,7 +102,7 @@
             "time": 17.0,
             "frame_idx": 510,
             "skip_frame": false,
-            "audio": "Shotspots",
+            "audio": null,
             "objects": "The image shows a room with a white door on the left side of the frame. The door is painted red and has two windows above it. On the right side of the door, there's a gray refrigerator. In front of the door, there are three books placed vertically against the wall. A blue chair can be seen in the background, positioned next to the door.",
             "ocr": null
         },
@@ -124,7 +124,7 @@
             "time": 18.0,
             "frame_idx": 540,
             "skip_frame": false,
-            "audio": "Shot clad",
+            "audio": null,
             "objects": "The image shows a room with a white door on the left side of the frame. The door is slightly open, revealing a glimpse of what's inside the room beyond it. On the right side of the door, there are two doors - one red and one pink. These doors stand out against the white wall behind them.\n\nIn front of these doors, there is a desk with various items on it. A computer mouse can be seen near the center of the image, while a keyboard is placed to its right side. There's also a blue chair positioned in front of the desk. The room appears to be well-organized and functional, with each object having its own designated space.",
             "ocr": null
         },
@@ -135,7 +135,7 @@
             "time": 18.5,
             "frame_idx": 555,
             "skip_frame": false,
-            "audio": "Shot clad",
+            "audio": null,
             "objects": "The image shows a room with a pink door on the left side of the frame. The room is filled with various items scattered around, including a green backpack placed near the center-right area, a blue chair positioned towards the right side, and several books spread across the floor in different parts of the room. These objects create an impression of a lived-in space where someone's belongings are casually strewn about.",
             "ocr": null
         },
