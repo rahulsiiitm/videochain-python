@@ -4,6 +4,29 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [0.7.2] — 2026-04-19
+
+### Added
+- **Spider-Net Intelligence Portal** (`vidchain-web`) — A professional-grade, Stark-Tech forensic command center built with Next.js, Framer Motion, and Tailwind CSS. **Now bundled natively within the Python package.**
+- **Unified Forensic Bundle** — `vidchain-serve` now automatically hosts the Spider-Net Portal on the root URL (`/`), providing a zero-config investigative experience out of the box.
+- **Forensic Evidence Vault** — Multi-sensor video player integrated directly into the dashboard. Supports surgical frame-by-frame scrubbing (`[<]` and `[>]` precision) and real-time Neural HUD overlays.
+- **Cognitive Bridge (Neural Handshake)** — Real-time telemetry connection between the B.A.B.U.R.A.O. backend and the web portal. Broadcasts active sensor states (Whisper, VLM, OCR) during ingestion to a live "Engine Status" HUD.
+- **Semantic Heatmap** — Timeline-based intelligence density visualization. Automatically maps OCR detections, VLM scene captions, and audio events across the video duration.
+- **Knowledge Gateway API** — New forensic endpoints in `serve.py` for structured timeline retrieval (`/api/knowledge/{video_id}`) and neural status polling (`/api/sessions/{session_id}/status`).
+- **Forensic Reporting** — One-click "Finalize Report" feature to export session logs and AI deductions into academic-grade Markdown.
+
+### Fixed
+- Resolved `NameError: session_id` in `serve.py` ingestion pipeline.
+- Fixed critical `Dict` typing NameError in `serve.py` status hub.
+- Corrected "Temporal Dead Zone" `ReferenceError` in React dashboard.
+- Synchronized Heatmap keys with actual sensor outputs (`ocr`, `objects`, `transcript`).
+
+### Changed
+- `vidchain-serve` now mounts a `/media` static route to provide secure local evidence streaming to the web portal.
+- Instrumented `VideoChain` orchestrator and `client.py` with `progress_callback` hooks for neural telemetry broadcast.
+
+---
+
 ## [0.6.0] — 2026-04-18
 
 ### Added

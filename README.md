@@ -1,18 +1,42 @@
 # VidChain: The "LangChain for Videos"
-> Edge-optimized, local-first multimodal RAG framework for video intelligence — compose modular nodes into custom pipelines, deploy as a microservice, or query with a conversational AI.
+> Edge-optimized, local-first multimodal RAG framework for forensic video intelligence — compose modular nodes into custom pipelines, deploy as a microservice, or query via the **Spider-Net Intelligence Portal**.
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-beta-orange) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
+![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v0.7.2--Elite-red) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
+
+![Spider-Net Intelligence Portal](assets/forensic_portal.webp)
+
+---
+
+## Diagnostic Architecture
+
+VidChain v0.7.2 follows a **Multimodal Sensor Fusion** architecture, orchestrating specialized AI nodes into a unified forensic timeline.
+
+```mermaid
+graph TD
+    A[Video Source] --> B[Adaptive Keyframe Extractor]
+    A --> C[Audio Extraction]
+    B --> D[Vision Engine]
+    D --> E[Moondream VLM]
+    D --> F[EasyOCR]
+    D --> G[YOLO v8]
+    C --> H[Whisper ASR]
+    E & F & G & H --> I[Semantic Fusion Layer]
+    I --> J[Temporal Knowledge Graph / GraphRAG]
+    I --> K[ChromaDB Vector Store]
+    J & K --> L[B.A.B.U.R.A.O. Intelligence]
+    L --> M[Spider-Net Portal]
+```
 
 ---
 
 ## Overview
 
-VidChain v0.6.0 is a modular, composable framework for on-device multimodal video understanding. Inspired by LangChain's node-based design, it lets developers snap together processing components — Vision Language Models, Audio, OCR — into custom pipelines running entirely on your local GPU.
+VidChain v0.7.2 is a modular, composable framework for on-device multimodal video understanding. Inspired by LangChain's node-based design, it lets developers snap together processing components — Vision Language Models, Audio, OCR — into custom pipelines running entirely on your local GPU.
 
 **VLM-First by design** — Moondream runs by default, delivering rich contextual descriptions (*"a red Honda Civic with a dented bumper"*) instead of blind YOLO tags (*"car"*). Use `--fast` for legacy YOLO when speed matters on long videos.
 
 ### 🧠 Intelligence Layer: GraphRAG
-VidChain v0.6.0 introduces **Temporal Knowledge Graphs**. While standard RAG searches for disjoint frames, GraphRAG maps entities (people, laptops, OCR text) and their relationships across time.
+VidChain v0.7.2 introduces **Temporal Knowledge Graphs**. While standard RAG searches for disjoint frames, GraphRAG maps entities (people, laptops, OCR text) and their relationships across time.
 
 - **Entity Persistence:** Automatically tracks when a person or object was first/last seen.
 - **Cross-Video Tracking:** Maps co-occurrences (e.g., "Person A and Person B appeared together at 12s").
@@ -20,9 +44,14 @@ VidChain v0.6.0 introduces **Temporal Knowledge Graphs**. While standard RAG sea
 
 ---
 
-### 🖥️ VidChain Studio (Desktop)
-A native, glassmorphism-inspired desktop application for monitoring and chatting with your video archives.
-`vidchain-studio`
+### 🕸️ Spider-Net Intelligence Portal (Web)
+A professional-grade forensic command center for real-time video intelligence and investigative discovery. **Now bundled natively within the Python package.**
+`vidchain-serve`
+
+- **Unified Launch**: Hosting both the B.A.B.U.R.A.O. API and the full web dashboard on `localhost:8000`.
+- **Forensic Evidence Vault**: Integrated media engine with **33ms frame-step** precision (`[<]` and `[>]` controls).
+- **Neural HUD & Heatmap**: Real-time visualization of sensor activity and intelligence density.
+- **Zero-Config Dashboard**: Served as a high-performance static bundle directly from the Python core.
 
 ---
 
@@ -158,10 +187,10 @@ vidchain-analyze video.mp4 --vlm llava --query "what brand is the laptop?"
 # Fast mode: Legacy YOLO pipeline (for long videos where speed > detail)
 vidchain-analyze video.mp4 --fast
 
-# Start Edge API Server
+# Start Unified Forensic Suite (API + Spider-Net Portal)
 vidchain-serve
 
-# Launch Desktop UI
+# Launch Legacy Desktop UI (Local)
 vidchain-studio
 
 # Train Custom Action Engine
@@ -249,6 +278,16 @@ vc.purge_storage()
 - [x] **Adaptive Keyframe Firewall** — GPU compute optimization (v0.5.0)
 - [x] **FastAPI Edge Microservice** — `vidchain-serve` (v0.5.0)
 - [x] **VLM-First default pipeline** — Moondream as default, YOLO via `--fast`
+- [x] **Spider-Net Intelligence Portal** — High-fidelity forensic web dashboard (v0.7.2)
+- [x] **Forensic Evidence Vault** — Precision frame-step video review system (v0.7.2)
+- [x] **Cognitive Bridge** — Real-time sensor telemetry & Neural HUD (v0.7.2)
+
+## [0.7.2] — 2026-04-19
+### Added
+- **Spider-Net Portal**: Next.js-based forensic command center.
+- **Neural HUD**: Real-time sensor indicators (VLM/OCR/Audio).
+- **Evidence Vault**: surgical seeking and metadata-anchored playback.
+- **Cognitive Bridge**: Live polling of backend forensic nodes.
 
 ## [0.6.0] — 2026-04-18
 ### Added

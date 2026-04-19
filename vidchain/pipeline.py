@@ -1,5 +1,5 @@
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 import cv2  # type: ignore
 
 from .nodes.base import BaseNode
@@ -18,9 +18,14 @@ class VideoChain:
         self.nodes = nodes
         self.frame_skip = frame_skip
         
-    def run(self, video_path: str, audio_path: Optional[str] = None) -> tuple[List[Dict[str, Any]], Optional[str]]:
+    def run(
+        self, 
+        video_path: str, 
+        audio_path: Optional[str] = None,
+        progress_callback: Optional[Callable[[str, str], None]] = None
+    ) -> tuple[List[Dict[str, Any]], Optional[str]]:
         """
-        Executes the chain over the given video.
+        Executes the chain over the given video with real-time telemetry.
         Returns:
             (timeline, effective_audio_path)
         """
@@ -72,6 +77,8 @@ class VideoChain:
                     # Sequentially execute each node
                     skip_entire_frame = False
                     for node in self.nodes:
+                        if progress_callback:
+                            progress_callback(node.__class__.__name__, f"Analyzing at {current_time}s...")
                         context = node.process(context)
                         if context.get("skip_frame", False):
                             skip_entire_frame = True

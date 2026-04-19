@@ -99,7 +99,7 @@ class VidChain:
         self,
         video_source: str,
         video_id: Optional[str] = None,
-        on_progress: Optional[Callable[[float], None]] = None,
+        progress_callback: Optional[Callable[[str, str], None]] = None,
         chain: Optional[Any] = None,
         **kwargs
     ) -> str:
@@ -133,7 +133,7 @@ class VidChain:
                 ],
                 frame_skip=15 # 2 FPS
             )
-            results = default_chain.run(video_source)
+            results = default_chain.run(video_source, progress_callback=progress_callback)
             # Robust destructuring to prevent 'list has no get' error
             if isinstance(results, tuple):
                 fused_timeline, _audio_path = results

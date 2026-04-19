@@ -3,10 +3,11 @@ import json
 import time
 import uuid
 import uvicorn
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from fastapi.staticfiles import StaticFiles
 from vidchain.client import VidChain
@@ -14,7 +15,7 @@ from vidchain.client import VidChain
 app = FastAPI(
     title="VidChain Edge Server",
     description="Local 'LangChain for Videos' API — Persistent Edition",
-    version="0.6.0"
+    version="0.7.2"
 )
 
 # ── Secure Media Streaming ────────────────────────────────────────────────────
@@ -30,9 +31,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Storage layout ────────────────────────────────────────────────────────────
+# ── Storage & Status Hub ────────────────────────────────────────────────────────
 STORAGE_DIR   = "vidchain_storage"
 SESSIONS_DIR  = os.path.join(STORAGE_DIR, "sessions")
+
+# Stores live status of processing session: {session_id: "status_text"}
+status_hub: Dict[str, str] = {}
+
+# Distribution paths for bundled Spider-Net Portal
+WEB_DIST_DIR = os.path.join(os.path.dirname(__file__), "web_dist")
 
 vc: Optional[VidChain] = None
 
@@ -111,6 +118,7 @@ def _list_sessions() -> List[dict]:
                         "created_at": s.get("created_at", 0),
                         "updated_at": s.get("updated_at", 0),
                         "message_count": len(s.get("messages", [])),
+                        "video_id": s.get("video_id")
                     })
             except Exception:
                 pass
@@ -245,16 +253,23 @@ def _background_ingest(video_source: str, video_id: Optional[str], session_id: s
     fname = os.path.basename(video_source)
     print(f"[VidChain Server] Background ingest started: {fname} (ID: {video_id})")
     try:
-        # Ingest with explicit ID binding
-        v_id = vc.ingest(video_source, video_id=video_id)  # type: ignore
-        print(f"[VidChain Server] Ingest complete: {fname}")
+        status_hub[session_id] = "Initializing Transformers..."
         
-        # Quick one-line summary MUST be tied to the current v_id to prevent race conditions
+        # We hook into the pipeline's progress callback to update our status hub
+        def _progress_cb(node_name: str, msg: str):
+            status_hub[session_id] = f"[{node_name}] {msg}"
+            print(f"[Neural Telemetry] {session_id} -> {node_name}: {msg}")
+
+        # Ingest with explicit ID binding
+        v_id = vc.ingest(video_source, video_id=video_id, progress_callback=_progress_cb) # type: ignore
+        
+        status_hub[session_id] = "Summarizing Intelligence..."
         summary = vc.ask(
             "In exactly two sentences, describe the most important event from the video just ingested.",
             video_id=v_id
         )
         
+        status_hub[session_id] = "Idle"
         _append_message(
             session_id,
             "system",
@@ -262,8 +277,7 @@ def _background_ingest(video_source: str, video_id: Optional[str], session_id: s
             v_id,
         )
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        status_hub[session_id] = "Error"
         print(f"[VidChain Server] Ingest failed: {e}")
         _append_message(session_id, "system", f"Ingestion failed for {fname}: {e}")
 
@@ -279,6 +293,7 @@ def ingest_video(req: IngestRequest, background_tasks: BackgroundTasks):
     # We resolve the ID early and lock it to the session root 
     # so that the UI/RAG can permanently anchor to it.
     video_id = req.video_id or str(uuid.uuid4())[:8]
+    session_id = req.session_id
 
     session = _load_session(session_id)
     if session:
@@ -295,12 +310,50 @@ def ingest_video(req: IngestRequest, background_tasks: BackgroundTasks):
     }
 
 
+# ── Knowledge Gateway ──────────────────────────────────────────────────────────
+@app.get("/api/knowledge/{video_id}")
+def get_video_knowledge(video_id: str):
+    """Provides the Semantic Heatmap with temporal activity mapping."""
+    if not vc:
+        raise HTTPException(status_code=500, detail="VidChain Engine offline")
+    
+    timeline = vc.get_video_timeline(video_id)
+    if not timeline:
+        raise HTTPException(status_code=404, detail="Knowledge base not found")
+        
+    return {
+        "video_id": video_id,
+        "timeline": timeline
+    }
+
+
+@app.get("/api/sessions/{session_id}/status")
+def get_live_status(session_id: str):
+    """Neural Handshake: Returns the current active sensor node."""
+    return {"status": status_hub.get(session_id, "Idle")}
+
+
+# ── Spider-Net Portal Serving ────────────────────────────────────────────────
+@app.get("/{rest_of_path:path}", include_in_schema=False)
+def serve_dashboard(rest_of_path: str):
+    """Serves the static Next.js export or redirects to index.html for SPA."""
+    asset_path = os.path.join(WEB_DIST_DIR, rest_of_path)
+    if os.path.isfile(asset_path):
+        return FileResponse(asset_path)
+    
+    # Fallback to index.html for React routing
+    index_path = os.path.join(WEB_DIST_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    return {"message": "VidChain Server Online. Dashboard bundle missing."}
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 def main_cli():
     print("=========================================")
-    print("  VidChain Edge Microservice v0.6.0")
-    print("  Storage  : ./vidchain_storage")
-    print("  Sessions : ./vidchain_storage/sessions/")
+    print("  VidChain Forensic Suite v0.7.2")
+    print("  Portal : http://localhost:8000")
+    print("  Storage: ./vidchain_storage")
     print("=========================================")
     uvicorn.run("vidchain.serve:app", host="0.0.0.0", port=8000, reload=False)
 
