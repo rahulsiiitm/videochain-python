@@ -1,21 +1,27 @@
 import os
 import json
 import time
+import uuid
 import uvicorn
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
 
+from fastapi.staticfiles import StaticFiles
 from vidchain.client import VidChain
 
 app = FastAPI(
     title="VidChain Edge Server",
-    description="Local 'LangChain for Videos' API",
+    description="Local 'LangChain for Videos' API — Persistent Edition",
     version="0.6.0"
 )
 
-# Enable CORS for the web frontend
+# ── Secure Media Streaming ────────────────────────────────────────────────────
+# This allows the Stark-Tech frontend to play local disk videos for forensic review.
+# In a production environment, this should be restricted to the STORAGE_DIR.
+app.mount("/media", StaticFiles(directory="."), name="media")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -24,49 +30,110 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Persistent storage paths ──────────────────────────────────────────────────
+# ── Storage layout ────────────────────────────────────────────────────────────
 STORAGE_DIR   = "vidchain_storage"
-HISTORY_FILE  = os.path.join(STORAGE_DIR, "chat_history.json")
+SESSIONS_DIR  = os.path.join(STORAGE_DIR, "sessions")
 
-# Singleton global VidChain instance
 vc: Optional[VidChain] = None
 
 
-# ── Helper: chat history I/O ──────────────────────────────────────────────────
-def _load_history() -> List[dict]:
-    if os.path.exists(HISTORY_FILE):
-        try:
-            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
+# ── Session helpers ───────────────────────────────────────────────────────────
+def _sessions_dir() -> str:
+    os.makedirs(SESSIONS_DIR, exist_ok=True)
+    return SESSIONS_DIR
 
+def _session_path(session_id: str) -> str:
+    return os.path.join(_sessions_dir(), f"{session_id}.json")
 
-def _save_message(sender: str, text: str, video_id: Optional[str] = None):
-    history = _load_history()
-    history.append({
+def _load_session(session_id: str) -> dict:
+    p = _session_path(session_id)
+    if os.path.exists(p):
+        with open(p, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+def _save_session(session: dict):
+    with open(_session_path(session["id"]), "w", encoding="utf-8") as f:
+        json.dump(session, f, ensure_ascii=False, indent=2)
+
+def _create_session(title: str = "New Session") -> dict:
+    session = {
+        "id": str(uuid.uuid4())[:8],
+        "title": title,
+        "created_at": time.time(),
+        "updated_at": time.time(),
+        "messages": []
+    }
+    _save_session(session)
+    return session
+
+def _append_message(session_id: str, sender: str, text: str, video_id: Optional[str] = None) -> dict:
+    session = _load_session(session_id)
+    if not session:
+        session = _create_session()
+        session_id = session["id"]
+
+    msg = {
         "id": f"{sender}-{int(time.time()*1000)}",
         "sender": sender,
         "text": text,
         "timestamp": time.strftime("%H:%M"),
         "video_id": video_id,
-    })
-    os.makedirs(STORAGE_DIR, exist_ok=True)
-    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(history, f, ensure_ascii=False, indent=2)
+    }
+    session["messages"].append(msg)
+    
+    # NEW: Securely and permanently bind the session to this video context
+    # We update the root even if video_id is None to ensure consistency 
+    # (though in practice v_id should always be present during ingest)
+    if video_id and session.get("video_id") != video_id:
+        session["video_id"] = video_id
+        
+    session["updated_at"] = time.time()
+
+    # Auto-title from first user message
+    if sender == "user" and session["title"] == "New Session":
+        session["title"] = text[:48].strip() + ("..." if len(text) > 48 else "")
+
+    _save_session(session)
+    return msg
+
+def _list_sessions() -> List[dict]:
+    d = _sessions_dir()
+    sessions = []
+    for fn in os.listdir(d):
+        if fn.endswith(".json"):
+            try:
+                with open(os.path.join(d, fn), "r", encoding="utf-8") as f:
+                    s = json.load(f)
+                    sessions.append({
+                        "id": s["id"],
+                        "title": s.get("title", "Untitled"),
+                        "created_at": s.get("created_at", 0),
+                        "updated_at": s.get("updated_at", 0),
+                        "message_count": len(s.get("messages", [])),
+                    })
+            except Exception:
+                pass
+    return sorted(sessions, key=lambda x: x["updated_at"], reverse=True)
 
 
-# ── Request / Response Models ─────────────────────────────────────────────────
+# ── Request models ────────────────────────────────────────────────────────────
 class IngestRequest(BaseModel):
     video_source: str
     video_id: Optional[str] = None
-    use_legacy_processor: bool = True
+    session_id: Optional[str] = None
 
 class QueryRequest(BaseModel):
     query: str
     video_id: Optional[str] = None
+    session_id: Optional[str] = None
     stream: bool = False
+
+class NewSessionRequest(BaseModel):
+    title: str = "New Session"
+
+class RenameSessionRequest(BaseModel):
+    title: str
 
 
 # ── Lifecycle ─────────────────────────────────────────────────────────────────
@@ -75,14 +142,15 @@ def startup_event():
     global vc
     print("[VidChain Server] Waking up edge microservice...")
     os.makedirs(STORAGE_DIR, exist_ok=True)
+    os.makedirs(SESSIONS_DIR, exist_ok=True)
 
-    # Always persist the vector store and graph to STORAGE_DIR
+    # Always persist to STORAGE_DIR — survives restarts
     vc = VidChain(db_path=STORAGE_DIR)
     indexed = vc.list_indexed_videos()
     print(f"[VidChain Server] Memory online. Videos indexed: {len(indexed)}")
 
 
-# ── API Endpoints ─────────────────────────────────────────────────────────────
+# ── Health ────────────────────────────────────────────────────────────────────
 @app.get("/api/health")
 def health_check():
     return {
@@ -91,81 +159,150 @@ def health_check():
     }
 
 
-@app.get("/api/history")
-def get_history():
-    """Return all saved chat messages."""
-    return {"messages": _load_history()}
+# ── Session CRUD ──────────────────────────────────────────────────────────────
+@app.get("/api/sessions")
+def list_sessions():
+    return {"sessions": _list_sessions()}
+
+@app.post("/api/sessions")
+def create_session(req: NewSessionRequest):
+    session = _create_session(req.title)
+    return session
+
+@app.get("/api/sessions/{session_id}")
+def get_session(session_id: str):
+    session = _load_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+@app.patch("/api/sessions/{session_id}")
+def rename_session(session_id: str, req: RenameSessionRequest):
+    session = _load_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    session["title"] = req.title
+    _save_session(session)
+    return {"status": "renamed"}
+
+@app.delete("/api/sessions/{session_id}")
+def delete_session(session_id: str):
+    p = _session_path(session_id)
+    if os.path.exists(p):
+        os.remove(p)
+        return {"status": "deleted"}
+    raise HTTPException(status_code=404, detail="Session not found")
 
 
-@app.delete("/api/history")
-def clear_history():
-    """Wipe chat history (keeps the vector index intact)."""
-    if os.path.exists(HISTORY_FILE):
-        os.remove(HISTORY_FILE)
-    return {"status": "cleared"}
-
-
+# ── Query ─────────────────────────────────────────────────────────────────────
 @app.post("/api/query")
 def query_video(req: QueryRequest):
     if not vc:
         raise HTTPException(status_code=500, detail="VidChain Engine offline")
 
+    # Load session and identify context
+    session = _load_session(req.session_id) if req.session_id else None
+    if not session:
+        session = _create_session()
+    
+    session_id = session["id"]
+    
+    # ── Session isolation logic ───────────────────────────────────
+    # 1. Resolve private chat history
+    history = []
+    for msg in session.get("messages", []):
+        role = "assistant" if msg["sender"] in ["baburao", "system"] else "user"
+        history.append({"role": role, "content": msg["text"]})
+
+    # 2. Resolve private video context
+    video_id = req.video_id or session.get("video_id")
+    timeline = vc.get_video_timeline(video_id) if video_id else []
+
     try:
-        response = vc.ask(req.query, video_id=req.video_id)
+        # Prepare arguments: only pass timeline if we actually found one
+        ask_kwargs = {
+            "video_id": video_id,
+            "history": history
+        }
+        if timeline:
+            ask_kwargs["timeline"] = timeline
 
-        # Persist both sides of the conversation
-        _save_message("user",    req.query,  req.video_id)
-        _save_message("baburao", response,   req.video_id)
-
-        return {"response": response}
+        response = vc.ask(req.query, **ask_kwargs)
+        
+        # 3. Save the interaction
+        _append_message(session_id, "user",    req.query,  video_id)
+        _append_message(session_id, "baburao", response,   video_id)
+        
+        return {"response": response, "session_id": session_id}
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def _background_ingest(video_source: str, video_id: Optional[str]):
-    """Run ingestion in a background thread."""
-    print(f"[VidChain Server] Background ingest started for: {video_source}")
+# ── Ingest ────────────────────────────────────────────────────────────────────
+def _background_ingest(video_source: str, video_id: Optional[str], session_id: str):
+    fname = os.path.basename(video_source)
+    print(f"[VidChain Server] Background ingest started: {fname} (ID: {video_id})")
     try:
-        vc.ingest(video_source, video_id=video_id)  # type: ignore
-        print(f"[VidChain Server] Background ingest complete for: {video_source}")
-
-        # Log an auto-summary to history so the chat shows ingestion happened
-        summary = vc.ask("In one sentence, describe what was captured in the video just ingested.")  # type: ignore
-        _save_message(
+        # Ingest with explicit ID binding
+        v_id = vc.ingest(video_source, video_id=video_id)  # type: ignore
+        print(f"[VidChain Server] Ingest complete: {fname}")
+        
+        # Quick one-line summary MUST be tied to the current v_id to prevent race conditions
+        summary = vc.ask(
+            "In exactly two sentences, describe the most important event from the video just ingested.",
+            video_id=v_id
+        )
+        
+        _append_message(
+            session_id,
             "system",
-            f"Video ingested successfully — {os.path.basename(video_source)}\n\nQuick summary: {summary}",
-            video_id,
+            f"Ingestion complete — {fname}\n\n{summary}",
+            v_id,
         )
     except Exception as e:
-        print(f"[VidChain Server] Background ingest failed: {e}")
-
+        import traceback
+        traceback.print_exc()
+        print(f"[VidChain Server] Ingest failed: {e}")
+        _append_message(session_id, "system", f"Ingestion failed for {fname}: {e}")
 
 @app.post("/api/ingest")
 def ingest_video(req: IngestRequest, background_tasks: BackgroundTasks):
     if not vc:
         raise HTTPException(status_code=500, detail="VidChain Engine offline")
-
     if not os.path.exists(req.video_source):
-        raise HTTPException(
-            status_code=404,
-            detail=f"File not found: {req.video_source}"
-        )
+        raise HTTPException(status_code=404, detail=f"File not found: {req.video_source}")
 
-    background_tasks.add_task(_background_ingest, req.video_source, req.video_id)
+    # Create or validate session
+    # ── Early Context Locking ─────────────────────────────────────
+    # We resolve the ID early and lock it to the session root 
+    # so that the UI/RAG can permanently anchor to it.
+    video_id = req.video_id or str(uuid.uuid4())[:8]
+
+    session = _load_session(session_id)
+    if session:
+        session["video_id"] = video_id
+        session["updated_at"] = time.time()
+        _save_session(session)
+
+    background_tasks.add_task(_background_ingest, req.video_source, video_id, session_id)
     return {
         "status": "processing",
+        "session_id": session_id,
+        "video_id": video_id,
         "message": f"Ingestion started for {req.video_source}",
     }
 
 
-# ── CLI Entry Point ───────────────────────────────────────────────────────────
+# ── CLI ───────────────────────────────────────────────────────────────────────
 def main_cli():
     print("=========================================")
-    print("  VidChain Edge Microservice Starting...")
-    print("  Storage : ./vidchain_storage")
+    print("  VidChain Edge Microservice v0.6.0")
+    print("  Storage  : ./vidchain_storage")
+    print("  Sessions : ./vidchain_storage/sessions/")
     print("=========================================")
     uvicorn.run("vidchain.serve:app", host="0.0.0.0", port=8000, reload=False)
-
 
 if __name__ == "__main__":
     main_cli()

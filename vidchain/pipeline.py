@@ -18,13 +18,29 @@ class VideoChain:
         self.nodes = nodes
         self.frame_skip = frame_skip
         
-    def run(self, video_path: str, audio_path: Optional[str] = None) -> List[Dict[str, Any]]:
+    def run(self, video_path: str, audio_path: Optional[str] = None) -> tuple[List[Dict[str, Any]], Optional[str]]:
         """
         Executes the chain over the given video.
+        Returns:
+            (timeline, effective_audio_path)
         """
         if not os.path.exists(video_path):
             raise FileNotFoundError(f"Video file not found: {video_path}")
             
+        # ── Audio extraction (Automatic) ──────────────────────────
+        _audio_path = audio_path
+        if _audio_path is None:
+            from moviepy import VideoFileClip
+            temp_audio = video_path.rsplit(".", 1)[0] + "_pipeline_temp.wav"
+            try:
+                with VideoFileClip(video_path) as clip:
+                    if clip.audio:
+                        print(f"[VideoChain] Extracting audio for Whisper node...")
+                        clip.audio.write_audiofile(temp_audio, fps=16000, logger=None)
+                        _audio_path = temp_audio
+            except Exception as e:
+                print(f"[VideoChain] Warning: Audio extraction failed - {e}")
+        
         print(f"[VideoChain] Initializing pipeline with {len(self.nodes)} nodes...")
         
         cap = cv2.VideoCapture(video_path)
@@ -46,7 +62,7 @@ class VideoChain:
                     # Initialize shared memory context
                     context: Dict[str, Any] = {
                         "video_path": video_path,
-                        "audio_path": audio_path,
+                        "audio_path": _audio_path,
                         "current_frame": frame,
                         "current_time": current_time,
                         "time": current_time,  # Normalized key for RAG compatibility
@@ -74,4 +90,4 @@ class VideoChain:
             cap.release()
             
         print(f"[VideoChain] Pipeline complete. Extracted {len(timeline)} events.")
-        return timeline
+        return timeline, _audio_path
