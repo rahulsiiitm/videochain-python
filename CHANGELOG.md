@@ -4,6 +4,23 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [0.8.0] — 2026-04-20
+
+### Added
+- **Modular Revolution**: Fully transitioned to a "Nodes & Chains" architecture. The monolithic `processor.py` has been deprecated and removed in favor of composable, independent sensory nodes.
+- **Forensic Stability Patch**: Fixed critical CLI crash where modular progress callbacks were misaligned with the terminal status bar.
+- **Extended Sensory Suite**: Introduced optional **`EmotionNode`** (Behavioral Sentiment) and **`ActionNode`** (Situational Verbs) as developer-triggerable sensors.
+- **Neural Handshake v2**: Refined the CLI Hud to show real-time "Sensory Pulse" counters for each active node during ingestion.
+- **Executive Summarization**: Integrated the recursive Map-Reduce narrative engine directly into the CLI. A forensic report is now automatically generated post-ingestion.
+- **Fast-Mode Activation**: Re-aligned the `--fast` flag to use the high-speed **`YoloNode`** instead of the heavy VLM, optimizing ingestion for long-form CCTV.
+
+### Changed
+- **Codebase Purge**: Removed legacy files including `processor.py`, `audio_loader.py`, and `page_old_fixed.tsx` to ensure a 0% redundancy core.
+- `vidchain.cli` now supports modular node injections via `--emotion` and `--action` flags.
+- Documentation suite overhauled to align with the library-first, modular API.
+
+---
+
 ## [0.7.5] — 2026-04-19
 
 ### Changed

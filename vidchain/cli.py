@@ -43,6 +43,16 @@ def main():
         action="store_true",
         help="Use legacy YOLO pipeline instead of VLM. Faster for long videos but less descriptive."
     )
+    parser.add_argument(
+        "--emotion",
+        action="store_true",
+        help="Enable modular EmotionNode for behavioral sentiment analysis (DeepFace)."
+    )
+    parser.add_argument(
+        "--action",
+        action="store_true",
+        help="Enable modular ActionNode for situational 'verb' analysis (MobileNet)."
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.video_path):
@@ -63,45 +73,79 @@ def main():
         "db_path": "./vidchain_storage"
     })
 
-    # ── Progress Callback ──────────────────────────────────
-    def progress_callback(percent):
-        """Simple ASCII progress bar for the CLI."""
-        bar_length = 40
-        filled_length = int(bar_length * percent // 100)
-        bar = '█' * filled_length + '-' * (bar_length - filled_length)
-        sys.stdout.write(f'\r[SYSTEM] Scanning: |{bar}| {percent}% Complete')
+    # ── Progress Callback (Multi-Sensor Pulse) ─────────────
+    def progress_callback(node_name: str, msg: str):
+        """Unified status ticker for the modular sensory chain."""
+        sys.stdout.write(f'\r\033[K[SENSORY PULSE] {node_name}: {msg}')
         sys.stdout.flush()
 
     # ── Build pipeline chain ──────────────────────────────
     chain = None
+    from vidchain.pipeline import VideoChain
+    from vidchain.nodes import AdaptiveKeyframeNode, WhisperNode, OcrNode, ActionNode, TrackerNode
+    
     if not args.fast:
         vlm_model = args.vlm  # defaults to "moondream"
-        from vidchain.pipeline import VideoChain
-        from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode, OcrNode, ActionNode
-        print(f"[INFO] VLM Mode: {vlm_model} + AdaptiveKeyframing (use --fast for YOLO)")
+        from vidchain.nodes import LlavaNode
+        print(f"[INFO] Mode: HIGH-FIDELITY (VLM: {vlm_model} + Action + OCR)")
         chain = VideoChain(
             nodes=[
                 AdaptiveKeyframeNode(change_threshold=5.0),
+                TrackerNode(),
+                WhisperNode(model_size="base"),
                 LlavaNode(model_name=vlm_model),
                 OcrNode(languages=args.ocr_lang),
             ],
             frame_skip=15  # 2 FPS
         )
     else:
-        print("[INFO] Fast Mode: Legacy YOLO pipeline enabled.")
+        from vidchain.nodes import YoloNode
+        print("[INFO] Mode: FAST (YOLOv8 + Action + OCR)")
+        chain = VideoChain(
+            nodes=[
+                AdaptiveKeyframeNode(change_threshold=5.0),
+                TrackerNode(),
+                WhisperNode(model_size="base"),
+                YoloNode(confidence=0.5),
+                OcrNode(languages=args.ocr_lang),
+            ],
+            frame_skip=30 # 1 FPS for speed
+        )
+
+    # ── Modular Node Injections ──────────────────────────
+    if args.emotion:
+        from vidchain.nodes import EmotionNode
+        print("[INFO] SENSOR INJECTION: EmotionNode Active.")
+        chain.nodes.append(EmotionNode())
     
+    if args.action:
+        from vidchain.nodes import ActionNode
+        print("[INFO] SENSOR INJECTION: ActionNode Active.")
+        chain.nodes.append(ActionNode())
+
     # ── Extraction & Ingestion ──────────────────────────────
-    print("\n[INFO] Initializing Multimodal Extraction & Semantic Fusion...")
+    print("\n[INFO] Initializing Forensic Intelligence Scan...")
     
     try:
         video_id = vc.ingest(
             video_source=args.video_path,
-            ocr_languages=args.ocr_lang,
-            on_progress=progress_callback,
+            progress_callback=progress_callback,
             chain=chain
         )
         print(f"\n\n[SUCCESS] Ingestion Complete. Video ID: {video_id}")
+        
+        # ── NEW: Automatic Forensic Executive Summary ──────────
+        print("\n[SYSTEM] Generating Forensic Executive Summary...")
+        summary = vc.summarize_video(video_id, depth="detailed")
+        print("\n" + "="*60)
+        print("📜 INTELLIGENCE REPORT")
+        print("="*60)
+        print(summary)
+        print("="*60 + "\n")
+        
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"\n\n[ERROR] Ingestion failed: {e}")
         sys.exit(1)
 

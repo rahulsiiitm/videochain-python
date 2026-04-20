@@ -1,66 +1,77 @@
-# 🕷️ VidChain Developer Quickstart Guide
+# 🕷️ VidChain v0.8.0 Developer Quickstart
 
-This guide explains how to use the **VidChain Framework** as an embedded library in your own projects (like the Stark-Net Live Portal).
-
----
-
-## 1. The "Library" Architecture
-VidChain is a **Titan-Class Multimodal RAG Framework**. It is designed to be imported by other Python applications.
-- **The Library (`vidchain/`)**: Contains the engine (VLM, OCR, GraphRAG).
-- **The Application**: Your custom portal or script that uses the engine to solve real-world problems.
+This guide explains how to integrate the **VidChain Framework** as a library into your own security and forensics applications.
 
 ---
 
-## 2. Setting Up a New "Embedded" Project
-To use VidChain in a new folder elsewhere on your PC:
-1.  **Initialize your new project folder**.
-2.  **Install the framework** in editable mode:
-    ```powershell
-    pip install -e /path/to/videochain-python
-    ```
-3.  **Start Coding!**
+## 1. Core Architecture
+VidChain v0.8.0-Stable is built on a **Modular Sensor Logic**. You construct a `VideoChain` (the "nervous system") and inject it into the `VidChain` orchestrator (the "brain").
 
 ---
 
-## 3. Core Developer API (Python)
-The entire framework is condensed into a single, powerful class.
+## 2. Setting Up
+```powershell
+# Clone and install in editable mode
+git clone https://github.com/rahulsiiitm/videochain-python
+cd videochain-python
+pip install -e .
+```
 
-### Initialization
+---
+
+## 3. High-Fidelity Python API Example
+
+This is the recommended way to use VidChain for professional forensic analysis:
+
 ```python
 from vidchain import VidChain
+from vidchain.pipeline import VideoChain
+from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode, WhisperNode, OcrNode
 
-# Uses local Llama3 for unlimited, private reasoning
-vc = VidChain(verbose=True) 
-```
+# 1. Compose the Sensory Chain
+# We use AdaptiveKeyframe to skip the boring stuff and Moondream for the smart stuff.
+chain = VideoChain(
+    nodes=[
+        AdaptiveKeyframeNode(change_threshold=5.0), # Save GPU cycles
+        LlavaNode(model_name="moondream"),          # Dense Scene Analysis
+        WhisperNode(model_size="base"),            # Audio Forensics
+        OcrNode()                                  # Text Trace
+    ],
+    frame_skip=15  # Process 2 frames per second
+)
 
-### Video Ingestion (Knowledge Building)
-```python
-# Ingests a video and builds the forensic knowledge base & GraphRAG
-vc.ingest("path/to/video.mp4", video_id="CAM_01")
-```
+# 2. Initialize the B.A.B.U.R.A.O. Engine
+vc = VidChain(verbose=True)
 
-### Forensic Inquiry (Retrieval)
-```python
-# Ask complex, multi-hop questions about the footage
-response = vc.ask("Was there any suspicious activity involving a laptop at 00:15?")
-print(response)
+# 3. Analyze & Index
+video_id = vc.ingest("incidents/break_in.mp4", chain=chain)
+
+# 4. Generate Intelligence
+summary = vc.summarize_video(video_id)
+print(f"REPORT: {summary}")
+
+# 5. Iterative Discovery
+answer = vc.ask("What color was the getaway car's plates?", video_id=video_id)
+print(f"AI: {answer}")
 ```
 
 ---
 
-## 4. Key Features to Highlight for Presentation:
-- **GraphRAG Precision**: We don't just search text; we track entities over time using a Knowledge Graph (`NetworkX`).
-- **Local-First (Stark-Logic)**: Runs on your GPU/CPU (Ollama) with 0% cloud cost.
-- **Multimodal Fusion**: Combines Audio (Whisper), Vision (Moondream), OCR, and Action classification into a single "Semantic Story."
+## 4. CLI Mastery (The "Stark-Tech" way)
+
+For rapid triage, use the global CLI module:
+
+| Task | Command |
+| :--- | :--- |
+| **Comprehensive Scan** | `python -m vidchain.cli surveillance.mp4` |
+| **Silent High-Speed Scan** | `python -m vidchain.cli surveillance.mp4 --fast` |
+| **Behavioral Incident Scan** | `python -m vidchain.cli surveillance.mp4 --emotion --action` |
+| **Batch API Deployment** | `vidchain-serve` |
 
 ---
 
-## 5. Live Surveillance Recipe
-For your live portal, use the **`hub.py`** logic:
-1.  **Monitor** a directory via `watchdog`.
-2.  **Ingest** new files as they arrive.
-3.  **Audit** the feed automatically using specific prompts like *"Generate a 2-sentence security threat assessment."*
-4.  **Display** results on your high-fidelity Stark-HUD Dashboard.
+## 5. Live Surviellance (Watchdog Mode)
+To build a live HUD, use the `watchdog` to monitor a CCTV folder and trigger `vc.ingest` automatically as files are closed by the recorder.
 
 ---
-**Powered by VidChain v0.6.0 | Stark-Tech Intelligence**
+**VidChain v0.8.0-Stable | Stark-Tech Forensic Intelligence**

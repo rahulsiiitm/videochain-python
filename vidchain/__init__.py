@@ -19,10 +19,13 @@ def __getattr__(name):
     if name == "VidChain":
         from vidchain.client import VidChain
         return VidChain
+    if name == "VideoChain":
+        from vidchain.pipeline import VideoChain
+        return VideoChain
     raise AttributeError(f"module 'vidchain' has no attribute '{name}'")
 
 
-__version__ = "0.7.5"
-__author__  = "Rahul Sharma"
+__version__ = "0.8.0"
+__author__ = "Rahul Sharma"
 __license__ = "MIT"
-__all__     = ["VidChain"] # type: ignore
+__all__ = ["VidChain", "VideoChain"]
