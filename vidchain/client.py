@@ -9,7 +9,6 @@ import os
 import uuid
 import json
 from typing import Optional, Dict, Any, Callable, List
-from vidchain.processor import VideoProcessor
 from vidchain.core.summarizer import VideoSummarizer
 from vidchain.rag import RAGEngine
 from vidchain.vectorstores.chroma import ChromaStore

@@ -6,6 +6,7 @@ from .action import ActionNode
 from .vlm import LlavaNode
 from .keyframe import AdaptiveKeyframeNode
 from .tracker import TrackerNode
+from .emotion import EmotionNode
 
 __all__ = [
     "BaseNode",
@@ -15,5 +16,6 @@ __all__ = [
     "ActionNode",
     "LlavaNode",
     "AdaptiveKeyframeNode",
-    "TrackerNode"
+    "TrackerNode",
+    "EmotionNode"
 ]
