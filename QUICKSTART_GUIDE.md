@@ -1,4 +1,4 @@
-# 🕷️ VidChain v0.8.0 Developer Quickstart
+# VidChain v0.8.0 Developer Quickstart
 
 This guide explains how to integrate the **VidChain Framework** as a library into your own security and forensics applications.
 

@@ -1,113 +1,208 @@
 # VidChain: The "LangChain for Videos"
-> **v0.8.0-Stable** — Edge-optimized, local-first multimodal RAG framework for forensic video intelligence. Compose modular nodes into custom pipelines, deploy as a microservice, or query via the **Spider-Net Intelligence Portal**.
+> **v0.8.0-Stable** — Edge-optimized, local-first multimodal RAG framework for forensic video intelligence. Compose modular sensory nodes into custom pipelines, deploy as a microservice, or query via the **Spider-Net Intelligence Portal**.
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v0.8.0--Stable-green)
+![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v0.8.0--Stable-green) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
 
 ![Spider-Net Intelligence Portal](assets/forensic_portal.webp)
 
 ---
 
-## 🏗️ Composable Modular Architecture (Nodes & Chains)
+## Advanced Forensic Architecture
 
-VidChain v0.8.0-Stable introduces a major architectural pivot: the **Nodes & Chains** framework. Instead of a monolithic processor, the system now orchestrates independent, specialized "Sensory Nodes" into a custom forensic chain.
+VidChain v0.8.0-Stable is powered by the **B.A.B.U.R.A.O. Engine** (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation). It utilizes a modular "Nodes & Chains" framework to transform raw pixels into serialized forensic intelligence.
 
 ```mermaid
 graph TD
-    A[Video Source] --> B[Adaptive Keyframe Extractor]
-    B --> C[Sensory Node Chain]
-    subgraph "Core Nodes"
-        C --> D[LlavaNode / VLM]
-        C --> E[WhisperNode / Audio]
-        C --> F[OcrNode / Text]
-        C --> G[TrackerNode / Motion]
+    %% --- Ingestion Stage ---
+    subgraph "1. Ingestion & Optimization Layer"
+        VS[Video Source] --> AK[Adaptive Gaussian Filter]
+        AK -- "Delta > Threshold" --> PK[Promote to Keyframe]
+        AK -- "Redundant" --> DROP{{GPU Compute Firewall}}
     end
-    subgraph "Extended Suite (Optional)"
-        C -.-> H[ActionNode / Verb Analysis]
-        C -.-> I[EmotionNode / Sentiment]
-        C -.-> J[YoloNode / Fast Detect]
+
+    %% --- Inference Stage ---
+    subgraph "2. Sensory Node Matrix (Late Fusion)"
+        PK --> VLM[LlavaNode: Scene Semantics]
+        PK --> ASR[WhisperNode: Audio Trace]
+        PK --> OCR[OcrNode: Digital Trace]
+        PK --> TRK[TrackerNode: Motion Flow]
+        
+        %% Optional Sensors
+        PK -.-> ACT[ActionNode: Situational Verbs]
+        PK -.-> EMT[EmotionNode: Sentiment]
     end
-    D & E & F & G & H & I & J --> K[B.A.B.U.R.A.O. Intelligence Engine]
-    K --> L[GraphRAG + Vector DB Storage]
-    L --> M[Forensic Reports / Chat Discovery]
+
+    %% --- Intelligence Logic ---
+    subgraph "3. B.A.B.U.R.A.O. Cognitive Engine"
+        VLM & ASR & OCR & TRK & ACT & EMT --> FUSE[Semantic Fusion Pipeline]
+        FUSE --> RDN[Recursive Map-Reduce Summarizer]
+    end
+
+    %% --- Persistence ---
+    subgraph "4. Forensic Memory Vault"
+        FUSE --> KV[(ChromaDB Vector Store)]
+        FUSE --> KG[[Temporal Knowledge Graph]]
+    end
+
+    %% --- Interaction Stage ---
+    subgraph "5. Spider-Net Intelligence Portal"
+        USER[User Query] --> IR{Intent Router}
+        IR -- "Forensic Search" --> RAG[RAG Retrieval Loop]
+        IR -- "Executive Overview" --> RDN
+        RAG <--> KV
+        RAG <--> KG
+        RDN --> REPORT([Intelligence Report])
+        RAG --> DISCOVERY([Discovery Hub])
+    end
+
+    %% --- Hardware Loop ---
+    HM[NVML Hardware Monitor] -.-> AK
+    HM -.-> VLM
+    HM -.-> DISCOVERY
+
+    style VS fill:#1e1e2e,stroke:#74c7ec,stroke-width:2px;
+    style DISCOVERY fill:#11111b,stroke:#a6e3a1,stroke-width:3px;
+    style REPORT fill:#11111b,stroke:#a6e3a1,stroke-width:3px;
+    style DROP fill:#313244,stroke-dasharray: 5 5;
+    style AK fill:#1e1e2e,stroke:#fab387;
 ```
 
 ---
 
-## 🧠 Intelligence Layer: B.A.B.U.R.A.O.
-The **Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation** (B.A.B.U.R.A.O.) acts as the cognitive router for VidChain.
+## Key Features (v0.8.0 Evolution)
 
-- **VLM-First Core**: Uses modular Vision Language Models (Moondream/LLaVA) for dense scene semantics (*"Subject is wearing a dark hoodie and typing on a silver Macbook"*).
-- **Temporal Knowledge Graph**: Tracks entities (people, objects, OCR text) and their relationships across time.
-- **Recursive Map-Reduce Summarization**: Generates high-fidelity forensic executive summaries for long-form video evidence.
+### Composable Sensory Chains
+Snap together modular nodes to build custom forensic pipelines. Optimized for **Hardware Awareness**, the system scales its inference depth based on live GPU/VRAM telemetry.
+- **Adaptive Keyframe Firewall**: Gaussian-blur differential filtering blocks identical frames, saving 70% of GPU compute in static scenes.
+- **VLM-First Captions**: Replaces blind tags with dense semantic descriptions (*"Subject is hiding a silver object in their left pocket"*).
+
+### Spider-Net Intelligence Portal
+A professional-grade forensic command center served natively via `vidchain-serve`.
+- **Evidence Vault**: surgical frame-by-frame seeking with 33ms precision.
+- **Neural HUD**: Real-time visualization of sensor activity and hardware stress.
+- **Semantic Heatmap**: Intelligence density mapping across the video timeline.
+
+### Automated Intelligence Reporting
+The built-in **Recursive Map-Reduce** engine automatically iterates over forensic logs to generate high-fidelity executive summaries, complete with verified timestamps and entity relationship discovery.
 
 ---
 
-## 🛠️ Installation & v0.8 Deployment
+## Installation
 
 ```bash
-# Install the core framework
-pip install vidchain
+# Core installation
+pip install VidChain
 
 # Setup local AI backends (Ollama)
 ollama pull moondream   # Optimized Edge VLM (1.7GB)
-ollama pull llama3      # LLM Reasoner (4.7GB)
+ollama pull llama3      # Local Reasoning Hub (4.7GB)
 
-# Verify Hardware Readiness (NVIDIA RTX 30-series recommended)
+# Verify Hardware Readiness (Bundled utility)
 python -m vidchain.scripts.check_gpu
 ```
 
 ---
 
-## 🚀 Quick Start: v0.8 Forensic CLI
+## Developer API Recipes (Python)
 
-v0.8 introduces a stabilized "Neural Handshake" CLI for rapid intelligence scanning.
+VidChain is designed to be deeply extensible. Here are the core "Intelligence Recipes" for v0.8.0-Stable.
 
-```bash
-# HIGH-FIDELITY SCAN (VLM + Whisper + OCR + Summary)
-python -m vidchain.cli surveillance.mp4
+### 1. High-Fidelity Forensic Scan (Default)
+Best for evidence reconstruction where detail matters more than speed.
+```python
+from vidchain import VidChain, VideoChain
+from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode, WhisperNode, OcrNode
 
-# FAST SCAN (YOLOv8 — ideal for high-speed CCTV reviews)
-python -m vidchain.cli surveillance.mp4 --fast
+# Build the chain
+chain = VideoChain(nodes=[
+    AdaptiveKeyframeNode(change_threshold=5.0),
+    LlavaNode(model_name="moondream"), 
+    WhisperNode(),
+    OcrNode()
+])
 
-# BEHAVIORAL SCAN (Injects Emotion & Action nodes)
-python -m vidchain.cli surveillance.mp4 --emotion --action
+vc = VidChain()
+vid = vc.ingest("evidence.mp4", chain=chain)
+print(vc.summarize_video(vid))
+```
 
-# SINGLE-SHOT FORENSIC QUERY
-python -m vidchain.cli surveillance.mp4 --query "identify the serial number on the device"
+### 2. "CCTV Ultra-Fast" Scan (Low Latency)
+Prioritize object detection speed over descriptive captioning.
+```python
+from vidchain.nodes import YoloNode, TrackerNode
+
+# Swap the VLM for a fast YOLOv8 tracker
+fast_chain = VideoChain(nodes=[
+    YoloNode(confidence=0.5), # Ultra-fast detection
+    TrackerNode()             # Subject persistence
+], frame_skip=30)             # 1 FPS skip for massive speedup
+
+vc.ingest("cctv_feed.mp4", chain=fast_chain)
+```
+
+### 3. Behavioral Sentiment Investigation
+Combine Kinetic and Emotional sensors for psychological profiling.
+```python
+from vidchain.nodes import EmotionNode, ActionNode, LlavaNode
+
+profile_chain = VideoChain(nodes=[
+    ActionNode(),             # Situational "Verbs"
+    EmotionNode(),            # Facial Sentiment
+    LlavaNode()               # Visual Context
+])
+
+vc.ingest("interview.mp4", chain=profile_chain)
+print(vc.ask("Does the subject appear agitated when talking about the incident?"))
+```
+
+### 4. Direct Knowledge Graph Inquiry (No LLM)
+Query entities directly from the **Temporal Knowledge Graph** without using LLM tokens.
+```python
+# Access the structured GraphRAG facts directly
+graph_facts = vc.graph_query("Laptop")
+print(f"Appearances: {graph_facts['timestamps']}")
+print(f"Co-occurrences: {graph_facts['entities_seen_together']}")
 ```
 
 ---
 
-## 📦 Sensory Node Suite
-
-| Tier | Node | Description |
+## Forensic CLI Mastery
+| Command | Mode | Intelligence Depth |
 | :--- | :--- | :--- |
-| **CORE** | `AdaptiveKeyframeNode` | **Compute Firewall**: Skips identical frames to save GPU load. |
-| **CORE** | `LlavaNode` | **Deep Vision**: Contextual scene captioning (LLaVA/Moondream). |
-| **CORE** | `WhisperNode` | **Audio Trace**: Time-aligned speech-to-text forensics. |
-| **CORE** | `OcrNode` | **Digital Trace**: Screen text and document extraction. |
-| **CORE** | `TrackerNode` | **Persistence**: Motion flow and subject tracking. |
-| **EXTENDED** | `ActionNode` | **Verbs**: Situational analysis (Emergency, Suspicious, Violence). |
-| **EXTENDED** | `EmotionNode` | **Sentiment**: Behavioral emotional analysis (Surprise, Agitation). |
-| **EXTENDED** | `YoloNode` | **Velocity**: Ultra-fast object detection alternative to VLM. |
+| `python -m vidchain.cli report.mp4` | **VLM-Standard** | Adaptive Keyframes + VLM + Summary. |
+| `python -m vidchain.cli report.mp4 --fast` | **YOLO-Scan** | High-speed object detection for long CCTV. |
+| `python -m vidchain.cli report.mp4 --emotion` | **Behavioral** | Injects EmotionNode for sentiment analysis. |
+| `python -m vidchain.cli report.mp4 --query "..."` | **Direct** | Instant query without interactive chat. |
 
 ---
 
-## 🕸️ Spider-Net Intelligence Portal
-Launch the full web dashboard for professional-grade forensic review, including the **Evidence Vault** and **Neural HUD Telemetry**.
+## Sensory Node Suite (The Matrix)
 
-```bash
-# Start the Edge Server + Web UI
-vidchain-serve
-```
+| Node | Type | Purpose |
+| :--- | :--- | :--- |
+| `LlavaNode` | VLM | Dense Contextual Scene Captioning (Moondream/LLaVA). |
+| `WhisperNode` | Audio | Time-aligned speech-to-text forensics. |
+| `OcrNode` | Text | Screen text and digital trace extraction. |
+| `TrackerNode` | Motion | Optical flow subject tracking & persistence. |
+| `ActionNode` | Verb | Situational classification (Emergency, Violation). |
+| `EmotionNode` | Sentiment | Behavioral sentiment analysis (DeepFace). |
+| `YoloNode` | Fast-Detect | Ultra-fast object detection (Fallback for VLM). |
 
 ---
 
-## ⚖️ Technical comparison (SOTA 2025)
-VidChain is uniquely positioned as a **Local-First, Edge-Optimized** framework, outperforming industry black-box VLMs in forensic stability through **Multi-Sensor Serialization**. See [RESEARCH_COMPARISON.md](./RESEARCH_COMPARISON.md) for detailed academic comparisons.
+## Research Position & Uniqueness
+VidChain treats video as **Serialized Sensor Logs**, performing retrieval over structured multimodal narratives rather than raw pixel tokens. This significantly reduces hallucinations and enables multi-video GraphRAG reasoning. 
+> See **[RESEARCH_COMPARISON.md](./RESEARCH_COMPARISON.md)** for detailed SOTA benchmarks.
+
+---
+
+## 📜 Changelog (The v0.8.0 Milestone)
+- **v0.8.0**: **The Modular Revolution**. Deprecated monolithic processors for a 100% composable Node framework. Added internal hardware diagnostics, automatic reporting, and fresh Next.js UI bundling.
+- **v0.7.2**: Integrated the **Spider-Net Portal** as a native microservice. Added Neural HUD and Evidence Vault.
+- **v0.6.0**: Introduced **GraphRAG** and Temporal Knowledge Graphs for entity tracking.
 
 ---
 
 ## Author
 **Rahul Sharma** — IIIT Manipur  
-*SEM Project Submission Version 0.8.0-Stable*
+*SEM Project Version 0.8.0-Stable*

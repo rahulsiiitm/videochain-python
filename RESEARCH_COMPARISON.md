@@ -4,7 +4,7 @@ This document provides a detailed technical comparison of the **VidChain Forensi
 
 ---
 
-## 🔬 The Uniqueness of VidChain (Implementation Process)
+## The Uniqueness of VidChain (Implementation Process)
 
 | # | Uniqueness Point | SOTA Research Approach (2024–2025) | **VidChain Uniqueness (Implementation)** | Research Reference / Link |
 | :--- | :--- | :--- | :--- | :--- |
@@ -18,7 +18,7 @@ This document provides a detailed technical comparison of the **VidChain Forensi
 
 ---
 
-## 🏆 Summary of Technical Distinctions
+## Summary of Technical Distinctions
 
 1.  **Edge-Optimized Reasoning**: Unlike cloud-native frameworks (like LangChain-Video), VidChain is a **Local-First** implementation optimized for 4GB–8GB VRAM environments using 4-bit quantization and quantized BGE embeddings.
 2.  **Forensic Rigor**: Market solutions focus on "Video Chatting" (casual). VidChain focuses on **Forensic Intelligence** (Auditability, Time-stamped Verification, and Sensor-log density).
