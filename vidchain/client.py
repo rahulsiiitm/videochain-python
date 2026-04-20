@@ -118,15 +118,16 @@ class VidChain:
             # ── High-Fidelity Default Pipeline ──────────────────────
             # This aligns the Web Dashboard with the 'analyze' CLI
             from vidchain.pipeline import VideoChain
-            from vidchain.nodes import AdaptiveKeyframeNode, WhisperNode, LlavaNode, OcrNode
+            from vidchain.nodes import AdaptiveKeyframeNode, WhisperNode, LlavaNode, OcrNode, TrackerNode
             
             if self.config["verbose"]:
-                print("[VidChain] Executing High-Fidelity Forensic Pipeline (VLM + Whisper)...")
+                print("[VidChain] Executing High-Fidelity Forensic Pipeline (VLM + Whisper + LK Tracking)...")
             
             # Build the same chain used in vidchain-analyze
             default_chain = VideoChain(
                 nodes=[
                     AdaptiveKeyframeNode(change_threshold=5.0),
+                    TrackerNode(),
                     WhisperNode(model_size="base"),
                     LlavaNode(model_name="moondream"), 
                     OcrNode(),

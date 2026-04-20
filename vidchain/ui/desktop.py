@@ -41,7 +41,7 @@ class VidChainStudio(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("🕸️ SPIDEY-CHAIN HQ")
+        self.title("🕸️ VID-CHAIN HQ")
         self.geometry("1200x780")
         self.minsize(1000, 650)
         self.configure(fg_color=COLORS["bg_deep"])
@@ -65,7 +65,7 @@ class VidChainStudio(ctk.CTk):
         topbar.pack_propagate(False)
 
         ctk.CTkLabel(
-            topbar, text="🕸️  SPIDEY-CHAIN HQ",
+            topbar, text="🕸️  VID-CHAIN HQ",
             font=ctk.CTkFont(family="Segoe UI", size=18, weight="bold"),
             text_color=COLORS["accent"]
         ).pack(side="left", padx=20, pady=12)

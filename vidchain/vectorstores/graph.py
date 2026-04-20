@@ -85,12 +85,17 @@ class TemporalKnowledgeGraph:
                     else:
                         self.G[e1][e2].setdefault("timestamps", []).append(ts)
 
-            # ── Audio node ────────────────────────────────
-            audio = event.get("audio")
-            if audio:
                 audio_node = f"audio:{ts}"
                 self.G.add_node(audio_node, type="audio", text=audio, time=ts)
                 self.G.add_edge(t_node, audio_node, relation="audio_at")
+
+            # ── Camera Motion ─────────────────────────────
+            motion = event.get("camera_motion")
+            if motion and motion != "static":
+                motion_node = f"motion:{motion}"
+                if not self.G.has_node(motion_node):
+                    self.G.add_node(motion_node, type="camera_behavior", movement=motion)
+                self.G.add_edge(t_node, motion_node, relation="camera_behavior_is")
 
         self._is_built = True
         print(f"[GraphRAG] Graph built: {self.G.number_of_nodes()} nodes, {self.G.number_of_edges()} edges.")
@@ -158,6 +163,17 @@ class TemporalKnowledgeGraph:
                     f"last seen at {e['last_seen']}s, "
                     f"appeared {e['total_appearances']} time(s)"
                 )
+
+        # Camera Motion Summary
+        motions = [n for n, d in self.G.nodes(data=True) if d.get("type") == "camera_behavior"]
+        if motions:
+            lines.append("\nSignificant camera movements detected:")
+            for m in motions:
+                # Find timestamps for this motion
+                ts_list = [self.G.nodes[t]["time"] for t in self.G.predecessors(m) if self.G.nodes[t].get("type") == "timestamp"]
+                if ts_list:
+                    movement = self.G.nodes[m]["movement"]
+                    lines.append(f"  • {movement}: detected at {sorted(ts_list)}")
 
         # Co-occurrence relationships
         cooccur_edges = [

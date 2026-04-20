@@ -79,6 +79,8 @@ class RAGEngine:
         if e.get("ocr"): parts.append(f"Screen text: {e['ocr']}")
         if e.get("audio"): parts.append(f"Speech: \"{e['audio']}\"")
         if e.get("emotion"): parts.append(f"Emotion: {e['emotion']}")
+        if e.get("camera_motion") and e.get("camera_motion") != "static":
+            parts.append(f"Camera: {e['camera_motion']}")
         return " | ".join(parts)
 
     @staticmethod
@@ -98,8 +100,10 @@ class RAGEngine:
         3. DEDUCTION ON-DEMAND: Only use your internal "mind" to assume, guess, or analyze deep intent if the user asks a specific question requiring reasoning (e.g., "Why...", "Is it suspicious...").
         4. SENSOR GROUND TRUTH: 
            - Speech (Whisper) and Screen Text (OCR) are 100% accurate.
-           - Visuals/Llava: Describe identified objects and actions.
-        5. CITATION: Always provide exact timestamps (e.g., [12.5s]) when citing events.
+           - Visuals/Llava: Use for general appearance and context.
+           - Camera Motion: Use to differentiate between subject movement and camera panning.
+           
+        5. TEMPORAL CONTEXT: Use the Provided GraphRAG facts to cross-reference multi-video events and camera behavior.
 
         SENSOR LOG DATA:
         {context}

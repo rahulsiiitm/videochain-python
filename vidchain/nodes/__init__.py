@@ -5,6 +5,7 @@ from .ocr import OcrNode
 from .action import ActionNode
 from .vlm import LlavaNode
 from .keyframe import AdaptiveKeyframeNode
+from .tracker import TrackerNode
 
 __all__ = [
     "BaseNode",
@@ -13,5 +14,6 @@ __all__ = [
     "OcrNode",
     "ActionNode",
     "LlavaNode",
-    "AdaptiveKeyframeNode"
+    "AdaptiveKeyframeNode",
+    "TrackerNode"
 ]

@@ -11,6 +11,7 @@ from typing import Optional, List, Dict
 
 from fastapi.staticfiles import StaticFiles
 from vidchain.client import VidChain
+from vidchain.telemetry import HardwareMonitor
 
 app = FastAPI(
     title="VidChain Edge Server",
@@ -346,8 +347,11 @@ def get_video_knowledge(video_id: str):
 
 @app.get("/api/sessions/{session_id}/status")
 def get_live_status(session_id: str):
-    """Neural Handshake: Returns the current active sensor node."""
-    return {"status": status_hub.get(session_id, "Idle")}
+    """Neural Handshake: Returns the current active sensor node and hardware load."""
+    return {
+        "status": status_hub.get(session_id, "Idle"),
+        "telemetry": HardwareMonitor.get_instant_sample()
+    }
 
 
 # ── Spider-Net Portal Serving ────────────────────────────────────────────────

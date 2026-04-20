@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#2D0606"/>
+      <stop offset="100%" stop-color="#050608"/>
+    </radialGradient>
+
+    <linearGradient id="lensGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="80%" stop-color="#E2E8F0"/>
+      <stop offset="100%" stop-color="#94A3B8"/>
+    </linearGradient>
+
+    <filter id="neonRed" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#FF0033" opacity="0.15"/>
+    </pattern>
+    
+    <clipPath id="squareClip">
+      <rect x="0" y="0" width="500" height="500" rx="60" ry="60"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#squareClip)">
+    <rect width="500" height="500" fill="url(#bgGlow)"/>
+    <rect width="500" height="500" fill="url(#dots)"/>
+
+    <g stroke="#FF0033" fill="none" opacity="0.25">
+      <circle cx="250" cy="220" r="170" stroke-width="1"/>
+      <circle cx="250" cy="220" r="190" stroke-width="2" stroke-dasharray="2 8"/>
+      <circle cx="250" cy="220" r="155" stroke-width="1" stroke-dasharray="10 20"/>
+    </g>
+
+    <polygon points="250,140 265,180 250,300 235,180" fill="#FF0033" filter="url(#neonRed)"/>
+
+    <g stroke="#FF0033" stroke-width="14" fill="none" filter="url(#neonRed)" opacity="0.8">
+      <path d="M 235,280 Q 225,220 220,150 Q 140,100 40,130 Q 110,310 235,280 Z"/>
+      <path d="M 265,280 Q 275,220 280,150 Q 360,100 460,130 Q 390,310 265,280 Z"/>
+    </g>
+
+    <g stroke="#0A0A0C" stroke-width="12" stroke-linejoin="round">
+      <path d="M 235,280 Q 225,220 220,150 Q 140,100 40,130 Q 110,310 235,280 Z" fill="url(#lensGrad)"/>
+      <path d="M 265,280 Q 275,220 280,150 Q 360,100 460,130 Q 390,310 265,280 Z" fill="url(#lensGrad)"/>
+    </g>
+
+    <g stroke="#FFFFFF" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round">
+      <path d="M 215,165 Q 150,125 70,145" />
+      <path d="M 285,165 Q 350,125 430,145" />
+    </g>
+
+    <g fill="none" stroke="#FF0033" stroke-width="2" opacity="0.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M 180,135 L 140,50 L 70,50"/>
+      <circle cx="70" cy="50" r="4" fill="#FF0033" filter="url(#neonRed)"/>
+      
+      <path d="M 320,135 L 360,50 L 430,50"/>
+      <circle cx="430" cy="50" r="4" fill="#FF0033" filter="url(#neonRed)"/>
+
+      <path d="M 160,285 L 110,390 L 50,390"/>
+      <circle cx="50" cy="390" r="4" fill="#FF0033" filter="url(#neonRed)"/>
+
+      <path d="M 340,285 L 390,390 L 450,390"/>
+      <circle cx="450" cy="390" r="4" fill="#FF0033" filter="url(#neonRed)"/>
+      
+      <path d="M 80,220 L 20,220"/>
+      <circle cx="20" cy="220" r="2" fill="#FF0033"/>
+
+      <path d="M 420,220 L 480,220"/>
+      <circle cx="480" cy="220" r="2" fill="#FF0033"/>
+    </g>
+
+    <rect width="500" height="500" fill="none" stroke="#FF0033" stroke-width="4" opacity="0.4" rx="60" ry="60"/>
+  </g>
+</svg>

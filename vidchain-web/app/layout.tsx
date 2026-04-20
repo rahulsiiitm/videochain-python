@@ -8,7 +8,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "SPIDEY-CHAIN HQ",
+  title: "VID-CHAIN HQ",
   description: "Stark-Tech Multimodal Video Intelligence",
 };
 
