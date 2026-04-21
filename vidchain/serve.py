@@ -3,6 +3,8 @@ import json
 import time
 import uuid
 import uvicorn
+import webbrowser
+import threading
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -370,12 +372,22 @@ def serve_dashboard(rest_of_path: str):
     return {"message": "VidChain Server Online. Dashboard bundle missing."}
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
+def open_browser():
+    """Waits for server to start and then opens the portal."""
+    time.sleep(2.5) # Give Uvicorn time to bind
+    print("[VidChain] Launching Spider-Net Intelligence Portal...")
+    webbrowser.open("http://localhost:8000")
+
 def main_cli():
     print("=========================================")
-    print("  VidChain Forensic Suite v0.7.2")
+    print("  VidChain Forensic Suite v0.8.0")
     print("  Portal : http://localhost:8000")
     print("  Storage: ./vidchain_storage")
     print("=========================================")
+    
+    # Auto-launch the browser in a background thread
+    threading.Thread(target=open_browser, daemon=True).start()
+    
     uvicorn.run("vidchain.serve:app", host="0.0.0.0", port=8000, reload=False)
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ def __getattr__(name):
     raise AttributeError(f"module 'vidchain' has no attribute '{name}'")
 
 
-__version__ = "0.8.0"
+__version__ = "0.8.2"
 __author__ = "Rahul Sharma"
 __license__ = "MIT"
 __all__ = ["VidChain", "VideoChain"]

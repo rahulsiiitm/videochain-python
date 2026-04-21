@@ -131,7 +131,7 @@ After ingestion, VidChain enters the **B.A.B.U.R.A.O. Interactive Hub**, allowin
 - **Backend**: Ollama (for LLaVA/Moondream hosting).
 - **Python Packages**: `ultralytics`, `deepface`, `openai-whisper`, `chromadb`, `litellm`.
 
-### Deployment as v0.8
+### Deployment as v0.8.2
 1. Initialize the B.A.B.U.R.A.O. orchestration layer.
 2. Index raw video assets into the persistent `vidchain_storage`.
 3. Launch the Web Portal (Next.js) or the CLI for active forensic review.

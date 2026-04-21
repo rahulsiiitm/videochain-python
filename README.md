@@ -1,7 +1,7 @@
 # VidChain: The "LangChain for Videos"
-> **v0.8.0-Stable** — Edge-optimized, local-first multimodal RAG framework for forensic video intelligence. Compose modular sensory nodes into custom pipelines, deploy as a microservice, or query via the **Spider-Net Intelligence Portal**.
+> **v0.8.2-Stable** — Edge-optimized, local-first multimodal RAG framework for forensic video intelligence. Compose modular sensory nodes into custom pipelines, deploy as a microservice, or query via the **Spider-Net Intelligence Portal**.
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v0.8.0--Stable-green) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
+![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v0.8.2--Stable-green) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
 
 ![Spider-Net Intelligence Portal](assets/forensic_portal.webp)
 
@@ -205,4 +205,4 @@ VidChain treats video as **Serialized Sensor Logs**, performing retrieval over s
 
 ## Author
 **Rahul Sharma** — IIIT Manipur  
-*SEM Project Version 0.8.0-Stable*
+*SEM Project Version 0.8.1-Stable*

@@ -4,6 +4,26 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [0.8.2] — 2026-04-21
+
+### Changed
+- **Official NVIDIA Bindings**: Migrated from the deprecated community `pynvml` package to the official `nvidia-ml-py` package. This resolves the `FutureWarning` during server startup while maintaining identical hardware telemetry functionality.
+- Bumbed metadata stability to v0.8.2.
+
+---
+
+## [0.8.1] — 2026-04-21
+
+### Added
+- **Auto-Launch Integration**: `vidchain-serve` now automatically opens the default web browser to the Spider-Net Portal once the server is initialized.
+- **Hardware Telemetry Resilience**: Explicitly added `pynvml` to formal dependencies to prevent runtime crashes during GPU profiling on fresh installations.
+
+### Changed
+- Minor internal timing adjustments in the hardware monitor for more stable polling.
+- Documented the new "Zero-Launch" workflow for forensic investigators.
+
+---
+
 ## [0.8.0] — 2026-04-20
 
 ### Added

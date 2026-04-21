@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "VidChain"
-version = "0.8.0"
+version = "0.8.2"
 description = "Edge-optimized multimodal RAG framework for video understanding"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -73,6 +73,7 @@ dependencies = [
     "tqdm>=4.65.0",
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
+    "nvidia-ml-py>=12.0.0",
 ]
 
 # ── Optional extras ───────────────────────────────────────────────────────

@@ -1,11 +1,11 @@
-# VidChain v0.8.0 Developer Quickstart
+# VidChain v0.8.2 Developer Quickstart
 
 This guide explains how to integrate the **VidChain Framework** as a library into your own security and forensics applications.
 
 ---
 
 ## 1. Core Architecture
-VidChain v0.8.0-Stable is built on a **Modular Sensor Logic**. You construct a `VideoChain` (the "nervous system") and inject it into the `VidChain` orchestrator (the "brain").
+VidChain v0.8.2-Stable is built on a **Modular Sensor Logic**. You construct a `VideoChain` (the "nervous system") and inject it into the `VidChain` orchestrator (the "brain").
 
 ---
 
@@ -74,4 +74,4 @@ For rapid triage, use the global CLI module:
 To build a live HUD, use the `watchdog` to monitor a CCTV folder and trigger `vc.ingest` automatically as files are closed by the recorder.
 
 ---
-**VidChain v0.8.0-Stable | Stark-Tech Forensic Intelligence**
+**VidChain v0.8.2-Stable | Stark-Tech Forensic Intelligence**
