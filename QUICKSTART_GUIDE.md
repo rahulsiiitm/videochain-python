@@ -1,77 +1,70 @@
-# VidChain v0.8.2 Developer Quickstart
+# VidChain v0.8.3 Developer Quickstart
 
 This guide explains how to integrate the **VidChain Framework** as a library into your own security and forensics applications.
 
 ---
 
 ## 1. Core Architecture
-VidChain v0.8.2-Stable is built on a **Modular Sensor Logic**. You construct a `VideoChain` (the "nervous system") and inject it into the `VidChain` orchestrator (the "brain").
+VidChain v0.8.3-Stable is built on a **Modular Sensor Logic**. You construct a `VideoChain` (the "nervous system") and inject it into the `VidChain` orchestrator (the "brain").
 
 ---
 
-## 2. Setting Up
-```powershell
-# Clone and install in editable mode
-git clone https://github.com/rahulsiiitm/videochain-python
-cd videochain-python
-pip install -e .
-```
-
----
-
-## 3. High-Fidelity Python API Example
-
-This is the recommended way to use VidChain for professional forensic analysis:
+## 2. Basic Ingestion Pipeline
+The simplest way to transform a video file into a searchable forensic database.
 
 ```python
 from vidchain import VidChain
-from vidchain.pipeline import VideoChain
-from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode, WhisperNode, OcrNode
 
-# 1. Compose the Sensory Chain
-# We use AdaptiveKeyframe to skip the boring stuff and Moondream for the smart stuff.
-chain = VideoChain(
-    nodes=[
-        AdaptiveKeyframeNode(change_threshold=5.0), # Save GPU cycles
-        LlavaNode(model_name="moondream"),          # Dense Scene Analysis
-        WhisperNode(model_size="base"),            # Audio Forensics
-        OcrNode()                                  # Text Trace
-    ],
-    frame_skip=15  # Process 2 frames per second
-)
+# Initialize the brain
+vc = VidChain(db_path="./my_forensic_vault")
 
-# 2. Initialize the B.A.B.U.R.A.O. Engine
-vc = VidChain(verbose=True)
+# Ingest evidence
+# Defaults to the Standard VLM-based chain
+vc.ingest("C:/evidence/cam_01.mp4")
 
-# 3. Analyze & Index
-video_id = vc.ingest("incidents/break_in.mp4", chain=chain)
-
-# 4. Generate Intelligence
-summary = vc.summarize_video(video_id)
-print(f"REPORT: {summary}")
-
-# 5. Iterative Discovery
-answer = vc.ask("What color was the getaway car's plates?", video_id=video_id)
-print(f"AI: {answer}")
+# Query the intelligence
+response = vc.ask("Is there any suspicious movement around the perimeter?")
+print(f"BABURAO: {response}")
 ```
 
 ---
 
-## 4. CLI Mastery (The "Stark-Tech" way)
+## 3. High-Fidelity Custom Chain
+For advanced control, assemble specific sensory nodes.
 
-For rapid triage, use the global CLI module:
+```python
+from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode, WhisperNode
 
-| Task | Command |
-| :--- | :--- |
-| **Comprehensive Scan** | `python -m vidchain.cli surveillance.mp4` |
-| **Silent High-Speed Scan** | `python -m vidchain.cli surveillance.mp4 --fast` |
-| **Behavioral Incident Scan** | `python -m vidchain.cli surveillance.mp4 --emotion --action` |
-| **Batch API Deployment** | `vidchain-serve` |
+# Create a chain optimized for interview forensics
+interview_chain = VideoChain(nodes=[
+    AdaptiveKeyframeNode(change_threshold=2.0), # Higher sensitivity
+    LlavaNode(model_name="moondream"), 
+    WhisperNode()
+])
+
+# Use the custom chain
+vc.ingest("interview_01.mp4", chain=interview_chain)
+```
 
 ---
 
-## 5. Live Surviellance (Watchdog Mode)
-To build a live HUD, use the `watchdog` to monitor a CCTV folder and trigger `vc.ingest` automatically as files are closed by the recorder.
+## 4. Serving the Spider-Net Portal
+To launch the forensic dashboard programmatically:
+
+```python
+from vidchain.serve import main_cli
+
+# This starts the FastAPI edge server and auto-launches the browser
+if __name__ == "__main__":
+    main_cli()
+```
 
 ---
-**VidChain v0.8.2-Stable | Stark-Tech Forensic Intelligence**
+
+## 5. Deployment Checklist
+- **Python**: 3.11+
+- **CUDA**: 12.1+ (Recommended for VLM/Whisper)
+- **Ollama**: Must be running in the background for LLM/VLM logic.
+
+---
+**VidChain v0.8.3-Stable | Stark-Tech Forensic Intelligence**

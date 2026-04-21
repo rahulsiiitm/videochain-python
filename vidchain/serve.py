@@ -18,7 +18,7 @@ from vidchain.telemetry import HardwareMonitor
 app = FastAPI(
     title="VidChain Edge Server",
     description="Local 'LangChain for Videos' API — Persistent Edition",
-    version="0.7.5"
+    version="0.8.3"
 )
 
 # ── Secure Media Streaming ────────────────────────────────────────────────────
@@ -380,7 +380,7 @@ def open_browser():
 
 def main_cli():
     print("=========================================")
-    print("  VidChain Forensic Suite v0.8.0")
+    print("  VidChain Forensic Suite v0.8.3")
     print("  Portal : http://localhost:8000")
     print("  Storage: ./vidchain_storage")
     print("=========================================")

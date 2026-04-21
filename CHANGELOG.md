@@ -4,6 +4,14 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [0.8.3] — 2026-04-21
+
+### Fixed
+- **Relative Forensic Uplink**: Removed all hardcoded `localhost:8000` URLs from the Spider-Net Portal source. The portal now uses relative API paths, resolving "broken fetch" errors when the suite is deployed or accessed via different IP addresses.
+- **Evidence Stream Persistence**: Fixed the media player and semantic heatmap to use relative asset routing, ensuring forensic evidence loads correctly from the `STORAGE_DIR`.
+
+---
+
 ## [0.8.2] — 2026-04-21
 
 ### Changed

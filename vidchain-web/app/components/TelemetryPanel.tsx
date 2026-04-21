@@ -115,7 +115,7 @@ export function TelemetryPanel({
               <>
                 <video
                   ref={videoRef}
-                  src={`http://localhost:8000/media/${activeVideoPath}`}
+                  src={`/media/${activeVideoPath}`}
                   className="w-full h-full object-contain"
                   onTimeUpdate={e => setVideoCurrentTime((e.target as HTMLVideoElement).currentTime)}
                   onDurationChange={e => setVideoDuration((e.target as HTMLVideoElement).duration)}

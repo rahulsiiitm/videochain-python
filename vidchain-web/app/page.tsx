@@ -13,7 +13,7 @@ import { ChatCanvas } from "./components/ChatCanvas";
 import { TelemetryPanel } from "./components/TelemetryPanel";
 import { cn } from "./components/utils";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Sender = "user" | "baburao" | "system";
