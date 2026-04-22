@@ -18,7 +18,7 @@ from vidchain.telemetry import HardwareMonitor
 app = FastAPI(
     title="VidChain Edge Server",
     description="Local 'LangChain for Videos' API — Persistent Edition",
-    version="0.8.3"
+    version="0.8.8-Stable"
 )
 
 # ── Secure Media Streaming ────────────────────────────────────────────────────
@@ -177,11 +177,13 @@ def list_sessions():
 
 @app.post("/api/sessions")
 def create_session(req: NewSessionRequest):
+    if vc: vc.active_timeline = [] # Ensure memory isolation
     session = _create_session(req.title)
     return session
 
 @app.get("/api/sessions/{session_id}")
 def get_session(session_id: str):
+    if vc: vc.active_timeline = [] # Purge residues on context switch
     session = _load_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -283,17 +285,11 @@ def _background_ingest(video_source: str, video_id: Optional[str], session_id: s
         # Ingest with explicit ID binding
         v_id = vc.ingest(video_source, video_id=video_id, progress_callback=_progress_cb) # type: ignore
         
-        status_hub[session_id] = "Summarizing Intelligence..."
-        summary = vc.ask(
-            "In exactly two sentences, describe the most important event from the video just ingested.",
-            video_id=v_id
-        )
-        
         status_hub[session_id] = "Idle"
         _append_message(
             session_id,
             "system",
-            f"Ingestion complete — {fname}\n\n{summary}",
+            f"Ingestion complete — {fname}. Evidence locked and isolated.",
             v_id,
         )
     except Exception as e:
@@ -333,16 +329,32 @@ def ingest_video(req: IngestRequest, background_tasks: BackgroundTasks):
 # ── Knowledge Gateway ──────────────────────────────────────────────────────────
 @app.get("/api/knowledge/{video_id}")
 def get_video_knowledge(video_id: str):
-    """Provides the Semantic Heatmap with temporal activity mapping."""
+    """Provides the Semantic Heatmap with temporal activity mapping and metadata."""
     if not vc:
         raise HTTPException(status_code=500, detail="VidChain Engine offline")
     
+    # Resolve the full knowledge base record to get the 'source' path
+    db_path = vc.config.get("db_path")
+    if db_path:
+        kb_path = os.path.join(db_path, "knowledge_bases", f"{video_id}.json")
+        if os.path.exists(kb_path):
+            with open(kb_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                # Normalize path for the /media static mount
+                src = data.get("metadata", {}).get("source")
+                if src and os.path.isabs(src):
+                    try:
+                        data["metadata"]["source"] = os.path.relpath(src, start=os.getcwd())
+                    except: pass
+                return data
+
+    # Fallback to just timeline if full KB not found
     timeline = vc.get_video_timeline(video_id)
     if not timeline:
         raise HTTPException(status_code=404, detail="Knowledge base not found")
         
     return {
-        "video_id": video_id,
+        "metadata": {"video_id": video_id},
         "timeline": timeline
     }
 

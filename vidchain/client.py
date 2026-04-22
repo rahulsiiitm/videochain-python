@@ -219,11 +219,12 @@ class VidChain:
         if self.knowledge_graph._is_built and "graph_context" not in kwargs:
             kwargs["graph_context"] = self.knowledge_graph.get_graph_context(query)
             
-        # Context Hotswapping: 
-        # If we have no timeline or an empty one, fallback to the just-ingested active_timeline
+        # Context Binding: 
+        # Ensure we are strictly using the provided timeline or searching the correct video_id.
         if "timeline" not in kwargs or not kwargs["timeline"]:
-            if hasattr(self, "active_timeline") and self.active_timeline:
-                kwargs["timeline"] = self.active_timeline
+            # If no timeline provided, the RAGEngine will perform its own vector search 
+            # filtered by the video_id provided above.
+            pass
             
         return self.rag_engine.query(query, stream=stream, history=history, video_id=video_id, **kwargs)
 
@@ -249,7 +250,7 @@ class VidChain:
     # ------------------------------------------------------------------
 
     def get_video_timeline(self, video_id: str) -> List[Dict[str, Any]]:
-        """Retrieves the full event list for a specific video ID with deep fallback."""
+        """Retrieves the full event list for a specific video ID. Strictly ID-bound."""
         if not video_id:
             return []
 
@@ -270,29 +271,6 @@ class VidChain:
                 except Exception as e:
                     print(f"[VidChain] [ERROR] Failed to load archived timeline for {video_id}: {e}")
         
-        # Fallback 1: Is this video currently in active memory?
-        if hasattr(self, "active_timeline") and self.active_timeline:
-            if self.config["verbose"]:
-                print(f"[VidChain] Using Active Brain fallback for {video_id}")
-            return self.active_timeline
-            
-        # Fallback 2: Deep Discovery - find the most recent KB if we're lost
-        if db_path:
-            kb_dir = os.path.join(db_path, "knowledge_bases")
-            if os.path.exists(kb_dir):
-                files = [f for f in os.listdir(kb_dir) if f.endswith(".json")]
-                if files:
-                    # Sort by modification time to get the freshest one
-                    files.sort(key=lambda x: os.path.getmtime(os.path.join(kb_dir, x)), reverse=True)
-                    latest_kb = os.path.join(kb_dir, files[0])
-                    try:
-                        with open(latest_kb, "r", encoding="utf-8") as f:
-                            data = json.load(f)
-                            if self.config["verbose"]:
-                                print(f"[VidChain] [Deep Discovery] Recalling latest available context: {files[0]}")
-                            return data.get("timeline", [])
-                    except: pass
-
         return []
 
     def set_llm(self, model_identifier: str):

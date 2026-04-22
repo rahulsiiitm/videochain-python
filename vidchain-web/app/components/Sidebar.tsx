@@ -10,6 +10,7 @@ import { cn } from "./utils";
 interface Session {
   id: string;
   title: string;
+  video_id?: string | null;
   message_count: number;
 }
 
@@ -95,8 +96,8 @@ export function Sidebar({
               key={s.id}
               onClick={() => loadSession(s.id)}
               className={cn(
-                "group relative mx-2 my-1 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 border",
-                isActive ? "bg-stark-card border-spider-red shadow-[0_0_15px_rgba(216,0,50,0.1)]" : "border-transparent hover:bg-stark-card/40 hover:border-stark-border"
+                "group relative z-10 mx-2 my-1 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200 border",
+                isActive ? "bg-stark-card/80 border-spider-red shadow-[0_0_15px_rgba(216,0,50,0.1)]" : "border-transparent hover:bg-stark-card/40 hover:border-stark-border"
               )}
             >
               {sidebarCollapsed ? (
@@ -113,7 +114,8 @@ export function Sidebar({
                   <div className="flex-1 min-w-0">
                     {renamingId === s.id ? (
                       <input
-                        ref={renameInputRef}
+                        autoFocus
+                        onFocus={(e) => e.target.select()}
                         className="w-full bg-background border border-spider-red rounded px-1.5 py-0.5 text-[10px] font-bold text-white focus:outline-none"
                         value={renameValue}
                         onChange={e => setRenameValue(e.target.value)}
@@ -126,12 +128,16 @@ export function Sidebar({
                         <h4 className={cn("text-[10px] font-bold truncate tracking-tight transition-colors", isActive ? "text-white" : "text-gray-500")}>
                           {s.title}
                         </h4>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[7px] text-gray-700 font-black uppercase tracking-tighter tabular-nums">
-                            {s.message_count} LOGS
-                          </span>
-                          <span className="text-[6px] text-gray-800">•</span>
-                          <span className="text-[7px] text-gray-700 font-black uppercase tracking-tighter">SECURED</span>
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[7px] text-gray-700 font-black uppercase tracking-tighter tabular-nums">
+                              {s.message_count} LOGS
+                            </span>
+                            <span className="text-[6px] text-gray-800">•</span>
+                            <span className="text-[7px] text-spider-red/60 font-black uppercase tracking-tighter">
+                              {s.video_id ? s.video_id : "NO SOURCE"}
+                            </span>
+                          </div>
                         </div>
                       </>
                     )}
