@@ -1,6 +1,6 @@
 # VidChain: Technical Specifications (v0.9.0-Final)
 
-## 1. Engine Core (B.A.B.U.R.A.O. 2.0)
+## 1. Engine Core (IRIS 2.0)
 - **Architecture**: Evolved Asynchronous sensory matrix with Neural Isolation.
 - **Intelligence Agent**: IRIS (Intelligent Retrieval & Insight System).
 - **VLM Pipeline**: Moondream (Optimized Edge) or LLaVA 1.6 via Ollama.

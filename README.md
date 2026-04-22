@@ -9,7 +9,7 @@
 
 ## High-Integrity Neural Architecture
 
-VidChain is powered by the **B.A.B.U.R.A.O. Engine 2.0** (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation). This engine fuses visual, auditory, and temporal data into a queryable intelligence layer, served through the **IRIS** (Intelligent Retrieval & Insight System) agent.
+VidChain is powered by the **IRIS Engine** (Intelligent Retrieval & Insight System). This engine fuses visual, auditory, and temporal data into a queryable intelligence layer, providing high-fidelity video summarization and insights.
 
 ```mermaid
 graph TD
@@ -29,7 +29,7 @@ graph TD
     end
 
     %% --- Intelligence Logic ---
-    subgraph "3. B.A.B.U.R.A.O. 2.0 Cognitive Engine"
+    subgraph "3. IRIS Cognitive Engine"
         VLM & ASR & OCR & TRK --> FUSE[Spatio-Temporal Fusion]
         FUSE --> RDN[Recursive Map-Reduce Summarizer]
     end
@@ -110,7 +110,7 @@ print(f"\nIRIS Intelligence Report:\n{response['text']}")
 ## Key Features (v0.9 Evolution)
 
 ### IRIS: The Intelligent Assistant
-The v0.9 milestone introduces **IRIS**, a friendly and surgical AI assistant that mediates between the user and the raw B.A.B.U.R.A.O. data. IRIS handles natural language queries, complex multi-hop reasoning, and executive summaries.
+The v0.9 milestone introduces **IRIS**, a friendly and smart AI assistant that helps users understand their video content. IRIS handles natural language queries, complex reasoning, and executive summaries.
 
 ### Isolated GraphRAG Intelligence
 Every VidChain "Insight Session" now generates a dedicated, persistent knowledge graph. 

@@ -150,8 +150,8 @@ def main():
         sys.exit(1)
 
     print("-" * 50)
-    print("[SYSTEM] B.A.B.U.R.A.O. Engine Online.")
-    print("[SYSTEM] (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation)")
+    print("[SYSTEM] IRIS Engine Online.")
+    print("[SYSTEM] (Intelligent Retrieval & Insight System)")
     print("-" * 50)
 
     # ── Single-shot query mode ─────────────────────────────

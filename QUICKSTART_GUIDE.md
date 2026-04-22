@@ -31,7 +31,7 @@ print(f"IRIS: {response['text']}")
 ---
 
 ## 3. High-Fidelity Custom Chain
-For advanced control, assemble specific sensory nodes from the B.A.B.U.R.A.O. matrix.
+For advanced control, assemble specific sensory nodes from the IRIS matrix.
 
 ```python
 from vidchain.nodes import AdaptiveKeyframeNode, LlavaNode, WhisperNode

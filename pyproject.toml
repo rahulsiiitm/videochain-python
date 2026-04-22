@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "VidChain"
-version = "0.9.0"
+version = "0.9.1"
 description = "VidChain: High-fidelity multimodal RAG framework featuring the IRIS Intelligence Agent"
 readme = "README.md"
 requires-python = ">=3.11"

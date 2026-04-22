@@ -4,6 +4,19 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [0.9.1] — 2026-04-22 (The "IRIS Transformation" Update)
+
+### Added
+- **Complete IRIS Rebranding**: Successfully transitioned the engine identity from B.A.B.U.R.A.O. to **IRIS** (Intelligent Retrieval & Insight System) across the entire codebase, including prompts, UI, and documentation.
+- **Narrative-First Synthesis**: Shifted the project's focus from forensic analysis to a streamlined **Video Summarization Framework**.
+
+### Changed
+- **Engine Logic**: Updated the recursive Map-Reduce summarizer to prioritize coherent narrative generation over forensic logging.
+- **Documentation**: Overhauled `README.md` and `TECHNICAL_SPECIFICATIONS.md` to align with the new project identity.
+- **Demo Evolution**: Rebranded the embedded demo to an **Insight Monitor** featuring IRIS-powered reports.
+
+---
+
 ## [0.9.0] — 2026-04-22 (The "Insight Engine" Release)
 
 ### Added
@@ -92,7 +105,7 @@ All notable changes to VidChain are documented here.
 - **Spider-Net Intelligence Portal** (`vidchain-web`) — A professional-grade, Stark-Tech forensic command center built with Next.js, Framer Motion, and Tailwind CSS. **Now bundled natively within the Python package.**
 - **Unified Forensic Bundle** — `vidchain-serve` now automatically hosts the Spider-Net Portal on the root URL (`/`), providing a zero-config investigative experience out of the box.
 - **Forensic Evidence Vault** — Multi-sensor video player integrated directly into the dashboard. Supports surgical frame-by-frame scrubbing (`[<]` and `[>]` precision) and real-time Neural HUD overlays.
-- **Cognitive Bridge (Neural Handshake)** — Real-time telemetry connection between the B.A.B.U.R.A.O. backend and the web portal. Broadcasts active sensor states (Whisper, VLM, OCR) during ingestion to a live "Engine Status" HUD.
+- **Cognitive Bridge (Neural Handshake)** — Real-time telemetry connection between the IRIS backend and the web portal. Broadcasts active sensor states (Whisper, VLM, OCR) during ingestion to a live "Engine Status" HUD.
 - **Semantic Heatmap** — Timeline-based intelligence density visualization. Automatically maps OCR detections, VLM scene captions, and audio events across the video duration.
 - **Knowledge Gateway API** — New forensic endpoints in `serve.py` for structured timeline retrieval (`/api/knowledge/{video_id}`) and neural status polling (`/api/sessions/{session_id}/status`).
 - **Forensic Reporting** — One-click "Finalize Report" feature to export session logs and AI deductions into academic-grade Markdown.
@@ -112,7 +125,7 @@ All notable changes to VidChain are documented here.
 ## [0.6.0] — 2026-04-18
 
 ### Added
-- **VidChain Studio** (`vidchain/ui/desktop.py`) — Native `CustomTkinter` desktop application. Launches via `vidchain-studio`. Features live server status indicator, video file browser, pipeline selector (moondream / llava / yolo), ingestion progress bar, and full B.A.B.U.R.A.O. chat interface backed by the FastAPI edge server.
+- **VidChain Studio** (`vidchain/ui/desktop.py`) — Native `CustomTkinter` desktop application. Launches via `vidchain-studio`. Features live server status indicator, video file browser, pipeline selector (moondream / llava / yolo), ingestion progress bar, and full IRIS chat interface backed by the FastAPI edge server.
 - **GraphRAG: Temporal Knowledge Graph** (`vidchain/vectorstores/graph.py`) — `TemporalKnowledgeGraph` built automatically on every `vc.ingest()` call using NetworkX. Tracks entity first/last seen timestamps, co-occurrence edges, and OCR text nodes. Graph context is silently injected into every `vc.ask()` call to enable multi-hop temporal reasoning.
 - **`vc.graph_query(entity)`** — Direct structured entity lookup that returns appearance timeline, co-occurrence data, and graph-level summary without touching the LLM.
 - **VLM-First default pipeline** — `vidchain-analyze` now defaults to Moondream (`--vlm moondream`) instead of YOLO. No flags needed for rich visual descriptions.
@@ -126,7 +139,7 @@ All notable changes to VidChain are documented here.
 
 ### Architecture Impact
 - VidChain is now a fully VLM-first framework. YOLO is a fallback, not the primary engine.
-- Every query to B.A.B.U.R.A.O. is enriched by both ChromaDB semantic search AND structured graph entity facts simultaneously.
+- Every query to IRIS is enriched by both ChromaDB semantic search AND structured graph entity facts simultaneously.
 
 ---
 
@@ -169,7 +182,7 @@ All notable changes to VidChain are documented here.
   and acoustic anomaly detection (shouts, impacts)
 - **CLIP Scene Engine** (`SceneEngine`) — zero-shot environment classification
   using `openai/clip-vit-base-patch32`; rate-limited to once per 10s
-- **`scene` field** in every KB entry — BABURAO now knows if the room is an
+- **`scene` field** in every KB entry — IRIS now knows if the room is an
   office, kitchen, hallway, etc.
 - **`VideoEvent` schema** and **`VideoAnalysisResult`** — typed dataclasses
   as the canonical contract between pipeline stages
@@ -230,7 +243,7 @@ All notable changes to VidChain are documented here.
 ### Changed
 - Full pipeline refactored from multi-file to unified `VideoProcessor`
 - Knowledge base schema unified: all modalities in one entry per timestamp
-- RAG system prompt upgraded to BABURAO with abductive reasoning directives
+- RAG system prompt upgraded to IRIS with objective reasoning directives
 
 ### Removed
 - Legacy `VideoLoader` (deprecated stub remains)

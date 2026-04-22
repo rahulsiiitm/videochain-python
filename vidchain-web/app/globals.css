@@ -15,7 +15,7 @@
   --gold:       #F5C518; /* kept for confidence meter only */
 }
 
-@theme inline {
+@theme{
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-sp-red:     var(--red);

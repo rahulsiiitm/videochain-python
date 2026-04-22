@@ -194,7 +194,7 @@ class VidChainStudio(ctk.CTk):
         input_row.columnconfigure(0, weight=1)
 
         self.query_entry = ctk.CTkEntry(
-            input_row, placeholder_text="Ask B.A.B.U.R.A.O. anything about the video...",
+            input_row, placeholder_text="Ask IRIS anything about the video...",
             fg_color=COLORS["bg_card"], border_color=COLORS["accent2"],
             text_color=COLORS["text_main"], font=ctk.CTkFont(size=13),
             height=46, corner_radius=10
@@ -213,9 +213,9 @@ class VidChainStudio(ctk.CTk):
         self.send_btn.grid(row=0, column=1)
 
         # Welcome message
-        self._append_chat("B.A.B.U.R.A.O.", 
-            "🕷️ Web-Net Secure. Narrative interface ready for feed analysis.\n"
-            "Status: Scanning for forensic evidence and entity relationships.",
+        self._append_chat("IRIS", 
+            "✨ IRIS Intelligence Online. Narrative interface ready.\n"
+            "Status: Ready to summarize and analyze your video content.",
             color=COLORS["accent"])
 
     def _section_label(self, parent, text):
@@ -295,7 +295,7 @@ class VidChainStudio(ctk.CTk):
         if success:
             self.progress_bar.set(1.0)
             self._log(f"✓ {message}")
-            self._append_chat("System", "Video successfully indexed! B.A.B.U.R.A.O. is now aware of this video. You can start querying.", color=COLORS["success"])
+            self._append_chat("System", "Video successfully indexed! IRIS is now aware of this video. You can start querying.", color=COLORS["success"])
         else:
             self.progress_bar.set(0)
             self._log(f"✗ Error: {message}")
@@ -327,7 +327,7 @@ class VidChainStudio(ctk.CTk):
 
     def _query_done(self, answer):
         self.send_btn.configure(state="normal", text="Send  ➤")
-        self._append_chat("B.A.B.U.R.A.O.", answer, color=COLORS["accent"])
+        self._append_chat("IRIS", answer, color=COLORS["accent"])
 
     # ─────────────────────────────────────────────────────
     # Helpers

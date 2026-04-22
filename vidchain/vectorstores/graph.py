@@ -145,7 +145,7 @@ class TemporalKnowledgeGraph:
     def get_graph_context(self, query: str) -> str:
         """
         Extracts relevant graph facts in natural language for RAG prompt injection.
-        B.A.B.U.R.A.O. uses this as additional factual context before answering.
+        IRIS uses this as additional factual context before answering.
         """
         if not self._is_built:
             return ""

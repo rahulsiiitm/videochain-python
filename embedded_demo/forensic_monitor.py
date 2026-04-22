@@ -1,5 +1,5 @@
 """
-embedded_demo/forensic_monitor.py
+embedded_demo/insight_monitor.py
 ---------------------------------
 Advanced "Real-Life" Application Demo.
 This script demonstrates how to embed VidChain as a library into a 
@@ -9,7 +9,7 @@ Use Case: Corporate Forensic Audit
 1. Ingests a surveillance log.
 2. Automatically identifies suspicious entities.
 3. Performs GraphRAG multi-hop lookups.
-4. Generates a professional forensic report in Markdown.
+4. Generates a professional narrative report in Markdown.
 """
 
 import os
@@ -29,7 +29,7 @@ except ImportError:
 class ForensicAuditAgent:
     def __init__(self, video_path: str):
         self.video_path = video_path
-        self.report_name = f"audit_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        self.report_name = f"insight_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
         
         # Initialize VidChain in 'Forensic' mode
         print(f"[*] Initializing Stark-Tech Intelligence Engine...")
@@ -67,7 +67,7 @@ class ForensicAuditAgent:
 
 ---
 
-## 📖 1. Event Narrative (B.A.B.U.R.A.O. Summary)
+## 📖 1. Event Narrative (IRIS Summary)
 {summary}
 
 ---

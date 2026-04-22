@@ -165,7 +165,7 @@ class RAGEngine:
     
     def _route_intent(self, user_input: str) -> str:
         """Agentic Router: Decides if we search, summarize, or just chat."""
-        prompt = f"""You are the intent classifier for B.A.B.U.R.A.O. Forensic AI.
+        prompt = f"""You are the intent classifier for the IRIS Intelligence Suite.
         Classify this message into EXACTLY ONE category:
 
         1. VIDEO_SUMMARY: Specifically asking for a summary, overview, story, or "what happened" in the video.
@@ -300,7 +300,7 @@ class RAGEngine:
                 confidence = self._assess_confidence(answer, context_str)
             except Exception as e:
                 traceback.print_exc()
-                answer = f"[ERROR] B.A.B.U.R.A.O. logic failure: {e}"
+                answer = f"[ERROR] IRIS logic failure: {e}"
                 confidence = 0
             
             telemetry_stats = hud.get_stats()

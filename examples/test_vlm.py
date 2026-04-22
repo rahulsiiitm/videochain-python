@@ -32,11 +32,11 @@ def test_autonomous_vlm_pipeline():
         t1 = time.time()
         
         print(f"\n[Test] ✅ Indexed {video_id} in {round(t1-t0, 1)}s via Moondream!")
-        print("[Test] Now querying B.A.B.U.R.A.O. with VLM-enriched data...\n")
+        print("[Test] Now querying IRIS with VLM-enriched data...\n")
         
-        # 3. Query B.A.B.U.R.A.O. using the new rich descriptions
+        # 3. Query IRIS using the new rich descriptions
         response = vc.ask("Describe what is visible on the screen in detail", video_id=video_id)
-        print(f"B.A.B.U.R.A.O.: {response}")
+        print(f"IRIS: {response}")
         
     except Exception as e:
         print(f"\n❌ [Test Failed] {e}")
