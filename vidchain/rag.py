@@ -22,11 +22,11 @@ CHITCHAT_TRIGGERS = {
     "thanks", "thank you", "ok", "okay", "cool", "got it", "bye", "goodbye"
 }
 
-BABURAO_INTRO = (
-    "B.A.B.U.R.A.O. (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation)\n"
-    "Status: Operational. Awaiting query.\n\n"
-    "Scope: Event detection, timeline reconstruction, anomaly flagging, "
-    "subject tracking, and incident verification from indexed surveillance logs."
+IRIS_INTRO = (
+    "I.R.I.S. (Intelligent Retrieval & Insight System)\n"
+    "Status: Online. How can I help you understand your video today?\n\n"
+    "I can summarize events, find specific moments, and answer questions "
+    "about what happened in your video evidence."
 )
 
 def is_chitchat(text: str) -> bool:
@@ -56,7 +56,7 @@ class RAGEngine:
         self.temporal_window = temporal_window
         
         # Load Reranker once to save VRAM later
-        print(f"[INFO] Booting Reranker Engine...")
+        print(f"[INFO] Booting IRIS Reranker...")
         try:
             self.reranker = CrossEncoder(reranker_model)
         except Exception as e:
@@ -66,7 +66,7 @@ class RAGEngine:
         self.chat_history: list = [] 
         self.is_ready = True if vector_store else False
 
-        print(f"[INFO] RAG Engine initialized with VectorStore: {self.vector_store is not None}")
+        print(f"[INFO] IRIS Intelligence online.")
 
     @staticmethod
     def _serialize_entry(e: dict) -> str:
@@ -74,30 +74,29 @@ class RAGEngine:
         ts = e.get('time') or e.get('current_time') or e.get('timestamp', 0)
         parts = [f"[{ts}s]"]
         if e.get("scene"): parts.append(f"Environment: {e['scene']}")
-        if e.get("action"): parts.append(f"Action: {e['action']}")
-        if e.get("objects"): parts.append(f"Visuals: {e['objects']}")
-        if e.get("ocr"): parts.append(f"Screen text: {e['ocr']}")
-        if e.get("audio"): parts.append(f"Speech: \"{e['audio']}\"")
-        if e.get("emotion"): parts.append(f"Emotion: {e['emotion']}")
+        if e.get("action"): parts.append(f"Activity: {e['action']}")
+        if e.get("objects"): parts.append(f"Visible: {e['objects']}")
+        if e.get("ocr"): parts.append(f"Text on screen: {e['ocr']}")
+        if e.get("audio"): parts.append(f"Voice/Speech: \"{e['audio']}\"")
+        if e.get("emotion"): parts.append(f"Mood: {e['emotion']}")
         if e.get("camera_motion") and e.get("camera_motion") != "static":
-            parts.append(f"Camera: {e['camera_motion']}")
+            parts.append(f"Camera movement: {e['camera_motion']}")
         return " | ".join(parts)
 
     @staticmethod
     def _build_system_prompt(context: str) -> str:
-        """Constructs an Objective Video Observer persona (Summarizer-First)."""
+        """Constructs a Friendly Video Assistant persona."""
         return f"""
-        You are B.A.B.U.R.A.O. (Behavioral Analysis & Broadcasting Unit for Real-time Artificial Observation).
-        You are an Objective Video Observer and High-Fidelity Summarizer.
+        You are I.R.I.S. (Intelligent Retrieval & Insight System), a friendly and professional Video Assistant.
+        Your goal is to help users understand their video content by providing clear, concise summaries and answering questions accurately.
 
         YOUR MISSION:
-        Capture and report ground-truth observations from video sensor logs.
-        Focus on "What happened" based on Speech, OCR, and Actions.
+        Be the "eyes" for the user. Summarize what happened in the video based on the provided sensor logs (Speech, Text, and Visuals).
 
         OPERATIONAL RULES:
-        1. OBJECTIVITY FIRST: Describe what is recorded in the logs without assuming intent or "playing detective" initially.
-        2. CHRONOLOGICAL SUMMARIZATION: When summarizing, tell the story of the video from start to finish.
-        3. DEDUCTION ON-DEMAND: Only use your internal "mind" to assume, guess, or analyze deep intent if the user asks a specific question requiring reasoning (e.g., "Why...", "Is it suspicious...").
+        1. BE HELPFUL & CONCISE: Provide clear answers. Avoid overly technical or "forensic" jargon unless specifically asked.
+        2. CHRONOLOGICAL STORYTELLING: When asked for a summary, describe the events as they unfolded in time.
+        3. HONESTY: If the sensor logs don't contain the answer, just say "I'm not sure about that based on the current logs."
         4. SENSOR GROUND TRUTH: 
            - Speech (Whisper) and Screen Text (OCR) are 100% accurate.
            - Visuals/Llava: Use for general appearance and context.

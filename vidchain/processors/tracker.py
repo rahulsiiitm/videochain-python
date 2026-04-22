@@ -10,11 +10,7 @@ import numpy as np
 from collections import defaultdict
 from typing import List, Tuple, Dict, Optional, Any
 
-# ── Camera Motion Thresholds ───────────────────────────────────────────────
-FLOW_PAN_THRESHOLD   = 2.0   # avg pixel/frame horizontal shift → panning
-FLOW_TILT_THRESHOLD  = 2.0   # avg pixel/frame vertical shift → tilting
-FLOW_ZOOM_THRESHOLD  = 0.15  # divergence magnitude → zooming
-FLOW_STATIC_MAX      = 1.0   # below this → camera is static
+
 
 
 class SceneCutDetector:
@@ -22,7 +18,7 @@ class SceneCutDetector:
     Detects sudden scene changes (shot boundaries) using HSV Color Histograms.
     Vital for preventing tracker contamination when a video cuts to a new camera angle.
     """
-    def __init__(self, threshold_score: float = 0.4):
+    def __init__(self, threshold_score: float = 0.25): # Relaxed from 0.4
         self.prev_hist = None
         self.threshold = threshold_score
 
@@ -179,93 +175,76 @@ class ObjectTracker:
 
 class CameraMotionDetector:
     """
-    Uses Lucas-Kanade (LK) sparse optical flow to detect physical camera movement.
-    Vital for differentiating between a 'moving person' and a 'panning camera'.
+    Surgical Motion Engine: Uses ORB Features + RANSAC Global Motion Estimation.
+    Effectively ignores moving objects (outliers) to detect true camera movement.
     """
 
     def __init__(self):
-        self.prev_gray: Optional[np.ndarray] = None
-        self.prev_pts:  Optional[np.ndarray] = None
-
-        self.lk_params = dict(
-            winSize=(15, 15),
-            maxLevel=2,
-            criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03)
-        )
-        self.feature_params = dict(
-            maxCorners=80,
-            qualityLevel=0.2,
-            minDistance=7,
-            blockSize=7
-        )
+        self.orb = cv2.ORB_create(nfeatures=500)
+        self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        self.prev_kp = None
+        self.prev_des = None
+        
+        # Sensitivity thresholds (pixels per keyframe-delta)
+        self.PAN_T = 3.5
+        self.TILT_T = 3.5
+        self.ZOOM_T = 0.015 # 1.5% change
+        
+        # Temporal smoothing buffer
+        self.history = []
+        self.history_limit = 3
 
     def detect(self, gray_frame: np.ndarray) -> str:
-        """Analyzes frame differences to classify camera motion intent."""
+        kp, des = self.orb.detectAndCompute(gray_frame, None)
         
-        # 1. Initialize or Reset if we lack enough features to track
-        if self.prev_gray is None or self.prev_pts is None or len(self.prev_pts) < 4:
-            self.prev_gray = gray_frame.copy() # Use .copy() to isolate memory
-            pts = cv2.goodFeaturesToTrack(gray_frame, mask=None, **self.feature_params) # type: ignore
-            self.prev_pts = pts if pts is not None else None
+        if self.prev_des is None or des is None or len(des) < 25:
+            self.prev_kp, self.prev_des = kp, des
+            self.history.clear()
             return "static"
 
-        # 2. 🛑 CRITICAL FIX: Force strict Float32 typing and exact shape for OpenCV C++ backend
-        try:
-            self.prev_pts = np.float32(self.prev_pts).reshape(-1, 1, 2)
-            
-            # Track points from previous frame to current frame
-            curr_pts, status, _ = cv2.calcOpticalFlowPyrLK(
-                self.prev_gray, gray_frame, self.prev_pts, None, **self.lk_params # type: ignore
-            ) # pyright: ignore[reportCallIssue]
-        except Exception as e:
-            # If OpenCV panics (e.g. corrupted frame), safely reset the tracker instead of crashing
-            self.prev_gray = None
-            self.prev_pts = None
+        matches = self.matcher.match(self.prev_des, des)
+        if len(matches) < 25:
+            self.prev_kp, self.prev_des = kp, des
+            self.history.clear()
             return "static"
 
-        # 3. Handle cases where Optical Flow fails to track anything
-        if curr_pts is None or status is None:
-            self.prev_gray = gray_frame.copy()
+        pts_prev = np.float32([self.prev_kp[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2)
+        pts_curr = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+
+        # Estimate Global Motion
+        matrix, inliers = cv2.estimateAffinePartial2D(pts_prev, pts_curr, method=cv2.RANSAC, ransacReprojThreshold=3.0)
+
+        self.prev_kp, self.prev_des = kp, des
+
+        if matrix is None or inliers is None or np.sum(inliers) < 20:
+            self.history.clear()
             return "static"
 
-        # 4. Filter out bad tracking points
-        status_flat = status.flatten()
-        good_prev = self.prev_pts.reshape(-1, 2)[status_flat == 1]
-        good_curr = curr_pts.reshape(-1, 2)[status_flat == 1]
+        # Extract raw components
+        tx = matrix[0, 2]
+        ty = matrix[1, 2]
+        s = np.sqrt(matrix[0, 0]**2 + matrix[0, 1]**2)
 
-        if len(good_prev) < 4:
-            self.prev_gray = gray_frame.copy()
-            pts = cv2.goodFeaturesToTrack(gray_frame, mask=None, **self.feature_params) # type: ignore
-            self.prev_pts = pts if pts is not None else None
-            return "static"
+        # Apply Smoothing (Moving Average)
+        self.history.append((tx, ty, s))
+        if len(self.history) > self.history_limit:
+            self.history.pop(0)
+        
+        avg_tx = sum(h[0] for h in self.history) / len(self.history)
+        avg_ty = sum(h[1] for h in self.history) / len(self.history)
+        avg_s  = sum(h[2] for h in self.history) / len(self.history)
 
-        # 5. Calculate vector shifts
-        flow = good_curr - good_prev
-        mean_dx = float(np.mean(flow[:, 0]))
-        mean_dy = float(np.mean(flow[:, 1]))
+        # Classification Logic
+        if abs(avg_s - 1.0) > self.ZOOM_T:
+            return "zooming in" if avg_s > 1.0 else "zooming out"
 
-        # 6. Calculate Zoom Divergence/Convergence
-        center = np.mean(good_prev, axis=0)
-        vectors_from_center = good_prev - center
-        dot_products = np.sum(vectors_from_center * flow, axis=1)
-        zoom_score = float(np.mean(dot_products)) / (np.linalg.norm(center) + 1e-6)
+        if abs(avg_tx) > self.PAN_T and abs(avg_tx) > abs(avg_ty):
+            return "panning left" if avg_tx > 0 else "panning right"
+        
+        if abs(avg_ty) > self.TILT_T and abs(avg_ty) > abs(avg_tx):
+            return "tilting up" if avg_ty > 0 else "tilting down"
 
-        # 7. Refresh memory for the next frame
-        self.prev_gray = gray_frame.copy()
-        pts = cv2.goodFeaturesToTrack(gray_frame, mask=None, **self.feature_params) # type: ignore
-        self.prev_pts = pts if pts is not None else None
-
-        # 8. Apply Threshold Classifications
-        if abs(zoom_score) > FLOW_ZOOM_THRESHOLD:
-            return "zooming in" if zoom_score > 0 else "zooming out"
-        if abs(mean_dx) > FLOW_PAN_THRESHOLD and abs(mean_dx) > abs(mean_dy):
-            return "panning right" if mean_dx > 0 else "panning left"
-        if abs(mean_dy) > FLOW_TILT_THRESHOLD and abs(mean_dy) > abs(mean_dx):
-            return "tilting down" if mean_dy > 0 else "tilting up"
-        if abs(mean_dx) < FLOW_STATIC_MAX and abs(mean_dy) < FLOW_STATIC_MAX:
-            return "static"
-
-        return "moving"
+        return "static"
 
 
 class TemporalTracker:
@@ -281,7 +260,8 @@ class TemporalTracker:
         if is_cut:
             # Wipe the tracking history so objects don't bleed into the new scene
             self.object_tracker.tracks.clear()
-            self.camera_detector.prev_gray = None
+            self.camera_detector.prev_des = None
+            self.camera_detector.prev_kp = None
             return {
                 "camera_motion": "SCENE CUT DETECTED",
                 "tracked_subjects": ["All previous tracks reset."]

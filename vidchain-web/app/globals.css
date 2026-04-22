@@ -1,23 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0A0D12;
-  --foreground: #E8ECFF;
-  --spider-red: #D80032;
-  --stark-navy: #1A1F2B;
-  --stark-card: #242B3D;
-  --stark-border: #31394D;
-  --stark-gold: #FDCB58;
+  --background: #0a0a0f;
+  --foreground: #f0f0f5;
+
+  /* Spider-Man Classic */
+  --red:        #E8192C;
+  --blue:       #1A3A8F;
+  --blue-light: #2952C8;
+  --web:        #1e1e2e;
+  --surface:    #12121a;
+  --border:     #1e2040;
+  --muted:      #3a3a5c;
+  --gold:       #F5C518; /* kept for confidence meter only */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-spider-red: var(--spider-red);
-  --color-stark-navy: var(--stark-navy);
-  --color-stark-card: var(--stark-card);
-  --color-stark-border: var(--stark-border);
-  --color-stark-gold: var(--stark-gold);
+  --color-sp-red:     var(--red);
+  --color-sp-blue:    var(--blue);
+  --color-sp-blue-light: var(--blue-light);
+  --color-sp-web:     var(--web);
+  --color-sp-surface: var(--surface);
+  --color-sp-border:  var(--border);
+  --color-sp-muted:   var(--muted);
   --font-sans: var(--font-montserrat), ui-sans-serif, system-ui;
 }
 
@@ -28,17 +35,24 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom Stark-Tech Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+/* Web pattern background */
+.web-bg {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(232,25,44,0.08) 1px, transparent 0);
+  background-size: 32px 32px;
 }
-::-webkit-scrollbar-track {
-  background: var(--background);
+
+/* Spider web SVG lines overlay */
+.web-lines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cg stroke='%23E8192C' stroke-width='0.3' opacity='0.06'%3E%3Cline x1='100' y1='0' x2='100' y2='200'/%3E%3Cline x1='0' y1='100' x2='200' y2='100'/%3E%3Cline x1='0' y1='0' x2='200' y2='200'/%3E%3Cline x1='200' y1='0' x2='0' y2='200'/%3E%3Ccircle cx='100' cy='100' r='40' fill='none'/%3E%3Ccircle cx='100' cy='100' r='80' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
 }
-::-webkit-scrollbar-thumb {
-  background: var(--stark-border);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--spider-red);
-}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--red); }

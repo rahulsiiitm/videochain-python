@@ -1,0 +1,144 @@
+{
+    "video": "c:\\Users\\Rahul Sharma\\OneDrive\\Documents\\CODE\\SEM PROJECT\\videochain-python\\sample.mp4",
+    "total_frames": 718,
+    "keyframes_processed": 27,
+    "results": [
+        {
+            "timestamp": 0.33,
+            "camera_motion": "static",
+            "subjects": []
+        },
+        {
+            "timestamp": 13.67,
+            "camera_motion": "static",
+            "subjects": []
+        },
+        {
+            "timestamp": 14.0,
+            "camera_motion": "SCENE CUT DETECTED",
+            "subjects": [
+                "All previous tracks reset."
+            ]
+        },
+        {
+            "timestamp": 14.34,
+            "camera_motion": "static",
+            "subjects": []
+        },
+        {
+            "timestamp": 14.67,
+            "camera_motion": "static",
+            "subjects": []
+        },
+        {
+            "timestamp": 15.0,
+            "camera_motion": "panning right",
+            "subjects": []
+        },
+        {
+            "timestamp": 15.34,
+            "camera_motion": "zooming in",
+            "subjects": []
+        },
+        {
+            "timestamp": 15.67,
+            "camera_motion": "panning right",
+            "subjects": []
+        },
+        {
+            "timestamp": 16.0,
+            "camera_motion": "zooming in",
+            "subjects": []
+        },
+        {
+            "timestamp": 16.34,
+            "camera_motion": "tilting up",
+            "subjects": []
+        },
+        {
+            "timestamp": 16.67,
+            "camera_motion": "zooming out",
+            "subjects": []
+        },
+        {
+            "timestamp": 17.34,
+            "camera_motion": "zooming out",
+            "subjects": []
+        },
+        {
+            "timestamp": 17.67,
+            "camera_motion": "zooming out",
+            "subjects": []
+        },
+        {
+            "timestamp": 18.34,
+            "camera_motion": "tilting up",
+            "subjects": []
+        },
+        {
+            "timestamp": 18.67,
+            "camera_motion": "panning left",
+            "subjects": []
+        },
+        {
+            "timestamp": 19.0,
+            "camera_motion": "panning left",
+            "subjects": []
+        },
+        {
+            "timestamp": 19.67,
+            "camera_motion": "panning left",
+            "subjects": []
+        },
+        {
+            "timestamp": 20.34,
+            "camera_motion": "tilting up",
+            "subjects": []
+        },
+        {
+            "timestamp": 20.67,
+            "camera_motion": "static",
+            "subjects": []
+        },
+        {
+            "timestamp": 21.0,
+            "camera_motion": "static",
+            "subjects": []
+        },
+        {
+            "timestamp": 21.34,
+            "camera_motion": "static",
+            "subjects": []
+        },
+        {
+            "timestamp": 21.67,
+            "camera_motion": "tilting down",
+            "subjects": []
+        },
+        {
+            "timestamp": 22.0,
+            "camera_motion": "tilting down",
+            "subjects": []
+        },
+        {
+            "timestamp": 22.34,
+            "camera_motion": "tilting down",
+            "subjects": []
+        },
+        {
+            "timestamp": 22.67,
+            "camera_motion": "tilting down",
+            "subjects": []
+        },
+        {
+            "timestamp": 23.0,
+            "camera_motion": "tilting down",
+            "subjects": []
+        },
+        {
+            "timestamp": 23.67,
+            "camera_motion": "tilting down",
+            "subjects": []
+        }
+    ]
+}

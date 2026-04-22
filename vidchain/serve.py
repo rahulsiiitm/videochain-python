@@ -16,15 +16,22 @@ from vidchain.client import VidChain
 from vidchain.telemetry import HardwareMonitor
 
 app = FastAPI(
-    title="VidChain Edge Server",
-    description="Local 'LangChain for Videos' API — Persistent Edition",
-    version="0.8.8-Stable"
+    title="IRIS (Intelligent Retrieval & Insight System)",
+    description="Local 'Intelligent Retrieval & Insight System' API — Persistent Edition",
+    version="0.9.0-Final"
 )
 
-# ── Secure Media Streaming ────────────────────────────────────────────────────
-# This allows the Stark-Tech frontend to play local disk videos for forensic review.
-# In a production environment, this should be restricted to the STORAGE_DIR.
-app.mount("/media", StaticFiles(directory="."), name="media")
+# ── Secure Media Gateway ──────────────────────────────────────────────────────
+@app.get("/api/media-stream")
+def stream_media(path: str):
+    """IRIS Gateway: Streams local video assets for insight review."""
+    if not os.path.exists(path):
+        # Fallback: maybe it's just a filename in the current dir
+        if os.path.exists(os.path.basename(path)):
+            path = os.path.basename(path)
+        else:
+            raise HTTPException(status_code=404, detail=f"Media not found: {path}")
+    return FileResponse(path)
 
 app.add_middleware(
     CORSMiddleware,
@@ -66,7 +73,7 @@ def _save_session(session: dict):
     with open(_session_path(session["id"]), "w", encoding="utf-8") as f:
         json.dump(session, f, ensure_ascii=False, indent=2)
 
-def _create_session(title: str = "New Session") -> dict:
+def _create_session(title: str = "New Insight Session") -> dict:
     session = {
         "id": str(uuid.uuid4())[:8],
         "title": title,
@@ -101,7 +108,7 @@ def _append_message(session_id: str, sender: str, text: str, video_id: Optional[
     session["updated_at"] = time.time()
 
     # Auto-title from first user message
-    if sender == "user" and session["title"] == "New Session":
+    if sender == "user" and session["title"] == "New Insight Session":
         session["title"] = text[:48].strip() + ("..." if len(text) > 48 else "")
 
     _save_session(session)
@@ -141,7 +148,7 @@ class QueryRequest(BaseModel):
     stream: bool = False
 
 class NewSessionRequest(BaseModel):
-    title: str = "New Session"
+    title: str = "New Insight Session"
 
 class RenameSessionRequest(BaseModel):
     title: str
@@ -151,14 +158,14 @@ class RenameSessionRequest(BaseModel):
 @app.on_event("startup")
 def startup_event():
     global vc
-    print("[VidChain Server] Waking up edge microservice...")
+    print("[IRIS] Waking up neural microservice...")
     os.makedirs(STORAGE_DIR, exist_ok=True)
     os.makedirs(SESSIONS_DIR, exist_ok=True)
 
     # Always persist to STORAGE_DIR — survives restarts
     vc = VidChain(db_path=STORAGE_DIR)
-    indexed = vc.list_indexed_videos()
-    print(f"[VidChain Server] Memory online. Videos indexed: {len(indexed)}")
+    indexed = vc.vector_store.list_videos()
+    print(f"[IRIS] Intelligence online. Insights cached: {len(indexed)}")
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
@@ -200,11 +207,41 @@ def rename_session(session_id: str, req: RenameSessionRequest):
 
 @app.delete("/api/sessions/{session_id}")
 def delete_session(session_id: str):
+    session = _load_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # ── Full Memory Purge ──────────────────────────────────────────
+    # IRIS ensures that deleting a session wipes the linked memory
+    video_id = session.get("video_id")
+    if video_id and vc:
+        print(f"[IRIS] Purging all memory linked to video: {video_id}")
+        
+        # 1. Clear ChromaDB vectors
+        try:
+            vc.purge_storage(video_id)
+        except Exception as e:
+            print(f"[Purge Error] ChromaDB: {e}")
+
+        # 2. Delete Knowledge Graph (.pkl)
+        graph_path = os.path.join(STORAGE_DIR, "knowledge_graphs", f"graph_{video_id}.pkl")
+        if os.path.exists(graph_path):
+            try: os.remove(graph_path)
+            except: pass
+
+        # 3. Delete Knowledge Base (.json)
+        kb_path = os.path.join(STORAGE_DIR, "knowledge_bases", f"{video_id}.json")
+        if os.path.exists(kb_path):
+            try: os.remove(kb_path)
+            except: pass
+
+    # ── Session Deletion ───────────────────────────────────────────
     p = _session_path(session_id)
     if os.path.exists(p):
         os.remove(p)
-        return {"status": "deleted"}
-    raise HTTPException(status_code=404, detail="Session not found")
+        return {"status": "deleted", "purged_video": video_id}
+    
+    raise HTTPException(status_code=404, detail="Session file missing")
 
 
 # ── Query ─────────────────────────────────────────────────────────────────────
@@ -224,7 +261,7 @@ def query_video(req: QueryRequest):
     # 1. Resolve private chat history
     history = []
     for msg in session.get("messages", []):
-        role = "assistant" if msg["sender"] in ["baburao", "system"] else "user"
+        role = "assistant" if msg["sender"] in ["iris", "system"] else "user"
         history.append({"role": role, "content": msg["text"]})
 
     # 2. Resolve private video context
@@ -251,7 +288,7 @@ def query_video(req: QueryRequest):
         
         # 3. Save the interaction with telemetry metadata
         _append_message(session_id, "user",    req.query,  video_id)
-        msg = _append_message(session_id, "baburao", answer, video_id)
+        msg = _append_message(session_id, "iris", answer, video_id)
         
         # Enrich stored message with neural scores
         msg["telemetry"]  = telemetry
@@ -314,6 +351,7 @@ def ingest_video(req: IngestRequest, background_tasks: BackgroundTasks):
     session = _load_session(session_id)
     if session:
         session["video_id"] = video_id
+        session["video_path"] = req.video_source # Store the real disk path for playback
         session["updated_at"] = time.time()
         _save_session(session)
 
@@ -322,6 +360,7 @@ def ingest_video(req: IngestRequest, background_tasks: BackgroundTasks):
         "status": "processing",
         "session_id": session_id,
         "video_id": video_id,
+        "video_path": req.video_source,
         "message": f"Ingestion started for {req.video_source}",
     }
 
@@ -386,13 +425,13 @@ def serve_dashboard(rest_of_path: str):
 # ── CLI ───────────────────────────────────────────────────────────────────────
 def open_browser():
     """Waits for server to start and then opens the portal."""
-    time.sleep(2.5) # Give Uvicorn time to bind
-    print("[VidChain] Launching Spider-Net Intelligence Portal...")
+    time.sleep(10.0) # Extended delay for IRIS neural warmup
+    print("[IRIS] Launching Intelligence Portal...")
     webbrowser.open("http://localhost:8000")
 
 def main_cli():
     print("=========================================")
-    print("  VidChain Forensic Suite v0.8.3")
+    print("  IRIS Intelligence Suite v0.8.8-Stable")
     print("  Portal : http://localhost:8000")
     print("  Storage: ./vidchain_storage")
     print("=========================================")

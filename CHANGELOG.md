@@ -4,6 +4,31 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [0.9.0] — 2026-04-22 (The "Insight Engine" Release)
+
+### Added
+- **IRIS: The Intelligent Assistant**: Integrated the IRIS (Intelligent Retrieval & Insight System) agent as the primary interaction layer.
+- **Neural Isolation Protocol**: Enforced per-session Knowledge Graph (`.pkl`) and Vector Store isolation. Each session now has a physically distinct memory footprint.
+- **VidChain Media Gateway**: New dedicated FastAPI streaming endpoint (`/api/media-stream`) to handle absolute local path resolution, fixing `404` errors for cross-directory video playback on Windows.
+- **Secure Memory Purge**: Custom glassmorphic UI modal for permanent session deletion, including automated cleanup of all associated neural artifacts.
+- **Startup Safety Buffer**: 7-second "Neural Warmup" delay during `vidchain-serve` to allow AI weights (BGE, Llava, Reranker) to stabilize before the UI launches.
+- **Deferred Session Creation**: The portal now waits for a valid video source before initializing a session, keeping the database clean of empty artifacts.
+
+### Changed
+- **Branding Transformation**: Standardized IRIS persona across all logs, UI elements, and API metadata.
+- **Developer Guide**: README overhauled into an "Ultra-Rich" SDK guide with Mermaid diagrams and programmatic node usage examples.
+- **Telemetry Update**: IRIS Cognitive HUD (v0.9.0) with refined node status indicators and peaked VRAM monitoring.
+- **Version Elevation**: System-wide update to **v0.9.0-Final**.
+
+### Fixed
+- Fixed critical `404 Not Found` when loading videos from previous insight sessions.
+- Resolved race condition where the UI would launch before the backend was reachable.
+- Fixed session navigation bug where switching context would reset the video player state.
+
+---
+
+---
+
 ## [0.8.3] — 2026-04-21
 
 ### Fixed

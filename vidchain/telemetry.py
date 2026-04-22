@@ -4,6 +4,9 @@ import os
 import threading
 from typing import Dict, Any, Optional
 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="pynvml")
+
 # ── Persistent Hardware Pulse ────────────────────────────────────────────────
 _NVML_INIT_FAILED = False
 try:
@@ -15,7 +18,7 @@ except Exception as e:
 
 class HardwareMonitor:
     """
-    Forensic Neural HUD v0.7.5: Peak Load Sampler.
+    IRIS Cognitive HUD v0.8.8: Peak Load Sampler.
     Uses background threading to capture computational spikes during AI processing.
     """
     def __init__(self):

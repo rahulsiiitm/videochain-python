@@ -1,10 +1,8 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Play, Pause, ChevronLeft, ChevronRight, Crosshair, Activity 
-} from "lucide-react";
+import React from "react";
+import { motion } from "framer-motion";
+import { Play, Pause, ChevronLeft, ChevronRight, Activity, Crosshair } from "lucide-react";
 import { cn } from "./utils";
 
 interface TelemetryPanelProps {
@@ -28,199 +26,143 @@ interface TelemetryPanelProps {
   trackerActive: boolean;
   graphActive: boolean;
   hardwareStats: { cpu: number; gpu: number; vram: number };
-  apiBase?: string;
-  collapsed: boolean;
-  setCollapsed: (val: boolean) => void;
 }
 
 export function TelemetryPanel({
-  activeVideoPath,
-  videoRef,
-  videoPlaying,
-  videoCurrentTime,
-  videoDuration,
-  setVideoPlaying,
-  setVideoCurrentTime,
-  setVideoDuration,
-  activeMetadata,
-  liveStatus,
-  logs,
-  logsEndRef,
-  serverOnline,
-  isIngesting,
-  vlmActive,
-  ocrActive,
-  audioActive,
-  trackerActive,
-  graphActive,
-  hardwareStats,
-  apiBase = "",
-  collapsed,
-  setCollapsed
+  activeVideoPath, videoRef, videoPlaying, videoCurrentTime, videoDuration,
+  setVideoPlaying, setVideoCurrentTime, setVideoDuration,
+  activeMetadata, liveStatus, logs, logsEndRef, serverOnline, isIngesting,
+  vlmActive, ocrActive, audioActive, trackerActive, graphActive, hardwareStats,
 }: TelemetryPanelProps) {
 
-  // Node indicator pill — driven by real liveStatus substrings from backend
-  const NodePill = ({ label, active, color }: { label: string; active: boolean; color: string }) => (
-    <div className="flex items-center gap-1.5">
-      <span
-        className={cn(
-          "w-1.5 h-1.5 rounded-full transition-all duration-300 shrink-0",
-          active ? "animate-pulse" : "bg-gray-800"
-        )}
-        style={active ? { backgroundColor: color, boxShadow: `0 0 6px ${color}` } : {}}
-      />
-      <span className={cn(
-        "text-[8px] font-bold uppercase tracking-widest transition-colors duration-300",
-        active ? "text-white" : "text-gray-700"
-      )}>
-        {label}
-      </span>
-      {active && (
-        <motion.span
-          animate={{ opacity: [1, 0.3, 1] }}
-          transition={{ duration: 0.8, repeat: Infinity }}
-          className="text-[7px] font-black ml-auto"
-          style={{ color }}
-        >
-          ●
-        </motion.span>
-      )}
-    </div>
-  );
+  const nodes = [
+    { label: "VLM", active: vlmActive, color: "#E8192C" },
+    { label: "OCR", active: ocrActive, color: "#F5C518" },
+    { label: "Audio", active: audioActive, color: "#22c55e" },
+    { label: "Track", active: trackerActive, color: "#60a5fa" },
+    { label: "Graph", active: graphActive, color: "#a855f7" },
+  ];
 
   return (
-    <motion.aside
-      animate={{ width: collapsed ? 52 : 320 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      className="relative z-10 flex flex-col border-l border-stark-border bg-background shrink-0 overflow-hidden"
-    >
-      {/* HUD Header */}
-      <div className={cn("p-4 border-b border-stark-border flex items-center justify-between gap-3 shrink-0 bg-black/20", collapsed && "flex-col justify-center px-1")}>
-        {!collapsed && (
-          <div className="flex items-center gap-2">
-            <div className={cn("w-1.5 h-1.5 rounded-full", serverOnline ? "bg-green-500 animate-pulse" : "bg-red-500")} />
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Neural Sync</span>
-          </div>
-        )}
-        <button 
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn(
-            "p-1 rounded bg-stark-card border border-stark-border text-gray-700 hover:text-white hover:bg-spider-red transition-all cursor-pointer",
-            collapsed && "mt-1"
-          )}
-        >
-          {collapsed ? <ChevronLeft className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-        </button>
+    <aside className="w-72 border-l border-sp-border bg-sp-surface flex flex-col shrink-0 overflow-hidden">
+
+      {/* Node status */}
+      <div className="p-4 border-b border-sp-border">
+        <p className="text-[8px] font-black uppercase tracking-[0.2em] text-sp-muted mb-3">Neural Nodes</p>
+        <div className="flex flex-wrap gap-2">
+          {nodes.map(({ label, active, color }) => (
+            <div key={label} className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[8px] font-bold uppercase tracking-widest transition-all",
+              active ? "border-transparent text-white" : "border-sp-border text-sp-muted"
+            )} style={active ? { backgroundColor: `${color}20`, borderColor: `${color}50`, color } : {}}>
+              <span className={cn("w-1 h-1 rounded-full", active ? "animate-pulse" : "bg-sp-border")}
+                style={active ? { backgroundColor: color } : {}} />
+              {label}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {!collapsed ? (
-        <AnimatePresence mode="wait">
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col overflow-hidden"
-          >
-            {/* Status indicators */}
-            <div className="p-4 space-y-3 border-b border-stark-border bg-black/10">
-              <NodePill label="VLM Engine" active={vlmActive} color="#D80032" />
-              <NodePill label="OCR Stream" active={ocrActive} color="#F5C518" />
-              <NodePill label="Audio Sync" active={audioActive} color="#22c55e" />
-              <NodePill label="LK Tracking" active={trackerActive} color="#60a5fa" />
-              <NodePill label="Graph RAG" active={graphActive} color="#a855f7" />
-            </div>
-
-            {/* Evidence Player */}
-            <div className="border-b border-stark-border bg-black/40">
-              <div className="p-3">
-                <div className="relative aspect-video rounded-lg overflow-hidden border border-stark-border bg-black shadow-2xl group">
-                  {activeVideoPath ? (
-                    <>
-                      <video
-                        ref={videoRef}
-                        src={activeVideoPath ? (activeVideoPath.startsWith("http") ? activeVideoPath : `${apiBase}/media/${activeVideoPath}`) : ""}
-                        className="w-full h-full object-contain"
-                        onTimeUpdate={e => setVideoCurrentTime((e.target as HTMLVideoElement).currentTime)}
-                        onDurationChange={e => setVideoDuration((e.target as HTMLVideoElement).duration)}
-                        onPlay={() => setVideoPlaying(true)}
-                        onPause={() => setVideoPlaying(false)}
-                      />
-                      <div className="absolute inset-0 pointer-events-none">
-                        {(["top-0 left-0 border-t-2 border-l-2", "top-0 right-0 border-t-2 border-r-2", "bottom-0 left-0 border-b-2 border-l-2", "bottom-0 right-0 border-b-2 border-r-2"] as const).map((cls, i) => (
-                          <div key={i} className={cn("absolute w-3 h-3 border-spider-red/40", cls)} />
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-800 p-6 text-center">
-                      <Activity className="w-8 h-8 mb-3 opacity-20" />
-                      <p className="text-[8px] font-black uppercase tracking-widest">Awaiting Neural Link</p>
-                    </div>
-                  )}
-                </div>
-
-                <div 
-                  className="mt-3 h-1.5 bg-white/5 rounded-full overflow-hidden cursor-pointer relative"
-                  onClick={e => {
-                    if (!videoRef.current || !videoDuration) return;
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    videoRef.current.currentTime = ((e.clientX - rect.left) / rect.width) * videoDuration;
-                  }}
-                >
-                  <div className="absolute inset-0 bg-spider-red/40" style={{ width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%` }} />
-                </div>
+      {/* Video player */}
+      <div className="border-b border-sp-border p-3">
+        <div className="relative aspect-video rounded-lg overflow-hidden bg-black border border-sp-border">
+          {activeVideoPath ? (
+            <>
+              <video ref={videoRef}
+                src={`http://localhost:8000/api/media-stream?path=${encodeURIComponent(activeVideoPath)}`}
+                className="w-full h-full object-contain"
+                onTimeUpdate={e => setVideoCurrentTime((e.target as HTMLVideoElement).currentTime)}
+                onDurationChange={e => setVideoDuration((e.target as HTMLVideoElement).duration)}
+                onPlay={() => setVideoPlaying(true)}
+                onPause={() => setVideoPlaying(false)}
+              />
+              {/* Corner brackets */}
+              <div className="absolute inset-0 pointer-events-none">
+                {(["top-0 left-0 border-t border-l", "top-0 right-0 border-t border-r", "bottom-0 left-0 border-b border-l", "bottom-0 right-0 border-b border-r"] as const).map((cls, i) => (
+                  <div key={i} className={cn("absolute w-3 h-3 border-sp-red/60", cls)} />
+                ))}
+                <span className="absolute bottom-1.5 left-2 text-[6px] font-mono text-sp-red/70">
+                  {videoCurrentTime.toFixed(2)}s
+                </span>
               </div>
+            </>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-sp-muted/30">
+              <Activity className="w-6 h-6 mb-2" />
+              <p className="text-[7px] font-bold uppercase tracking-widest">No Context</p>
             </div>
-
-            {/* Logs Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-[8px]" style={{ scrollbarWidth: "none" }}>
-              <div className="pb-2 mb-2 border-b border-stark-border/30">
-                <span className="text-gray-700 text-[7px] uppercase font-bold tracking-[0.2em]">Sensor Output</span>
-              </div>
-              {logs.slice(-20).map(log => (
-                <div key={log.id} className="flex gap-2 group">
-                  <span className="text-gray-800 shrink-0 tabular-nums">[{log.timestamp}]</span>
-                  <span className={cn(
-                    "leading-relaxed",
-                    log.type === "error" ? "text-spider-red" : 
-                    log.type === "success" ? "text-green-500" : "text-gray-500"
-                  )}>
-                    {log.text}
-                  </span>
-                </div>
-              ))}
-              <div ref={logsEndRef} />
-            </div>
-
-            {/* Hardware Status */}
-            <div className="p-4 border-t border-stark-border bg-black/20 space-y-2">
-              {[
-                { label: "GPU", value: hardwareStats.gpu, color: "bg-spider-red" },
-                { label: "VRAM", value: hardwareStats.vram, color: "bg-blue-500" },
-              ].map(({ label, value, color }) => (
-                <div key={label} className="space-y-1">
-                  <div className="flex justify-between items-end">
-                    <span className="text-[7px] font-black text-gray-500 tracking-widest">{label}</span>
-                    <span className="text-[8px] font-mono text-white">{value}%</span>
-                  </div>
-                  <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${value}%` }} className={cn("h-full rounded-full", color)} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      ) : (
-        <div className="flex-1 flex flex-col items-center py-4 gap-6 text-gray-800">
-           <Activity className="w-5 h-5 opacity-20" />
-           <div className="flex flex-col gap-4">
-             <div className={cn("w-1.5 h-1.5 rounded-full", vlmActive ? "bg-spider-red" : "bg-gray-800")} />
-             <div className={cn("w-1.5 h-1.5 rounded-full", ocrActive ? "bg-stark-gold" : "bg-gray-800")} />
-             <div className={cn("w-1.5 h-1.5 rounded-full", audioActive ? "bg-green-500" : "bg-gray-800")} />
-           </div>
+          )}
         </div>
-      )}
-    </motion.aside>
+
+        {/* Scrubber */}
+        <div className="mt-2 h-1 bg-white/5 rounded-full overflow-hidden cursor-pointer relative"
+          onClick={e => {
+            if (!videoRef.current || !videoDuration) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            videoRef.current.currentTime = ((e.clientX - rect.left) / rect.width) * videoDuration;
+          }}>
+          <div className="absolute inset-0 bg-sp-red/50 rounded-full transition-all"
+            style={{ width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%` }} />
+          {activeMetadata.map((evt, i) => (
+            <div key={i} className="absolute top-0 h-full w-px opacity-60"
+              style={{ left: `${((evt.time || evt.current_time) / (videoDuration || 1)) * 100}%`, backgroundColor: evt.ocr ? "#F5C518" : evt.camera_motion ? "#60a5fa" : "#22c55e" }} />
+          ))}
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center justify-between mt-2 px-1">
+          <div className="flex items-center gap-1">
+            <button onClick={() => { if (videoRef.current) videoRef.current.currentTime -= 0.033; }}
+              className="p-1 rounded text-sp-muted hover:text-white transition-all">
+              <ChevronLeft className="w-3 h-3" />
+            </button>
+            <button onClick={() => { if (!videoRef.current) return; videoRef.current.paused ? videoRef.current.play() : videoRef.current.pause(); }}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-sp-red/20 border border-sp-red/40 text-sp-red hover:bg-sp-red hover:text-white transition-all">
+              {videoPlaying ? <Pause className="w-2.5 h-2.5" /> : <Play className="w-2.5 h-2.5" />}
+            </button>
+            <button onClick={() => { if (videoRef.current) videoRef.current.currentTime += 0.033; }}
+              className="p-1 rounded text-sp-muted hover:text-white transition-all">
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+          <span className="text-[8px] font-mono text-white/40">
+            {videoCurrentTime.toFixed(1)}s / {videoDuration.toFixed(1)}s
+          </span>
+        </div>
+      </div>
+
+      {/* Logs */}
+      <div className="flex-1 overflow-y-auto p-3 font-mono text-[8px] space-y-0.5" style={{ scrollbarWidth: "none" }}>
+        <p className="text-[7px] font-bold uppercase tracking-[0.2em] text-sp-muted/50 pb-2 mb-1 border-b border-sp-border/30">Analysis Feed</p>
+        {logs.slice(-40).map(log => (
+          <div key={log.id} className="flex gap-2">
+            <span className="text-sp-muted/40 shrink-0">[{log.timestamp}]</span>
+            <span className={cn(
+              log.type === "error" ? "text-sp-red" :
+              log.type === "success" ? "text-green-500" :
+              log.type === "warn" ? "text-yellow-500" : "text-white/30"
+            )}>{log.text}</span>
+          </div>
+        ))}
+        <div ref={logsEndRef} />
+      </div>
+
+      {/* Hardware stats */}
+      <div className="p-3 border-t border-sp-border space-y-2">
+        {[
+          { label: "CPU", value: hardwareStats.cpu, color: "bg-yellow-500" },
+          { label: "GPU", value: hardwareStats.gpu, color: "bg-sp-red" },
+          { label: "VRAM", value: hardwareStats.vram, color: "bg-sp-blue-light" },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="flex items-center gap-2">
+            <span className="text-[7px] font-bold text-sp-muted/60 w-7">{label}</span>
+            <div className="flex-1 h-0.5 bg-white/5 rounded-full overflow-hidden">
+              <motion.div animate={{ width: `${value}%` }} className={cn("h-full rounded-full", color)} />
+            </div>
+            <span className="text-[7px] font-mono text-white/30 w-6 text-right">{value}%</span>
+          </div>
+        ))}
+      </div>
+    </aside>
   );
 }

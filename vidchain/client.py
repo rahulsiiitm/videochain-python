@@ -56,16 +56,14 @@ class VidChain:
         self.action_engine = None
         self.scene_engine  = None
         
-        # GraphRAG knowledge graph (built automatically on every ingest)
+        # GraphRAG knowledge graph (Isolated per video)
         self.knowledge_graph = TemporalKnowledgeGraph()
-        self.active_timeline: List[dict] = []  # In-memory cache for Agentic AI reasoning
+        self.active_timeline: List[dict] = []  
         
-        # Load graph if database is persistent
-        if db_path:
-            self.graph_path = os.path.join(db_path, "knowledge_graph.pkl")
-            self.knowledge_graph.load_from_disk(self.graph_path)
-        else:
-            self.graph_path = None
+        # In multi-video mode, graphs are loaded on-demand by video_id
+        self.graph_dir = os.path.join(db_path, "knowledge_graphs") if db_path else None
+        if self.graph_dir:
+            os.makedirs(self.graph_dir, exist_ok=True)
 
     # ------------------------------------------------------------------
     # Internal engine management
@@ -162,11 +160,14 @@ class VidChain:
         # ── Build GraphRAG Knowledge Graph ────────────────────────────
         self.knowledge_graph.build_from_timeline(fused_timeline)
         if self.config["verbose"]:
-            print(f"[VidChain] {self.knowledge_graph.describe()}")
+            print(f"[IRIS] {self.knowledge_graph.describe()}")
             
-        # ── Save Graph if persistent ──────────────────────────────────
-        if self.graph_path:
-            self.knowledge_graph.save_to_disk(self.graph_path)
+        # ── Save Isolated Graph ───────────────────────────────────────
+        if self.graph_dir:
+            per_video_graph = os.path.join(self.graph_dir, f"graph_{v_id}.pkl")
+            self.knowledge_graph.save_to_disk(per_video_graph)
+            if self.config["verbose"]:
+                print(f"[IRIS] Isolated Knowledge Graph secured -> {per_video_graph}")
 
         # ── Write knowledge_base.json ─────────────────────────────────
         if self.config.get("save_kb_json", True):
@@ -202,6 +203,15 @@ class VidChain:
 
         return v_id
 
+    def _load_video_context(self, video_id: Optional[str]):
+        """Hot-swaps the active knowledge graph based on the video context."""
+        if not video_id or not self.graph_dir:
+            return
+
+        per_video_graph = os.path.join(self.graph_dir, f"graph_{video_id}.pkl")
+        if os.path.exists(per_video_graph):
+            self.knowledge_graph.load_from_disk(per_video_graph)
+
     def ask(
         self, 
         query: str, 
@@ -210,12 +220,10 @@ class VidChain:
         stream: bool = False, 
         **kwargs
     ) -> str:
-        """
-        Main query entry point. 
-        If video_id is provided, it isolates search and context to that video.
-        If history is provided, it maintains private session memory.
-        """
-        # Inject Graph Context if available
+        # Load the specific graph for this video context
+        self._load_video_context(video_id)
+
+        # Inject Graph Context
         if self.knowledge_graph._is_built and "graph_context" not in kwargs:
             kwargs["graph_context"] = self.knowledge_graph.get_graph_context(query)
             
@@ -228,10 +236,13 @@ class VidChain:
             
         return self.rag_engine.query(query, stream=stream, history=history, video_id=video_id, **kwargs)
 
-    def graph_query(self, entity: str) -> Dict[str, Any]:
-        """Direct knowledge graph lookup for a specific entity."""
+    def graph_query(self, entity: str, video_id: Optional[str] = None) -> Dict[str, Any]:
+        """Direct knowledge graph lookup for a specific entity context."""
+        if video_id:
+            self._load_video_context(video_id)
+            
         if not self.knowledge_graph._is_built:
-            return {"error": "Graph not built yet. Run ingest() first."}
+            return {"error": "Graph not built yet for this context."}
         return {
             "entity": entity,
             "timeline": self.knowledge_graph.get_entity_timeline(entity),
