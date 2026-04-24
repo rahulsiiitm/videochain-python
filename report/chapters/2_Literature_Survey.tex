@@ -1,0 +1,61 @@
+\section{Existing Solution Introduction}
+Recent advancements in artificial intelligence have led to the development of powerful Multimodal Large Language Models (MLLMs) such as GPT-4V and Gemini Pro Vision, which demonstrate remarkable capabilities in understanding visual content. However, these models are primarily optimized for short-form video snippets or static images. When applied to long-form video intelligence, they suffer from extreme computational overhead and a lack of temporal continuity, limiting their utility for complex, multi-hour narrative analysis.
+
+On the other hand, traditional video analytics platforms offer functionalities like object detection, facial recognition, and motion tracking. Yet, they lack natural language conversational interfaces, multimodal semantic fusion (vision + audio + OCR), and the ability to synthesize high-level narratives from raw detection logs. Very few existing tools combine spatial detection, temporal entity tracking, and recursive summarization into a single unified framework. This technological gap has prompted increasing interest in \textbf{Retrieval-Augmented Generation (RAG)} for video, which combines dense multimodal retrieval with generative models to ground responses in verifiable sensor data.
+
+\section{Relevant Theories and Models}
+The foundation of modern video intelligence assistants lies in the fusion of Computer Vision (CV), Automatic Speech Recognition (ASR), and Large Language Models (LLMs). 
+
+\subsection{Vision and Spatial Extraction}
+Retrieval-Augmented Generation (RAG) for video relies on robust spatial feature extractors. The \textbf{YOLO (You Only Look Once)} framework \cite{yolov8}, specifically YOLOv8, frames object detection as a regression problem, allowing for real-time identification of entities with high Mean Average Precision (mAP). Complementary to this is \textbf{CLIP (Contrastive Language-Image Pre-training)} \cite{clip}, which maps visual and textual information into a unified latent space, enabling semantic scene-anchoring without the need for fixed-class labels.
+
+\subsection{Audio Intelligence and ASR}
+Automatic Speech Recognition has been revolutionized by Transformer-based models like \textbf{OpenAI's Whisper} \cite{whisper}. Trained on 680,000 hours of multilingual audio, Whisper provides high-fidelity timestamped transcriptions that are essential for grounding video narratives in spoken dialogue. Its robustness to background noise makes it a primary choice for local-first execution.
+
+\subsection{GraphRAG and Knowledge Graphs}
+The emergence of \textbf{GraphRAG} \cite{graphrag} represents a shift from flat vector stores to relational knowledge bases. By representing data as a graph $G = \langle V, E \rangle$, where $V$ denotes entities (people, objects, OCR text) and $E$ denotes temporal interactions, systems can perform "multi-hop" reasoning. This is critical for solving the problem of entity persistence across disjoint video segments.
+
+\subsection{Recursive Map-Reduce Logic}
+Hierarchical summarization is supported by \textbf{Map-Reduce} strategies \cite{mapreduce}. In this paradigm, long-form data is "mapped" into dense local summaries and subsequently "reduced" through recursive consolidation. This prevents the "Context Window Wall" encountered when feeding bulk metadata directly into an LLM.
+
+\subsection{Vector Similarity Metrics and Retrieval Logic}
+The efficiency of RAG frameworks is predicated on the accuracy of the retrieval phase. Standard methodologies utilize \textbf{Cosine Similarity} to measure the angular distance between a query vector $q$ and a document vector $d$ in a high-dimensional embedding space. Mathematically, this is expressed as:
+\[ \text{similarity} = \cos(\theta) = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \|\mathbf{B}\|} \]
+While effective for broad semantic matching, Cosine Similarity often fails to capture the fine-grained temporal relationships required for video forensics. VidChain addresses this by integrating a multi-stage retrieval pipeline.
+
+\subsection{Cross-Encoder Reranking Algorithms}
+Research indicates that \textbf{Bi-Encoders} (used by vector stores like ChromaDB) provide high-speed search but suffer from lower relational accuracy. To bridge this gap, modern architectures implement \textbf{Cross-Encoders} for the final reranking phase. Unlike Bi-Encoders, which process query and document independently, Cross-Encoders (e.g., \textbf{MS-MARCO}) feed the concatenated query-document pair into a transformer simultaneously. This allows the model to capture deep interactions between the user's intent and the retrieved video segment, significantly reducing false-positive retrieval.
+
+\subsection{Evaluation Metrics in Narrative Synthesis}
+Assessing the quality of generated video narratives requires standardized quantitative metrics. The literature identifies three primary benchmarks:
+\begin{itemize}
+    \item \textbf{BLEU (Bilingual Evaluation Understudy):} Measures $n$-gram overlap between the generated narrative and a ground-truth reference.
+    \item \textbf{ROUGE (Recall-Oriented Understudy for Gisting Evaluation):} Focuses on recall, measuring the coverage of the generated summary against the source material.
+    \item \textbf{METEOR (Metric for Evaluation of Translation with Explicit ORdering):} Addresses the limitations of BLEU by considering synonyms and morphological variants, providing a more human-aligned accuracy score.
+\end{itemize}
+
+\section{Comparison of Similar Projects}
+Several systems have attempted to bridge the gap between video data and natural language reasoning. Among them, frameworks like \textbf{Video-ChatGPT}, \textbf{Video-LLaVA}, and \textbf{PaperQA} (for document-level grounding) provide the current state-of-the-art context.
+
+\subsection{Video-LLaVA and Video-ChatGPT}
+These models are built as end-to-end transformers that process video tokens alongside text. While they excel at short-form visual Q\&A on benchmarks like \textbf{ActivityNet-QA} and \textbf{MSVD-QA}, they are limited in several ways \cite{videollava}:
+\begin{itemize}
+    \item \textbf{High Resource Consumption:} They require server-grade GPUs (40GB--80GB VRAM), making them inaccessible for edge-local deployments.
+    \item \textbf{Temporal Hallucination:} Without structured tracking, they often "hallucinate" actions or confuse the chronological order of events in longer videos.
+    \item \textbf{Fixed Context Windows:} They are vulnerable to "Lost in the Middle" phenomena where the model loses focus on earlier segments as the video length increases.
+\end{itemize}
+
+\subsection{VidChain: A Hybrid Paradigm}
+In contrast to the monolithic approach, VidChain focuses on a \textbf{Hybrid Logic}. It combines the high-speed retrieval of ChromaDB with the structural persistence of **GraphRAG**. This richer framework allows for more transparent, explainable, and robust academic assistance—particularly useful for longitudinal studies and technical explanations where traceability is paramount.
+
+\section{Identified Gaps in the Literature}
+Despite the growing interest in multimodal RAG, several gaps remain unaddressed in the current body of research:
+\begin{itemize}
+    \item \textbf{Lack of Edge-Optimized Orchestration:} Existing frameworks do not permit local execution on consumer hardware, creating a dependence on high-latency cloud APIs.
+    \item \textbf{Insufficient Temporal Gating:} Few platforms implement automatic "energy-based gating" to manage computational loads during multimodal fusion.
+    \item \textbf{The Entity Persistence Gap:} Standard Video RAG lacks a native mechanism for multi-hop relational reasoning (e.g., "Where did the person seen at 02:00 reappear?").
+    \item \textbf{Lack of Citation Transparency:} Many systems provide black-box summaries without explicit links to the visual timestamps or audio segments that justify the claim.
+\end{itemize}
+
+\section{Conclusion of Survey}
+The literature review highlights a dynamic landscape of video intelligence tools. While general-purpose models offer linguistic fluency, they lack the scholarly grounding and resource efficiency required for edge-local video analysis. This survey reinforces the importance of a decentralized research assistant that integrates real-time retrieval, semantic reranking, and citation transparency. The identified limitations in existing solutions provide a strong justification for the proposed **VidChain** system, which seeks to bridge these gaps and enhance the reliability of video-based information discovery.

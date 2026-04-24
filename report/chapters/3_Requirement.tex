@@ -1,0 +1,327 @@
+\section{Introduction}
+
+This chapter defines the formal requirements that guided the design and development of VidChain. The process began with identifying who would actually use the system, what problems they needed solved, and what constraints the hardware environment imposed. Requirements are classified using the MoSCoW method (Must Have, Should Have, Could Have, Won't Have) and are divided into functional and non-functional categories. Hardware constraints are derived directly from the project's technical specifications.
+
+\section{User Personas}
+
+\subsection{The Academic Researcher}
+
+The primary persona for this system is an academic researcher working in fields such as computer vision, human-computer interaction, or behavioural analysis. This persona typically works with recorded video data---lecture recordings, lab experiment footage, or field study captures---and needs to extract structured, queryable information from long sessions without manually reviewing every minute of footage.
+
+\textbf{Goals:}
+\begin{itemize}
+    \item Extract timestamped events, spoken dialogue, and on-screen text from research recordings.
+    \item Query video content using natural language rather than manual scrubbing.
+    \item Generate structured summaries suitable for inclusion in research notes or reports.
+    \item Run analysis locally without uploading sensitive research data to external cloud services.
+\end{itemize}
+
+\textbf{Pain Points:}
+\begin{itemize}
+    \item Existing tools require either cloud APIs (raising data privacy concerns) or server-grade hardware that is inaccessible to individual researchers.
+    \item Standard video players offer no semantic search capability---finding a specific moment requires manual effort.
+    \item Most AI-powered video tools produce flat, unstructured outputs with no temporal continuity between observations.
+\end{itemize}
+
+\textbf{Technical Comfort Level:} Moderate to high. Comfortable running a command-line tool or a local web interface, but does not want to configure deep infrastructure.
+
+\textbf{Hardware Profile:} A personal workstation or university-issued laptop, typically equipped with a consumer NVIDIA GPU in the 4--12\,GB VRAM range (e.g., RTX 3050, RTX 4060). No access to dedicated compute clusters for personal projects.
+
+\section{Functional Requirements}
+
+Functional requirements describe what the system must do. They are organised using the MoSCoW prioritisation framework.
+
+\subsection{Must Have}
+
+\begin{enumerate}
+    \item \textbf{FR-01: Video Ingestion.} The system must accept a local video file path and process it through the full multimodal pipeline, producing a structured, searchable knowledge base.
+
+    \item \textbf{FR-02: Multimodal Extraction.} The system must extract at minimum three independent data streams per video: visual scene descriptions (via VLM or YOLO), speech transcription (via Whisper), and on-screen text (via OCR).
+
+    \item \textbf{FR-03: Natural Language Query.} The system must allow the user to query ingested video content using free-form natural language and return a coherent, timestamped response.
+
+    \item \textbf{FR-04: Temporal Summarisation.} The system must be capable of producing a narrative summary of an entire video using the Recursive Map-Reduce pipeline, without exceeding LLM context window limits.
+
+    \item \textbf{FR-05: Persistent Storage.} All ingested video knowledge bases, vector stores, and knowledge graphs must persist to disk and survive server restarts.
+
+    \item \textbf{FR-06: Session Management.} The system must support multiple independent sessions, each isolated to a specific video context, with create, rename, and delete operations.
+
+    \item \textbf{FR-07: Local-First Execution.} The entire pipeline---including LLM inference, embedding, and retrieval---must run locally without requiring any external API calls, unless the user explicitly configures a cloud LLM.
+\end{enumerate}
+
+\subsection{Should Have}
+
+\begin{enumerate}
+    \item \textbf{FR-08: GraphRAG Integration.} The system should construct a Temporal Knowledge Graph per video session, enabling multi-hop entity queries that flat vector search cannot resolve.
+
+    \item \textbf{FR-09: Web Dashboard.} The system should provide a browser-based interface exposing the chat, video player, semantic heatmap, and live telemetry without requiring a separate installation.
+
+    \item \textbf{FR-10: Confidence Scoring.} IRIS should self-evaluate and return a confidence score alongside each response, giving the user a signal of how well the answer is grounded in evidence.
+
+    \item \textbf{FR-11: Adaptive Keyframe Filtering.} The pipeline should skip visually redundant frames before they reach heavy compute nodes, reducing GPU load without sacrificing coverage.
+
+    \item \textbf{FR-12: Hardware Telemetry.} The system should expose live CPU, GPU, and VRAM utilisation during ingestion, visible through the dashboard's Neural HUD.
+\end{enumerate}
+
+\subsection{Could Have}
+
+\begin{enumerate}
+    \item \textbf{FR-13: Emotion Analysis.} The system could include an optional \texttt{EmotionNode} (DeepFace) that classifies the dominant emotion of detected persons on a per-frame basis.
+
+    \item \textbf{FR-14: Action Classification.} An optional \texttt{ActionNode} (MobileNetV3) could supplement VLM scene descriptions with high-level activity labels (e.g., \textit{suspicious}, \textit{emergency}).
+
+    \item \textbf{FR-15: Desktop GUI.} A native desktop application (\texttt{vidchain-studio}) could provide an alternative interface for users who prefer a standalone tool over a browser.
+
+    \item \textbf{FR-16: Report Export.} The system could allow users to export the full conversation history and IRIS responses to a structured Markdown report with a single click.
+\end{enumerate}
+
+\subsection{Won't Have (in v0.9.0)}
+
+\begin{enumerate}
+    \item \textbf{FR-17: Real-time Stream Ingestion.} Live video stream processing (RTSP, webcam) is out of scope for the current release. The pipeline is designed for pre-recorded files only.
+
+    \item \textbf{FR-18: Multi-user Collaboration.} Shared sessions or concurrent multi-user access are not supported. VidChain is a single-user, local-first tool.
+
+    \item \textbf{FR-19: Cloud Deployment.} Managed cloud hosting, containerised deployment, or SaaS distribution are explicitly deferred to a future release.
+\end{enumerate}
+
+\section{Non-Functional Requirements}
+
+Non-functional requirements define the quality attributes and operational constraints of the system.
+
+\subsection{Performance}
+
+\begin{itemize}
+    \item \textbf{NFR-01:} The \texttt{AdaptiveKeyframeNode} must achieve at least 60\% frame reduction on static or low-motion footage compared to uniform frame sampling, preserving GPU budget for meaningful frames. Benchmarks from v0.5.0 confirm 60--80\% savings on surveillance-style content.
+
+    \item \textbf{NFR-02:} The Moondream VLM must process each accepted keyframe in under 5 seconds on the minimum supported hardware configuration (4\,GB VRAM). This was validated at approximately 2--5 seconds per frame during development.
+
+    \item \textbf{NFR-03:} The FastAPI server must respond to \texttt{/api/query} requests within 30 seconds under normal operating conditions on the minimum hardware profile.
+\end{itemize}
+
+\subsection{Reliability}
+
+\begin{itemize}
+    \item \textbf{NFR-04:} Every inference stage (Whisper, VLM, OCR, DeepFace, YOLO) must fail independently. A crash in one node must not terminate the pipeline; partial results must always be returned.
+
+    \item \textbf{NFR-05:} The system must resolve video playback correctly for absolute local paths on Windows and Unix-based systems, handled by the VidChain Media Gateway (\texttt{/api/media-stream}).
+\end{itemize}
+
+\subsection{Privacy and Security}
+
+\begin{itemize}
+    \item \textbf{NFR-06:} No video data, transcripts, or query results may be transmitted to external servers unless the user has explicitly configured a remote LLM provider via \texttt{litellm}.
+
+    \item \textbf{NFR-07:} Session deletion must trigger a full memory purge, including ChromaDB vectors, the associated \texttt{.pkl} knowledge graph, and the \texttt{.json} knowledge base archive.
+\end{itemize}
+
+\subsection{Usability}
+
+\begin{itemize}
+    \item \textbf{NFR-08:} A user must be able to ingest a video and receive a natural language summary with no more than two commands (\texttt{vidchain-serve} followed by a browser interaction), without writing any code.
+
+    \item \textbf{NFR-09:} The web dashboard must be responsive and functional on screens with a minimum width of 768\,px (tablet and above).
+\end{itemize}
+
+\subsection{Maintainability}
+
+\begin{itemize}
+    \item \textbf{NFR-10:} All pipeline components must conform to the \texttt{BaseNode} interface, allowing new modalities to be injected into any \texttt{VideoChain} without modifying existing nodes.
+
+    \item \textbf{NFR-11:} The codebase must maintain zero redundant legacy files; deprecated modules (\texttt{processor.py}, \texttt{audio\_loader.py}) are retained only as stub references and carry explicit deprecation notices.
+\end{itemize}
+
+\section{Hardware Constraints}
+
+The following constraints are drawn directly from the project's technical specifications and \texttt{pyproject.toml} dependency declarations.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Hardware Requirements for VidChain v0.9.0}
+\label{tab:hardware}
+\begin{tabular}{|p{2.5cm}|p{4.5cm}|p{4.5cm}|}
+\hline
+\rowcolor[HTML]{EFEFEF}
+\textbf{Component} & \textbf{Minimum Configuration} & \textbf{Optimised Configuration} \\ \hline
+\textbf{RAM} & 16\,GB & 32\,GB \\ \hline
+\textbf{GPU VRAM} & 4\,GB (NVIDIA RTX 3050+) & 12\,GB (NVIDIA RTX 4070+) \\ \hline
+\textbf{CUDA Version} & 12.1+ & 12.1+ \\ \hline
+\textbf{Python} & 3.11+ & 3.11 or 3.12 \\ \hline
+\textbf{Storage} & \textasciitilde{}10\,GB (models + DB) & 20\,GB+ (multiple sessions) \\ \hline
+\textbf{Ollama} & Required (active instance) & Required (active instance) \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{PyTorch} is intentionally unpinned in \texttt{pyproject.toml} and must be installed manually with the correct CUDA variant:
+
+\begin{verbatim}
+pip install torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cu121
+\end{verbatim}
+
+This decision was made to avoid shipping an incorrect CUDA build on machines with different driver versions, which is a common failure point in edge-deployed AI systems.
+
+\subsection{Edge Optimisation Strategy}
+
+The 4\,GB VRAM constraint is not a limitation imposed on the system---it is a design target. Several architectural decisions exist specifically to honour it:
+
+\begin{itemize}
+    \item The \texttt{AdaptiveKeyframeNode} eliminates redundant frames before they reach the GPU, minimising peak VRAM pressure.
+    \item Moondream was chosen as the default VLM over LLaVA 7B because it delivers comparable scene understanding at approximately 186$\times$ lower latency on 4\,GB hardware.
+    \item The \texttt{EmotionNode} (DeepFace) is threaded on CPU explicitly to avoid competing with VLM/YOLO for VRAM.
+    \item YOLO is kept as a fast-mode fallback via the \texttt{--fast} CLI flag for long videos where VLM throughput would be prohibitive.
+    \item The \texttt{VisionEngine} forces \texttt{FP32} precision (\texttt{half=False}) to prevent layer-fusion crashes on RTX 30-series laptops, which exhibit a known FP16 instability under certain Ultralytics builds.
+\end{itemize}
+
+\section{Summary}
+
+This chapter established the requirements boundary for VidChain v0.9.0. The single primary persona---the academic researcher---shaped the emphasis on local-first privacy, consumer hardware compatibility, and natural language accessibility. The MoSCoW classification separates the core intelligence pipeline (Must Have) from optional enrichment nodes (Could Have), providing a clear scope boundary. Non-functional requirements formalise the performance targets and reliability guarantees that were validated iteratively during development, and hardware constraints reflect real architectural trade-offs made to keep the system accessible on edge hardware.
+
+\section{System Models}
+
+Two diagrams are provided to complement the written requirements: a Use Case Diagram capturing the interactions between the primary persona and the system, and a Level-1 Data Flow Diagram tracing how data moves through each node in the pipeline.
+
+\subsection{Use Case Diagram}
+
+Figure~\ref{fig:use_case} illustrates the full set of interactions available to the Academic Researcher persona. The core use cases---ingesting a video, querying content, and viewing a summary---each include a subordinate system process: the node pipeline, GraphRAG retrieval, and the Map-Reduce engine respectively. This makes explicit that the user-facing actions are backed by non-trivial internal workflows, not simple database lookups.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    actor/.style={draw, circle, minimum size=0.6cm, inner sep=0pt},
+    usecase/.style={draw, ellipse, minimum width=3.8cm, minimum height=0.9cm, text centered, font=\small},
+    system/.style={draw, rectangle, rounded corners, minimum width=9cm, minimum height=11cm, dashed, thick},
+    arr/.style={draw, -latex}
+]
+
+% System boundary
+\node[system, label={above:\textbf{IRIS / VidChain System}}] (sys) at (4,0) {};
+
+% Actor
+\node[actor, label=below:{\small Academic Researcher}] (user) at (-1.5, 0) {};
+\draw (-1.5, 0.3) -- (-1.5, 1.0);
+\draw (-1.5, 1.0) -- (-2.0, 0.5);
+\draw (-1.5, 1.0) -- (-1.0, 0.5);
+\draw (-1.5, 0) -- (-2.0, -0.5);
+\draw (-1.5, 0) -- (-1.0, -0.5);
+
+% Use cases
+\node[usecase] (uc1) at (4,  4.2) {Ingest Video File};
+\node[usecase] (uc2) at (4,  2.8) {Query Video Content};
+\node[usecase] (uc3) at (4,  1.4) {View Narrative Summary};
+\node[usecase] (uc4) at (4,  0.0) {Browse Session History};
+\node[usecase] (uc5) at (4, -1.4) {Export Insight Report};
+\node[usecase] (uc6) at (4, -2.8) {Delete / Purge Session};
+\node[usecase] (uc7) at (4, -4.2) {Monitor Hardware (HUD)};
+
+% Associations
+\foreach \uc in {uc1,uc2,uc3,uc4,uc5,uc6,uc7}{
+    \draw[arr] (user) -- (\uc);
+}
+
+% Include relationships
+\node[usecase, minimum width=3.2cm, font=\footnotesize] (inc1) at (8.5, 4.2) {Run Node Pipeline};
+\node[usecase, minimum width=3.2cm, font=\footnotesize] (inc2) at (8.5, 2.8) {GraphRAG Retrieval};
+\node[usecase, minimum width=3.2cm, font=\footnotesize] (inc3) at (8.5, 1.4) {Map-Reduce Engine};
+
+\draw[arr, dashed] (uc1) -- node[above, font=\tiny] {\textlangle\textlangle include\textrangle\textrangle} (inc1);
+\draw[arr, dashed] (uc2) -- node[above, font=\tiny] {\textlangle\textlangle include\textrangle\textrangle} (inc2);
+\draw[arr, dashed] (uc3) -- node[above, font=\tiny] {\textlangle\textlangle include\textrangle\textrangle} (inc3);
+
+\end{tikzpicture}
+\caption{Use Case Diagram --- Academic Researcher interacting with the IRIS System}
+\label{fig:use_case}
+\end{figure}
+
+\subsection{Data Flow Diagram}
+
+Figure~\ref{fig:dfd} shows a Level-1 DFD of the VidChain processing pipeline. A raw video file enters the \texttt{VideoChain} orchestrator (P1), which passes frames through the \texttt{AdaptiveKeyframeNode} (P2) before distributing them to the three primary sensor nodes: \texttt{WhisperNode} (P3), \texttt{LlavaNode} (P4), and \texttt{OcrNode} (P5). Each node communicates with its respective external model service. The fused timeline flows into the RAG Engine (P6), which simultaneously writes to ChromaDB (D2) and the Knowledge Graph (D3), and reads from both to enrich query responses. The Map-Reduce Summariser (P7) consumes timeline chunks from P6 to produce the final narrative report returned to the researcher.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.9cm,
+    ext/.style={draw, rectangle, minimum width=2.8cm, minimum height=0.8cm,
+                text centered, font=\small, fill=gray!15},
+    proc/.style={draw, rectangle, rounded corners, minimum width=3.2cm,
+                 minimum height=0.8cm, text centered, font=\small, fill=blue!10},
+    store/.style={draw, rectangle, minimum width=3.2cm, minimum height=0.7cm,
+                  text centered, font=\small, fill=yellow!15,
+                  append after command={\pgfextra{
+                      \draw (\tikzlastnode.north west) -- (\tikzlastnode.north east);
+                  }}},
+    arr/.style={draw, -latex, font=\scriptsize}
+]
+
+% ── External entities ──
+\node[ext] (user)    at (0,   0)    {Researcher};
+\node[ext] (ollama)  at (10,  0)    {Ollama (LLM/VLM)};
+\node[ext] (whisper) at (10, -3.5)  {Whisper (Audio)};
+\node[ext] (easyocr) at (10, -5.5) {EasyOCR};
+
+% ── Processes ──
+\node[proc] (p1) at (4,  0)    {P1: VideoChain\\Orchestrator};
+\node[proc] (p2) at (4, -2.0)  {P2: AdaptiveKeyframe\\Node};
+\node[proc] (p3) at (4, -3.5)  {P3: WhisperNode};
+\node[proc] (p4) at (4, -5.0)  {P4: LlavaNode};
+\node[proc] (p5) at (4, -6.5)  {P5: OcrNode};
+\node[proc] (p6) at (4, -8.2)  {P6: RAG Engine\\+ GraphRAG};
+\node[proc] (p7) at (4, -9.8)  {P7: Map-Reduce\\Summariser};
+
+% ── Data stores ──
+\node[store] (ds1) at (0, -6.0)  {D1: Raw Video File};
+\node[store] (ds2) at (0, -8.2)  {D2: ChromaDB\\Vector Store};
+\node[store] (ds3) at (0, -9.8)  {D3: Knowledge Graph\\(.pkl)};
+\node[store] (ds4) at (8, -8.2)  {D4: Session Store\\(.json)};
+
+% ── Flows ──
+% User → Orchestrator
+\draw[arr] (user)    -- node[above]{\scriptsize video path} (p1);
+
+% Orchestrator → Keyframe
+\draw[arr] (p1)  -- node[right]{\scriptsize raw frames} (p2);
+
+% Raw video → Keyframe
+\draw[arr] (ds1) -- node[above, sloped]{\scriptsize video stream} (p2);
+
+% Keyframe → downstream nodes
+\draw[arr] (p2) -- node[right]{\scriptsize keyframe} (p3);
+\draw[arr] (p2) -- node[right]{\scriptsize keyframe} (p4);
+\draw[arr] (p2) -- node[right]{\scriptsize keyframe} (p5);
+
+% Nodes → external services
+\draw[arr] (p4) -- node[above]{\scriptsize frame (base64)} (ollama);
+\draw[arr] (ollama) -- node[below]{\scriptsize scene description} (p4);
+
+\draw[arr] (p3) -- node[above]{\scriptsize audio path} (whisper);
+\draw[arr] (whisper) -- node[below]{\scriptsize transcript segments} (p3);
+
+\draw[arr] (p5) -- node[above]{\scriptsize frame} (easyocr);
+\draw[arr] (easyocr) -- node[below]{\scriptsize extracted text} (p5);
+
+% Nodes → RAG Engine
+\draw[arr] (p3) -- node[right, xshift=2pt]{\scriptsize fused timeline} (p6);
+\draw[arr] (p4) -- node[right, xshift=2pt]{} (p6);
+\draw[arr] (p5) -- node[right, xshift=2pt]{} (p6);
+
+% RAG ↔ stores
+\draw[arr] (p6) -- node[above, sloped]{\scriptsize vectors} (ds2);
+\draw[arr] (p6) -- node[above, sloped]{\scriptsize graph} (ds3);
+\draw[arr] (p6) -- node[above]{\scriptsize response + telemetry} (ds4);
+\draw[arr] (ds2) -- node[below, sloped]{\scriptsize retrieved docs} (p6);
+\draw[arr] (ds3) -- node[below, sloped]{\scriptsize entity facts} (p6);
+
+% RAG → Summariser
+\draw[arr] (p6) -- node[right]{\scriptsize timeline chunks} (p7);
+
+% Summariser → User
+\draw[arr] (p7) -- ++(0, 1.6) -| node[above, near start]{\scriptsize narrative report} (user);
+
+% RAG → User (query response)
+\draw[arr] (p6) -- ++(-4.2, 0) -- ++(0, 8.2) node[above]{\scriptsize query response};
+
+\end{tikzpicture}
+\caption{Level-1 Data Flow Diagram --- VidChain Multimodal Processing Pipeline}
+\label{fig:dfd}
+\end{figure}

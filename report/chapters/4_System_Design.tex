@@ -1,0 +1,443 @@
+\section{Introduction}
+
+This chapter presents the complete architectural design of VidChain and its intelligence engine, IRIS. Every structural decision documented here was made in response to one of the three core problems identified in Chapter 1: the Context Window Wall, Sensory Hallucination and Action Flickering, and the lack of Temporal Entity Persistence. The architecture is examined at four levels of abstraction --- a high-level overview, a component breakdown, a class hierarchy, and a runtime sequence trace --- each supported by a formal diagram.
+
+% ─────────────────────────────────────────────
+\section{Architectural Philosophy: Late-Fusion}
+% ─────────────────────────────────────────────
+
+The central architectural decision in VidChain is the adoption of a \textbf{Late-Fusion} paradigm for multimodal data processing. This is a deliberate departure from the \textit{Early-Fusion} approach used by most state-of-the-art Video-Language Models, where raw visual tokens are concatenated with text tokens and fed jointly into a single large transformer.
+
+Early-Fusion has two fundamental problems on edge hardware. First, the combined token budget of vision and language far exceeds what a 4\,GB VRAM device can hold in a single forward pass. Second, it creates a single point of failure --- if the visual encoder produces noisy output (a common occurrence on low-quality footage), that noise propagates directly into the language model's context and cannot be corrected.
+
+Late-Fusion instead processes each modality through an independent, specialised expert node. Each node produces a structured text log --- a ``Sensor Log'' --- that is human-readable and verifiable. These logs are only merged at the RAG retrieval stage, after each modality has been individually validated and filtered. This design means that a failure in the OCR node, for example, simply produces a null entry in the timeline rather than corrupting the vision or audio streams.
+
+The practical consequence is that VidChain can run a Vision Language Model, a Whisper transcription engine, and an EasyOCR reader on the same 4\,GB GPU without any of them competing for the same memory window at the same time.
+
+% ─────────────────────────────────────────────
+\section{Process Flow: Ingestion Pipeline}
+% ─────────────────────────────────────────────
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    startstop/.style={draw, rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30},
+    process/.style={draw, rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30},
+    decision/.style={draw, diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30},
+    arrow/.style={thick,->,>=stealth}
+]
+
+\node (start) [startstop] {Start Video Ingest};
+\node (audio) [process, below=0.7cm of start] {Extract Audio (Whisper)};
+\node (cap) [process, below=0.7cm of audio] {Init OpenCV Capture};
+\node (read) [process, below=0.7cm of cap] {Read Next Frame};
+\node (skip) [decision, below=0.7cm of read] {Keyframe?};
+\node (vision) [process, right=1.5cm of skip] {Run Vision Nodes (YOLO/VLM)};
+\node (fuse) [process, below=0.8cm of vision] {Fuse Metadata (JSON)};
+\node (store) [process, left=1.5cm of fuse] {Store in Vector/Graph DB};
+\node (end) [decision, below=0.8cm of store] {Last Frame?};
+\node (finish) [startstop, right=1.5cm of end] {Ingestion Complete};
+
+\draw [arrow] (start) -- (audio);
+\draw [arrow] (audio) -- (cap);
+\draw [arrow] (cap) -- (read);
+\draw [arrow] (read) -- (skip);
+\draw [arrow] (skip) -- node[anchor=south] {Yes} (vision);
+\draw [arrow] (skip) |- node[anchor=east] {No} (read);
+\draw [arrow] (vision) -- (fuse);
+\draw [arrow] (fuse) -- (store);
+\draw [arrow] (store) -- (end);
+\draw [arrow] (end) -- node[anchor=south] {Yes} (finish);
+\draw [arrow] (end) -| (read);
+
+\end{tikzpicture}
+\caption{VidChain Ingestion Pipeline Process Flow}
+\label{fig:ingest_flow}
+\end{figure}
+
+\section{Architecture Overview}
+% ─────────────────────────────────────────────
+
+\subsection{Diagram}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=0.7cm,
+    layer/.style={draw, rectangle, rounded corners=6pt, minimum width=12cm,
+                  minimum height=1.1cm, text centered, font=\small\bfseries},
+    box/.style={draw, rectangle, rounded corners=4pt, minimum width=2.6cm,
+                minimum height=0.9cm, text centered, font=\scriptsize, fill=white},
+    arr/.style={draw, -latex, thick},
+    groupbox/.style={draw, rectangle, rounded corners=6pt, dashed,
+                     inner sep=8pt, fill=blue!4}
+]
+
+% Layer 0 — Input
+\node[layer, fill=gray!15] (L0) at (0, 0) {Layer 0 — Raw Input: Local Video File (.mp4 / .mkv / .avi)};
+
+% Layer 1 — Sensor Matrix
+\node[layer, fill=blue!10, minimum height=2.2cm] (L1frame) at (0, -1.8) {};
+\node[font=\small\bfseries] at (0, -1.1) {Layer 1 — Sensor Matrix (VideoChain Nodes)};
+\node[box, fill=blue!15] (kf)  at (-4.5, -2.0) {Adaptive\\KeyframeNode};
+\node[box, fill=blue!15] (tr)  at (-1.8, -2.0) {TrackerNode\\(IOU + LK Flow)};
+\node[box, fill=blue!15] (wh)  at ( 0.9, -2.0) {WhisperNode\\(Audio)};
+\node[box, fill=blue!15] (vl)  at ( 3.6, -2.0) {LlavaNode\\(VLM)};
+\node[box, fill=blue!15] (oc)  at ( 6.0, -2.0) {OcrNode};
+
+% Layer 2 — Fusion
+\node[layer, fill=green!10] (L2) at (0, -3.4)
+    {Layer 2 — Late Fusion: Unified Temporal Timeline (JSON)};
+
+% Layer 3 — Intelligence
+\node[layer, fill=orange!10, minimum height=2.2cm] (L3frame) at (0, -5.2) {};
+\node[font=\small\bfseries] at (0, -4.5) {Layer 3 — IRIS Intelligence Engine};
+\node[box, fill=orange!15] (chroma) at (-4.0, -5.4) {ChromaDB\\Vector Store};
+\node[box, fill=orange!15] (graph)  at (-1.2, -5.4) {Temporal\\Knowledge Graph};
+\node[box, fill=orange!15] (rag)    at ( 1.8, -5.4) {RAG Engine\\+ Reranker};
+\node[box, fill=orange!15] (summ)   at ( 4.8, -5.4) {Map-Reduce\\Summariser};
+
+% Layer 4 — Interface
+\node[layer, fill=red!10, minimum height=2.2cm] (L4frame) at (0, -7.0) {};
+\node[font=\small\bfseries] at (0, -6.3) {Layer 4 — User Interface};
+\node[box, fill=red!15] (api)     at (-3.5, -7.2) {FastAPI\\Edge Server};
+\node[box, fill=red!15] (portal)  at (-0.5, -7.2) {IRIS Web\\Portal (Next.js)};
+\node[box, fill=red!15] (studio)  at ( 2.8, -7.2) {VidChain\\Studio (CTk)};
+\node[box, fill=red!15] (cli)     at ( 5.6, -7.2) {CLI\\(vidchain-analyze)};
+
+% Vertical arrows between layers
+\draw[arr] (L0)      -- (L1frame);
+\draw[arr] (L1frame) -- (L2);
+\draw[arr] (L2)      -- (L3frame);
+\draw[arr] (L3frame) -- (L4frame);
+
+\end{tikzpicture}
+\caption{VidChain Four-Layer Architecture Overview}
+\label{fig:arch_overview}
+\end{figure}
+
+\subsection{Layer Descriptions}
+
+VidChain is organised into four vertical layers, each with a single, well-defined responsibility.
+
+\textbf{Layer 0 --- Raw Input} accepts a local video file path. No preprocessing is required from the user. The \texttt{VideoChain} orchestrator handles audio extraction, frame decoding, and FPS normalisation internally.
+
+\textbf{Layer 1 --- Sensor Matrix} is the core processing layer. It is composed of composable \texttt{BaseNode} implementations that each extract one modality from the video. Nodes are stateless with respect to each other --- they communicate only through a shared context dictionary, never through direct references. This design means any node can be removed, replaced, or reordered without breaking the pipeline.
+
+\textbf{Layer 2 --- Late Fusion} is not a separate module but a structural contract. After all nodes have processed a frame, the shared context dictionary is serialised into a unified timeline entry. This entry contains every modality's output for that timestamp in a single flat structure, which becomes the unit of storage for both ChromaDB and the Knowledge Graph.
+
+\textbf{Layer 3 --- IRIS Intelligence Engine} is responsible for all reasoning. It comprises four sub-components: the ChromaDB vector store for semantic similarity search, the Temporal Knowledge Graph for entity-level relational reasoning, the RAG Engine with cross-encoder reranking for query resolution, and the Map-Reduce Summariser for long-form narrative generation.
+
+\textbf{Layer 4 --- Interface} exposes the system through four access points: a FastAPI edge server (the primary integration point), the IRIS Web Portal built in Next.js, the VidChain Studio desktop application, and the \texttt{vidchain-analyze} CLI for headless use.
+
+% ─────────────────────────────────────────────
+% ─────────────────────────────────────────────
+\section{Data Flow Diagram (DFD)}
+% ─────────────────────────────────────────────
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    data/.style={draw, cylinder, alias=c, shape border rotate=90, aspect=0.25, minimum width=1.5cm, minimum height=1.5cm, text centered, fill=blue!10},
+    proc/.style={draw, rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm, text centered, fill=green!10},
+    ext/.style={draw, rectangle, minimum width=2cm, minimum height=1cm, text centered, fill=orange!10},
+    arr/.style={-latex, thick}
+]
+
+% Entities
+\node[ext] (user) at (0,0) {User / Client};
+\node[proc] (ingest) at (4,0) {Ingestion Pipeline};
+\node[proc] (rag) at (4,-3) {RAG Engine};
+
+% Data Stores
+\node[data] (vector) at (8,0) {ChromaDB};
+\node[data] (graph) at (8,-3) {Knowledge Graph};
+
+% Flows
+\draw[arr] (user) -- node[above, font=\tiny] {Video File} (ingest);
+\draw[arr] (ingest) -- node[above, font=\tiny] {Embeddings} (vector);
+\draw[arr] (ingest) -- node[left, font=\tiny] {Entities} (graph);
+\draw[arr] (user) -- node[left, font=\tiny] {NLP Query} (rag);
+\draw[arr] (rag) -- node[above, font=\tiny] {Context} (vector);
+\draw[arr] (rag) -- node[below, font=\tiny] {Relations} (graph);
+\draw[arr] (rag) -| node[pos=0.7, left, font=\tiny] {Grounded Response} (user);
+
+\end{tikzpicture}
+\caption{VidChain Level-1 Data Flow Diagram (DFD)}
+\label{fig:dfd}
+\end{figure}
+
+\section{Component Diagram}
+% ─────────────────────────────────────────────
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    comp/.style={draw, rectangle, rounded corners=4pt, minimum width=3.0cm,
+                 minimum height=0.85cm, text centered, font=\scriptsize,
+                 fill=white, draw=black},
+    pkg/.style={draw, rectangle, rounded corners=6pt, inner sep=10pt,
+                font=\small\bfseries, fill=blue!5},
+    iface/.style={draw, circle, minimum size=0.18cm, fill=black, inner sep=0pt},
+    arr/.style={draw, -latex},
+    darr/.style={draw, latex-latex, dashed}
+]
+
+% ── vidchain.pipeline ─────────────────────────────────────────
+\node[pkg, minimum width=4.2cm, minimum height=3.8cm,
+      label={[font=\small\bfseries]above:vidchain.pipeline}] (pkg_pipe) at (0, 0) {};
+\node[comp] (vc_orch) at (0,  0.6) {VideoChain\\Orchestrator};
+\node[comp] (base)    at (0, -0.6) {BaseNode\\(Abstract)};
+
+% ── vidchain.nodes ────────────────────────────────────────────
+\node[pkg, minimum width=4.5cm, minimum height=5.2cm,
+      label={[font=\small\bfseries]above:vidchain.nodes}] (pkg_nodes) at (5.8, 0) {};
+\node[comp] (kfn)  at (5.8,  2.0) {AdaptiveKeyframeNode};
+\node[comp] (trn)  at (5.8,  0.9) {TrackerNode};
+\node[comp] (whn)  at (5.8, -0.2) {WhisperNode};
+\node[comp] (vln)  at (5.8, -1.3) {LlavaNode};
+\node[comp] (ocn)  at (5.8, -2.4) {OcrNode};
+
+% ── vidchain.vectorstores ─────────────────────────────────────
+\node[pkg, minimum width=4.2cm, minimum height=3.2cm,
+      label={[font=\small\bfseries]above:vidchain.vectorstores}] (pkg_vs) at (0, -5.5) {};
+\node[comp] (chroma) at (0, -4.9) {ChromaStore};
+\node[comp] (graph)  at (0, -6.1) {TemporalKnowledgeGraph};
+
+% ── vidchain.core ─────────────────────────────────────────────
+\node[pkg, minimum width=4.2cm, minimum height=1.8cm,
+      label={[font=\small\bfseries]above:vidchain.core}] (pkg_core) at (5.8, -5.0) {};
+\node[comp] (summ) at (5.8, -5.0) {VideoSummariser\\(Map-Reduce)};
+
+% ── vidchain.rag ──────────────────────────────────────────────
+\node[pkg, minimum width=4.2cm, minimum height=1.8cm,
+      label={[font=\small\bfseries]above:vidchain.rag}] (pkg_rag) at (5.8, -7.2) {};
+\node[comp] (rag) at (5.8, -7.2) {RAGEngine\\+ CrossEncoder};
+
+% ── vidchain.client ───────────────────────────────────────────
+\node[pkg, minimum width=4.2cm, minimum height=1.8cm,
+      label={[font=\small\bfseries]above:vidchain.client}] (pkg_client) at (0, -9.0) {};
+\node[comp] (client) at (0, -9.0) {VidChain\\(Orchestrator API)};
+
+% ── vidchain.serve ────────────────────────────────────────────
+\node[pkg, minimum width=4.2cm, minimum height=1.8cm,
+      label={[font=\small\bfseries]above:vidchain.serve}] (pkg_serve) at (5.8, -9.6) {};
+\node[comp] (serve) at (5.8, -9.6) {FastAPI Server\\+ Session CRUD};
+
+% Relationships
+\draw[arr] (vc_orch) -- node[right, font=\tiny]{uses} (base);
+\draw[arr] (base)    -- node[above, font=\tiny]{implements} (kfn);
+\draw[arr] (base)    -- (trn);
+\draw[arr] (base)    -- (whn);
+\draw[arr] (base)    -- (vln);
+\draw[arr] (base)    -- (ocn);
+
+\draw[arr] (client) -- node[right, font=\tiny]{owns} (vc_orch);
+\draw[arr] (client) -- node[right, font=\tiny]{owns} (chroma);
+\draw[arr] (client) -- node[right, font=\tiny]{owns} (graph);
+\draw[arr] (client) -- node[above, font=\tiny, sloped]{delegates} (rag);
+\draw[arr] (client) -- node[above, font=\tiny, sloped]{delegates} (summ);
+
+\draw[arr] (rag)    -- node[right, font=\tiny]{queries} (chroma);
+\draw[arr] (rag)    -- node[right, font=\tiny]{reads} (graph);
+
+\draw[arr] (serve)  -- node[above, font=\tiny]{calls} (client);
+
+\end{tikzpicture}
+\caption{Component Diagram --- VidChain Package Structure and Dependencies}
+\label{fig:component}
+\end{figure}
+
+The component diagram reveals two important structural properties. First, \texttt{VidChain} (in \texttt{vidchain.client}) is the single owner of all stateful components --- the vector store, the knowledge graph, and the pipeline orchestrator. No other module holds references to these directly. This guarantees that memory isolation (a key requirement from Chapter 3) is enforced at the object level: swapping the active session means swapping the active \texttt{VidChain} context, which transitively swaps every downstream store.
+
+Second, \texttt{FastAPI} (\texttt{vidchain.serve}) communicates with the system exclusively through \texttt{VidChain.ingest()} and \texttt{VidChain.ask()}. The HTTP layer has no direct access to ChromaDB, the knowledge graph, or any node. This separation means the entire intelligence pipeline can be used as a pure Python library without the server, as documented in the Quickstart Guide.
+
+% ─────────────────────────────────────────────
+\section{Class Diagram: Node Hierarchy}
+% ─────────────────────────────────────────────
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    cls/.style={draw, rectangle, minimum width=3.4cm, font=\scriptsize,
+                text centered, fill=white},
+    abstr/.style={draw, rectangle, minimum width=3.4cm, font=\scriptsize\itshape,
+                  text centered, fill=gray!10},
+    inherit/.style={draw, -open triangle 60, thick},
+    assoc/.style={draw, -latex, dashed}
+]
+
+% BaseNode (abstract)
+\node[abstr, minimum height=1.6cm] (base) at (0, 0) {
+    \textit{$\langle\langle$abstract$\rangle\rangle$}\\
+    \textbf{BaseNode}\\
+    \rule{3.2cm}{0.3pt}\\
+    + process(context: dict): dict
+};
+
+% Concrete nodes
+\node[cls, minimum height=1.4cm] (kf) at (-6.5, -3.5) {
+    \textbf{AdaptiveKeyframeNode}\\
+    \rule{3.2cm}{0.3pt}\\
+    - change\_threshold: float\\
+    - prev\_gray: ndarray
+};
+
+\node[cls, minimum height=1.4cm] (tr) at (-2.8, -3.5) {
+    \textbf{TrackerNode}\\
+    \rule{3.2cm}{0.3pt}\\
+    - tracker: TemporalTracker
+};
+
+\node[cls, minimum height=1.4cm] (wh) at ( 0.8, -3.5) {
+    \textbf{WhisperNode}\\
+    \rule{3.2cm}{0.3pt}\\
+    - engine: AudioProcessor\\
+    - segments\_cache: list
+};
+
+\node[cls, minimum height=1.4cm] (vl) at ( 4.4, -3.5) {
+    \textbf{LlavaNode}\\
+    \rule{3.2cm}{0.3pt}\\
+    - model\_name: str\\
+    - prompt: str
+};
+
+\node[cls, minimum height=1.4cm] (oc) at ( 7.8, -3.5) {
+    \textbf{OcrNode}\\
+    \rule{3.2cm}{0.3pt}\\
+    - engine: OCRProcessor\\
+    - interval: float
+};
+
+% VideoChain
+\node[cls, minimum height=1.6cm] (vc) at (0, 3.5) {
+    \textbf{VideoChain}\\
+    \rule{3.2cm}{0.3pt}\\
+    - nodes: List[BaseNode]\\
+    - frame\_skip: int\\
+    \rule{3.2cm}{0.3pt}\\
+    + run(video\_path): tuple
+};
+
+% Inheritance arrows
+\foreach \n in {kf, tr, wh, vl, oc}{
+    \draw[inherit] (\n.north) -- (base.south);
+}
+
+% Composition arrow: VideoChain uses BaseNode
+\draw[assoc] (vc.south) -- node[right, font=\tiny]{composes 1..*} (base.north);
+
+\end{tikzpicture}
+\caption{Class Diagram --- BaseNode Hierarchy and VideoChain Composition}
+\label{fig:class}
+\end{figure}
+
+\subsection{Design Justification: The BaseNode Contract}
+
+The \texttt{BaseNode} abstract class defines a single method: \texttt{process(context: dict) -> dict}. This interface was chosen deliberately for its minimalism. A single-method contract imposes almost no coupling on implementors while still guaranteeing the one property the \texttt{VideoChain} orchestrator needs: that every node reads from and writes to the same shared context dictionary.
+
+This design draws from the Chain of Responsibility pattern. Each node is responsible for one thing, knows nothing about its neighbours, and simply enriches the context it receives before passing it on. The \texttt{AdaptiveKeyframeNode} exploits this by injecting a \texttt{skip\_frame: True} flag into the context when a frame is visually redundant. Every subsequent node checks this flag and returns immediately, achieving GPU-level compute savings without any node needing to know about the keyframe logic.
+
+The \texttt{WhisperNode} uses a \texttt{segments\_cache} to illustrate another design property: nodes can be stateful across frames. Whisper transcribes the entire audio track once on the first call and caches the result. All subsequent calls perform a cheap binary search over the cached segments to find the speech active at the current timestamp. This avoids re-running a heavy model on every frame while still providing accurate temporal alignment.
+
+% ─────────────────────────────────────────────
+\section{Sequence Diagram: Query Lifecycle}
+% ─────────────────────────────────────────────
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    lifelinelabel/.style={draw, rectangle, rounded corners=3pt,
+                          minimum width=2.2cm, minimum height=0.7cm,
+                          text centered, font=\scriptsize\bfseries, fill=white},
+    msg/.style={draw, -latex, font=\scriptsize},
+    rmsg/.style={draw, -latex, dashed, font=\scriptsize},
+    act/.style={draw, rectangle, fill=blue!15, minimum width=0.18cm}
+]
+
+% Lifeline labels
+\node[lifelinelabel] (U)   at (0,   0) {User};
+\node[lifelinelabel] (API) at (2.8, 0) {FastAPI};
+\node[lifelinelabel] (VC)  at (5.4, 0) {VidChain};
+\node[lifelinelabel] (RAG) at (8.0, 0) {RAGEngine};
+\node[lifelinelabel] (GR)  at (10.4, 0) {GraphRAG};
+\node[lifelinelabel] (DB)  at (12.8, 0) {ChromaDB};
+\node[lifelinelabel] (LLM) at (15.2, 0) {Ollama LLM};
+
+% Lifelines
+\foreach \x in {0, 2.8, 5.4, 8.0, 10.4, 12.8, 15.2}{
+    \draw[dashed, gray] (\x, -0.35) -- (\x, -11.5);
+}
+
+% Messages
+\draw[msg] (0, -0.8)  -- node[above]{\scriptsize POST /api/query} (2.8, -0.8);
+\draw[msg] (2.8,-1.4) -- node[above]{\scriptsize load session history} (5.4,-1.4);
+\draw[msg] (2.8,-2.0) -- node[above]{\scriptsize ask(query, video\_id)} (5.4,-2.0);
+
+\draw[msg] (5.4,-2.6) -- node[above]{\scriptsize load\_video\_context()} (10.4,-2.6);
+\draw[rmsg] (10.4,-3.2) -- node[above]{\scriptsize graph.pkl loaded} (5.4,-3.2);
+
+\draw[msg] (5.4,-3.8) -- node[above]{\scriptsize route\_intent(query)} (8.0,-3.8);
+\draw[rmsg] (8.0,-4.4) -- node[above]{\scriptsize VIDEO\_SEARCH} (5.4,-4.4);
+
+\draw[msg] (5.4,-5.0) -- node[above]{\scriptsize \_retrieve(query, video\_id)} (8.0,-5.0);
+\draw[msg] (8.0,-5.6) -- node[above]{\scriptsize collection.query()} (12.8,-5.6);
+\draw[rmsg] (12.8,-6.2) -- node[above]{\scriptsize top-k candidates} (8.0,-6.2);
+\draw[msg] (8.0,-6.8) -- node[above]{\scriptsize reranker.predict()} (8.0,-6.8);
+\draw[rmsg] (8.0,-7.2) -- node[above]{\scriptsize reranked docs} (5.4,-7.2);
+
+\draw[msg] (5.4,-7.8) -- node[above]{\scriptsize get\_graph\_context(query)} (10.4,-7.8);
+\draw[rmsg] (10.4,-8.4) -- node[above]{\scriptsize entity facts (text)} (5.4,-8.4);
+
+\draw[msg] (5.4,-9.0) -- node[above]{\scriptsize completion(messages)} (15.2,-9.0);
+\draw[rmsg] (15.2,-9.6) -- node[above]{\scriptsize answer text} (5.4,-9.6);
+
+\draw[msg] (5.4,-10.2) -- node[above]{\scriptsize assess\_confidence()} (15.2,-10.2);
+\draw[rmsg] (15.2,-10.8) -- node[above]{\scriptsize confidence score} (5.4,-10.8);
+
+\draw[rmsg] (5.4,-11.2) -- node[above]{\scriptsize \{answer, confidence, telemetry\}} (2.8,-11.2);
+\draw[rmsg] (2.8,-11.4) -- node[above]{\scriptsize JSON response} (0,-11.4);
+
+\end{tikzpicture}
+\caption{Sequence Diagram --- Full Query Lifecycle from User Request to IRIS Response}
+\label{fig:sequence}
+\end{figure}
+
+\subsection{Design Justification: The Query Lifecycle}
+
+The sequence diagram makes three non-obvious design decisions visible.
+
+\textbf{Intent Routing before Retrieval.} Before any vector search is performed, the \texttt{RAGEngine} calls \texttt{\_route\_intent()} to classify the query as \texttt{VIDEO\_SEARCH}, \texttt{VIDEO\_SUMMARY}, or \texttt{CONVERSATION}. This matters because a summary request should not trigger ChromaDB retrieval at all --- it should route to the Map-Reduce Summariser instead. Performing retrieval first and then summarising would produce a response grounded in only the top-k retrieved fragments, losing the temporal continuity that the full timeline provides.
+
+\textbf{Graph Context Injection.} After retrieval, the system separately calls \texttt{get\_graph\_context()} on the Temporal Knowledge Graph. The returned entity facts --- first/last seen timestamps, co-occurrence relationships, camera motion patterns --- are appended to the system prompt as a distinct block. This means the LLM receives two independent evidence sources: semantically similar fragments from ChromaDB and structured relational facts from the graph. Neither source alone is sufficient; a flat vector search cannot answer ``when did person \#1 first appear?'' and a graph alone cannot answer open-ended natural language questions.
+
+\textbf{Confidence Scoring as a Second LLM Call.} The \texttt{\_assess\_confidence()} step fires a separate, lightweight completion call asking the LLM to rate its own certainty given the retrieved context. This is the Neural Verification Pulse described in Chapter 1. Routing this as a second call rather than embedding it in the main prompt prevents the confidence reasoning from influencing the answer itself, which would introduce a self-fulfilling bias.
+
+% ─────────────────────────────────────────────
+\section{The IRIS Orchestrator}
+% ─────────────────────────────────────────────
+
+IRIS (Intelligent Retrieval \& Insight System) is not a single module but an emergent behaviour produced by the interaction of four components: the \texttt{VidChain} client, the \texttt{RAGEngine}, the \texttt{TemporalKnowledgeGraph}, and the \texttt{VideoSummariser}. The \texttt{VidChain} client acts as the conductor --- it owns the state, loads the correct per-video graph on context switch, and routes calls to the appropriate subsystem. The intelligence itself arises from the combination of vector retrieval, graph-grounded facts, and LLM synthesis.
+
+\subsection{Memory Isolation Protocol}
+
+A critical architectural guarantee introduced in v0.9.0 is per-session memory isolation. Each ingested video produces three isolated artefacts on disk: a ChromaDB collection entry keyed by \texttt{video\_id}, a pickled NetworkX graph at \texttt{knowledge\_graphs/graph\_\{video\_id\}.pkl}, and a JSON knowledge base at \texttt{knowledge\_bases/\{video\_id\}.json}. When the user switches sessions, \texttt{VidChain.\_load\_video\_context()} hot-swaps the active graph by deserialising the correct \texttt{.pkl} file. ChromaDB queries are always filtered with a \texttt{where: \{video\_id: ...\}} clause. This guarantees that no information from one video session can bleed into the retrieval results of another --- a property referred to in the codebase as ``Cross-Video Noise'' prevention.
+
+\subsection{Recursive Map-Reduce Summarisation}
+
+The \texttt{VideoSummariser} solves the Context Window Wall through a three-phase process. In the \textit{Map} phase, the full timeline is split into word-budget chunks (default: 1,500 words per chunk) and each chunk is independently summarised by the LLM into a dense ``chapter summary.'' In the \textit{Reduce} phase, chapter summaries are grouped into batches of five and recursively collapsed until only one summary remains. In the \textit{Polish} phase, the final collapsed summary is passed through a formatting prompt that applies the IRIS narrative voice --- professional, chronological, and evidence-grounded. The recursion depth scales logarithmically with video length, meaning a three-hour lecture with hundreds of timeline entries requires at most three or four LLM calls to produce the final report, regardless of the original token count.
+
+% ─────────────────────────────────────────────
+\section{GraphRAG: Temporal Knowledge Graph}
+% ─────────────────────────────────────────────
+
+The \texttt{TemporalKnowledgeGraph} is built on NetworkX and populated immediately after every \texttt{ingest()} call. The graph contains three node types: \textit{timestamp nodes} (one per timeline entry), \textit{entity nodes} (persons, objects, and OCR text strings), and \textit{camera behaviour nodes} (panning, tilting, zooming). Edges encode relationships: \texttt{detects} (timestamp $\to$ entity), \texttt{co-occurs} (entity $\leftrightarrow$ entity), \texttt{screen\_shows} (timestamp $\to$ OCR text), and \texttt{camera\_behavior\_is} (timestamp $\to$ motion type).
+
+This structure enables queries that are impossible for flat vector search. A question such as ``did the same person appear in both the opening and closing segments?'' requires knowing the first-seen and last-seen timestamps of a tracked entity --- information that is stored as node attributes in the graph but would require scanning the entire ChromaDB collection otherwise. The \texttt{get\_graph\_context()} method serialises the most relevant graph facts into a natural language block that is injected directly into the LLM's system prompt, grounding the response in verified structural evidence rather than probabilistic retrieval alone.
+
+% ─────────────────────────────────────────────
+\section{Summary}
+% ─────────────────────────────────────────────
+
+This chapter has presented the full architectural design of VidChain across four levels of abstraction. The Late-Fusion paradigm was justified as the only viable approach for edge hardware, and its consequences --- independent nodes, shared context dictionaries, and modality-specific failure isolation --- were traced through the component and class diagrams. The sequence diagram exposed three deliberate design decisions: intent routing before retrieval, dual-source evidence injection (vector + graph), and confidence scoring as a second-pass verification step. Finally, the IRIS orchestrator's two most significant subsystems --- the Memory Isolation Protocol and the Recursive Map-Reduce Summariser --- were described with sufficient detail to motivate the implementation choices documented in Chapter 5.
