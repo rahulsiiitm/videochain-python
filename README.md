@@ -1,7 +1,7 @@
 # VidChain: The "LangChain for Videos"
-> **v0.9.0-Final** — Featuring the **IRIS Intelligence Assistant**. A high-fidelity, local-first multimodal RAG framework for surgical video intelligence.
+> **v0.9.1-Stable** — Featuring the **Neural Lens** for forensic visual evidence. A high-fidelity, local-first multimodal RAG framework for surgical video intelligence.
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v0.9.0--Final-red) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
+![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v0.9.1--Stable-red) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
 
 ![VidChain v0.9 Dashboard](assets/iris_v09_dashboard.png)
 
@@ -121,6 +121,13 @@ Every VidChain "Insight Session" now generates a dedicated, persistent knowledge
 ### VidChain Media Gateway
 No more broken paths. VidChain now features a dedicated streaming gateway that resolves absolute local paths, enabling high-fidelity playback of MKV, MP4, and AVI files.
 
+### The Neural Lens (v0.9.1 Upgrade)
+IRIS now provides visual proof for her findings.
+- **Forensic Snapshots**: Automatic frame extraction for every search query.
+- **Evidence Polaroids**: Interactive, high-contrast evidence cards in the chat hub.
+- **Neural HUD**: Real-time, chapter-level progress tracking during deep summarization.
+- **Infinite Patience**: Robust 900s neural timeout handling for massive forensic files.
+
 ---
 
 ## Setup & Installation
@@ -142,6 +149,12 @@ vidchain-serve
 
 ## Detailed Evolution (v0.8 to v0.9)
 
+### v0.9.1 (The Neural Lens Release)
+- **Visuals**: Implemented the "Neural Lens" for automatic forensic snapshot extraction.
+- **HUD**: Integrated real-time, chapter-level status updates (Neural HUD) into the Chat Hub.
+- **Stability**: Implemented Infinite Patience logic with 900s timeouts for large-scale summarization.
+- **Logic**: Upgraded to Agentic Router v2, purging legacy keyword-based chitchat triggers.
+
 ### v0.9.0 (The Insight Release)
 - **Architecture**: Implemented Neural Isolation for per-session knowledge graphs.
 - **Media**: Introduced the VidChain Media Gateway for absolute Windows path streaming.
@@ -156,4 +169,4 @@ vidchain-serve
 
 ## Author
 **Rahul Sharma** — IIIT Manipur  
-*SEM Project Phase 0.9.0-Final*
+*SEM Project Phase 0.9.1-Stable*

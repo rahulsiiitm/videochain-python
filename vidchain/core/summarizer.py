@@ -6,7 +6,7 @@ Features: Recursive Summarization, Contextual Bridging, and Provider Abstraction
 """
 
 import math
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Callable
 from litellm import completion
 
 class VideoSummarizer:
@@ -19,7 +19,8 @@ class VideoSummarizer:
 
     def _serialize_for_summary(self, event: Dict[str, Any]) -> str:
         """Converts a raw event into a dense string for the LLM to read."""
-        parts = [f"[{event.get('timestamp', 0)}s]"]
+        ts = event.get('time') or event.get('current_time') or event.get('timestamp', 0)
+        parts = [f"[{ts}s]"]
         if event.get('action'): parts.append(f"Action: {event['action']}")
         if event.get('objects'): parts.append(f"Visuals: {event['objects']}")
         if event.get('ocr'): parts.append(f"Text: {event['ocr']}")
@@ -47,24 +48,26 @@ class VideoSummarizer:
             chunks.append(current_chunk)
         return chunks
 
-    def generate(self, timeline: List[Dict[str, Any]], mode: str = "concise") -> str:
+    def generate(self, timeline: List[Dict[str, Any]], mode: str = "concise", status_callback: Optional[Callable[[str], None]] = None) -> str:
         if not timeline:
             return "No data available to summarize."
 
         print(f"[Summarizer] Processing {len(timeline)} events in '{mode}' mode...")
         
         chunks = self._chunk_by_token_limit(timeline)
-        chapter_summaries = self._map_phase(chunks)
-        final_narrative = self._recursive_reduce(chapter_summaries, mode)
+        chapter_summaries = self._map_phase(chunks, status_callback)
+        final_narrative = self._recursive_reduce(chapter_summaries, mode, status_callback)
         
         return final_narrative
 
-    def _map_phase(self, chunks: List[List[Dict[str, Any]]]) -> List[str]:
+    def _map_phase(self, chunks: List[List[Dict[str, Any]]], status_callback: Optional[Callable[[str], None]] = None) -> List[str]:
         summaries = []
         api_base = "http://localhost:11434" if "ollama" in self.model_name.lower() else None
         
         for i, chunk in enumerate(chunks):
-            print(f"  -> Mapping Chapter {i+1}/{len(chunks)}...")
+            status_msg = f"Neural HUD: Mapping Chapter {i+1}/{len(chunks)}..."
+            print(f"  -> {status_msg}")
+            if status_callback: status_callback(status_msg)
             chunk_text = "\n".join([self._serialize_for_summary(e) for e in chunk])
             
             prompt = f"""Summarize this video segment logs into a dense narrative.
@@ -78,16 +81,19 @@ class VideoSummarizer:
                 model=self.model_name,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
-                api_base=api_base
+                api_base=api_base,
+                timeout=300
             )
             summaries.append(response.choices[0].message.content)
         return summaries
 
-    def _recursive_reduce(self, summaries: List[str], mode: str) -> str:
+    def _recursive_reduce(self, summaries: List[str], mode: str, status_callback: Optional[Callable[[str], None]] = None) -> str:
         if len(summaries) == 1:
-            return self._final_polish(summaries[0], mode)
+            return self._final_polish(summaries[0], mode, status_callback)
 
-        print(f"  -> Reducing {len(summaries)} chapters...")
+        status_msg = f"Neural HUD: Reducing {len(summaries)} chapter summaries..."
+        print(f"  -> {status_msg}")
+        if status_callback: status_callback(status_msg)
         grouped_summaries = []
         api_base = "http://localhost:11434" if "ollama" in self.model_name.lower() else None
         
@@ -98,13 +104,16 @@ class VideoSummarizer:
             response = completion(
                 model=self.model_name,
                 messages=[{"role": "user", "content": prompt}],
-                api_base=api_base
+                api_base=api_base,
+                timeout=900
             )
             grouped_summaries.append(response.choices[0].message.content)
 
-        return self._recursive_reduce(grouped_summaries, mode)
+        return self._recursive_reduce(grouped_summaries, mode, status_callback)
 
-    def _final_polish(self, raw_summary: str, mode: str) -> str:
+    def _final_polish(self, raw_summary: str, mode: str, status_callback: Optional[Callable[[str], None]] = None) -> str:
+        status_msg = "Neural HUD: Finalizing high-fidelity report..."
+        if status_callback: status_callback(status_msg)
         system_prompt = """
         You are IRIS (Intelligent Retrieval & Insight System).
         You are a smart video summarization assistant. 
@@ -128,7 +137,8 @@ class VideoSummarizer:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                api_base=api_base
+                api_base=api_base,
+                timeout=300
             )
             return response.choices[0].message.content.strip()
         except Exception as e:

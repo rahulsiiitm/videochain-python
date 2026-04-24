@@ -1,0 +1,5 @@
+vidchain_db/
+*.mp4
+models/*.pt
+models/*.pth
+.venv/

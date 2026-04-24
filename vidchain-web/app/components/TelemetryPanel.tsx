@@ -120,7 +120,7 @@ export function TelemetryPanel({
       {/* Terminal Logs */}
       <div className="flex-1 flex flex-col min-h-0 bg-black">
         <div className="h-8 shrink-0 flex items-center px-4 border-b border-[#1a1a1a] bg-[#080808]">
-           <Terminal className="w-3 h-3 text-muted-foreground mr-2 opacity-50" />
+           <img src="/logo_noir_rembg.png" className="w-3.5 h-3.5 invert brightness-200 mr-2 opacity-60" alt="IRIS" />
            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">Assistant Activity</span>
         </div>
         <div className="flex-1 overflow-y-auto p-4 font-mono text-[9px] space-y-1 custom-scrollbar">

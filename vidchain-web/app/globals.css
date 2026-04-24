@@ -37,15 +37,19 @@ body {
   position: relative;
 }
 
-/* Noir Film Grain Effect */
-body::before {
+/* Noir Film Grain Effect - Dynamic */
+/* We apply it to the main container in page.tsx */
+.noir-grain::before {
   content: "";
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.02;
+  opacity: 0.06; /* Boosted for visibility */
   pointer-events: none;
   z-index: 9999;
+  mix-blend-mode: overlay;
 }
 
 /* High Contrast Noir Components */
@@ -100,49 +104,43 @@ body::before {
   width: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #050505;
 }
 ::-webkit-scrollbar-thumb {
   background: #1a1a1a;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #333333;
+  background: #222;
+}
+
+/* Animations */
+@keyframes noir-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.noir-pulse {
+  animation: noir-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .metric-pill {
-  font-size: 9px;
-  font-family: ui-monospace, monospace;
-  background: #000;
-  border: 1px solid var(--border);
-  padding: 2px 6px;
-  border-radius: 2px;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  @apply px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest bg-zinc-900 text-zinc-500 border border-zinc-800;
 }
 
-.fade-in {
-  animation: fadeIn 0.4s ease-out;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a1a #050505;
 }
 
-.active-pulse {
-  position: relative;
+/* Prose overrides for monochrome look */
+.prose h1, .prose h2, .prose h3, .prose strong {
+  color: white !important;
 }
-.active-pulse::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  border: 1px solid var(--accent);
-  opacity: 0.1;
-  animation: noir-pulse 4s ease-in-out infinite;
+.prose p {
+  color: #a1a1aa !important;
 }
-@keyframes noir-pulse {
-  0%, 100% { opacity: 0.05; }
-  50% { opacity: 0.2; }
+.prose a {
+  color: white !important;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }

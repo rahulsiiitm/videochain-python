@@ -43,13 +43,13 @@ export function Sidebar({
         "h-16 flex items-center shrink-0 px-5 mb-2",
         sidebarCollapsed ? "justify-center" : "gap-3"
       )}>
-        <div className="w-8 h-8 rounded bg-[#111] border border-[#222] flex items-center justify-center shrink-0">
-           <Shield className="w-4 h-4 text-white" />
+        <div className="w-10 h-10 rounded overflow-hidden bg-black flex items-center justify-center border border-[#1a1a1a]">
+           <img src="/logo_noir_rembg.png" className="w-8 h-8 invert brightness-200" alt="IRIS" />
         </div>
         {!sidebarCollapsed && (
           <div className="flex flex-col">
-            <span className="text-[12px] font-bold tracking-tight text-white uppercase letter-spacing-[0.1em]">IRIS Assistant</span>
-            <span className="text-[9px] text-muted-foreground font-medium uppercase opacity-50">Friendly Helper</span>
+            <span className="text-[12px] font-black tracking-tighter text-white uppercase leading-none">IRIS</span>
+            <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest opacity-50">Intelligence Suite</span>
           </div>
         )}
       </div>
@@ -105,16 +105,14 @@ export function Sidebar({
                     )}
                   </div>
                   
-                  {!renamingId && (
-                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all shrink-0">
-                      <button onClick={e => startRename(s, e)} className="p-1 hover:text-white">
-                        <Edit2 className="w-3 h-3" />
+                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-all shrink-0 ml-2">
+                      <button onClick={e => startRename(s, e)} className="p-1.5 hover:text-white transition-colors">
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={e => deleteSession(s.id, e)} className="p-1 hover:text-red-500">
-                        <Trash2 className="w-3 h-3" />
+                      <button onClick={e => deleteSession(s.id, e)} className="p-1.5 text-zinc-600 hover:text-red-500 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  )}
                 </div>
               )}
             </div>

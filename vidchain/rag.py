@@ -1,6 +1,8 @@
 import os
 import json
 import time
+import cv2
+import base64
 import numpy as np
 import traceback
 from typing import Any, List, Dict, Optional
@@ -10,28 +12,6 @@ from dotenv import load_dotenv
 from litellm import completion
 
 load_dotenv()
-
-# ---------------------------------------------------------------------------
-# Intent classifier & Persona
-# ---------------------------------------------------------------------------
-
-CHITCHAT_TRIGGERS = {
-    "hi", "hello", "hey", "sup", "yo", "hiya",
-    "who are you", "who r u", "who are u", "what are you",
-    "what r you", "what can you do", "help",
-    "thanks", "thank you", "ok", "okay", "cool", "got it", "bye", "goodbye"
-}
-
-IRIS_INTRO = (
-    "I.R.I.S. (Intelligent Retrieval & Insight System)\n"
-    "Status: Online. How can I help you understand your video today?\n\n"
-    "I can summarize events, find specific moments, and answer questions "
-    "about what happened in your video evidence."
-)
-
-def is_chitchat(text: str) -> bool:
-    if not text: return False
-    return text.strip().lower().rstrip("!?.,'\"") in CHITCHAT_TRIGGERS
 
 # ---------------------------------------------------------------------------
 # RAG Engine
@@ -84,6 +64,30 @@ class RAGEngine:
         if e.get("camera_motion") and e.get("camera_motion") != "static":
             parts.append(f"Camera movement: {e['camera_motion']}")
         return " | ".join(parts)
+
+    def _get_snapshot(self, video_path: str, timestamp: float) -> Optional[str]:
+        """Extracts a frame from the video at a specific timestamp and returns it as a base64 string."""
+        if not video_path or not os.path.exists(video_path):
+            return None
+        try:
+            cap = cv2.VideoCapture(video_path)
+            # Set position in milliseconds
+            cap.set(cv2.CAP_PROP_POS_MSEC, timestamp * 1000)
+            ret, frame = cap.read()
+            cap.release()
+            
+            if ret:
+                # Resize for chat performance (max 480p width)
+                h, w = frame.shape[:2]
+                if w > 480:
+                    new_h = int(h * (480 / w))
+                    frame = cv2.resize(frame, (480, new_h))
+                
+                _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                return base64.b64encode(buffer).decode('utf-8')
+        except Exception as e:
+            print(f"[IRIS] Snapshot extraction failed: {e}")
+        return None
 
     @staticmethod
     def _build_system_prompt(context: str) -> str:
@@ -156,10 +160,10 @@ class RAGEngine:
                     return 0.0
             top_docs.sort(key=extract_time)
             
-            return "\n".join(top_docs)
+            return "\n".join(top_docs), top_docs
         except Exception as e:
             print(f"[ERROR] Retrieval logic failure: {e}")
-            return ""
+            return "", []
 
     # ------------------------------------------------------------------
     # Intent Routing (Phase Recognition)
@@ -278,7 +282,8 @@ class RAGEngine:
 
                 print(f"[Agentic AI] Summarizing {len(timeline)} forensic events...")
                 summarizer = VideoSummarizer(model_name=self.model_name)
-                answer = summarizer.generate(timeline, mode="detailed")
+                status_cb = kwargs.get("status_callback")
+                answer = summarizer.generate(timeline, mode="detailed", status_callback=status_cb)
                 
                 # ── Cache for Future Retrieval ──────────────────────────
                 if self.kb_dir and video_id:
@@ -302,9 +307,10 @@ class RAGEngine:
                 return answer
 
         # ── PHASE 3: FORENSIC QUERY ─────────────────────────────────
+        top_nodes = []
         if intent == "VIDEO_SEARCH":
             # Hybrid Retrieval: Vector + Temporal Graph
-            context_str = self._retrieve(user_question, video_id=kwargs.get("video_id"))
+            context_str, top_nodes = self._retrieve(user_question, video_id=kwargs.get("video_id"))
             
         # ── PHASE 1: CONVERSATION (or combined reasoning) ────────────
         system_prompt = self._build_system_prompt(context_str)
@@ -331,20 +337,47 @@ class RAGEngine:
                 # Force local Ollama endpoint connection
                 api_base = "http://localhost:11434" if "ollama" in self.model_name.lower() else None
                 response = completion(model=self.model_name, messages=messages, api_base=api_base)
-                answer = response.choices[0].message.content.strip() #type: ignore
                 
-                # Update history only if we are using instance memory
+                # ── EVIDENCE SNAPSHOTS (Neural Lens) ────────────────────────
+                snapshots = []
+                if top_nodes and kwargs.get("video_id"):
+                    video_path = kwargs.get("video_source") # Passed from serve.py
+                    # Get snapshots for top 3 most relevant nodes
+                    for node_text in top_nodes[:3]:
+                        try:
+                            ts = float(node_text.split('s]')[0].strip('['))
+                            img_b64 = self._get_snapshot(video_path, ts)
+                            if img_b64:
+                                snapshots.append({"timestamp": ts, "data": img_b64})
+                        except: continue
+
+                # Extract structured intel
+                answer = response.choices[0].message.content.strip() #type: ignore
+                confidence = self._assess_confidence(answer, context_str)
+                
+                # ── PERSISTENCE ───────────────────────────────────────────
                 if history is None:
                     self.chat_history.append({"role": "user", "content": user_question})
                     self.chat_history.append({"role": "assistant", "content": answer})
+
+                telemetry_stats = hud.get_stats()
                 
-                # ── NEURAL VERIFICATION PULSE ───────────────────────────────
-                confidence = self._assess_confidence(answer, context_str)
+                # Return the rich forensic payload
+                if "return_raw" in kwargs: # Support for unified API relay
+                    return {
+                        "answer": answer,
+                        "telemetry": telemetry_stats,
+                        "confidence": confidence,
+                        "snapshots": snapshots
+                    }
+                
+                return answer
+
             except Exception as e:
                 traceback.print_exc()
                 answer = f"[ERROR] IRIS logic failure: {e}"
                 confidence = 0
-            
+                
             telemetry_stats = hud.get_stats()
 
         # Return the rich forensic payload

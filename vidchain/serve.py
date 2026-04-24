@@ -18,7 +18,7 @@ from vidchain.telemetry import HardwareMonitor
 app = FastAPI(
     title="IRIS (Intelligent Retrieval & Insight System)",
     description="Local 'Intelligent Retrieval & Insight System' API — Persistent Edition",
-    version="0.9.0-Final"
+    version="0.9.1-Stable"
 )
 
 # ── Secure Media Gateway ──────────────────────────────────────────────────────
@@ -47,6 +47,8 @@ SESSIONS_DIR  = os.path.join(STORAGE_DIR, "sessions")
 
 # Stores live status of processing session: {session_id: "status_text"}
 status_hub: Dict[str, str] = {}
+# Stores kill signals for active sessions: {session_id: True}
+interrupt_hub: Dict[str, bool] = {}
 
 # Distribution paths for bundled Spider-Net Portal
 WEB_DIST_DIR = os.path.join(os.path.dirname(__file__), "web_dist")
@@ -84,7 +86,7 @@ def _create_session(title: str = "New Insight Session") -> dict:
     _save_session(session)
     return session
 
-def _append_message(session_id: str, sender: str, text: str, video_id: Optional[str] = None) -> dict:
+def _append_message(session_id: str, sender: str, text: str, video_id: Optional[str] = None, confidence: Optional[int] = None, telemetry: Optional[dict] = None, snapshots: Optional[list] = None) -> dict:
     session = _load_session(session_id)
     if not session:
         session = _create_session()
@@ -96,6 +98,9 @@ def _append_message(session_id: str, sender: str, text: str, video_id: Optional[
         "text": text,
         "timestamp": time.strftime("%H:%M"),
         "video_id": video_id,
+        "confidence": confidence,
+        "telemetry": telemetry,
+        "snapshots": snapshots
     }
     session["messages"].append(msg)
     
@@ -178,6 +183,13 @@ def health_check():
 
 
 # ── Session CRUD ──────────────────────────────────────────────────────────────
+@app.post("/api/sessions/{session_id}/interrupt")
+def interrupt_session(session_id: str):
+    """Neural Killswitch: Sends a stop signal to the active session nodes."""
+    print(f"[IRIS] Interrupt signal received for session: {session_id}")
+    interrupt_hub[session_id] = True
+    return {"status": "interrupt_signal_sent"}
+
 @app.get("/api/sessions")
 def list_sessions():
     return {"sessions": _list_sessions()}
@@ -269,42 +281,56 @@ def query_video(req: QueryRequest):
     timeline = vc.get_video_timeline(video_id) if video_id else []
 
     try:
+        status_hub[session_id] = "Neural Retrieval: Finding evidence..."
+        # ── Instant Persistence ───────────────────────────────────
+        # Save the user's question immediately so it's not lost on refresh
+        _append_message(session_id, "user", req.query, video_id)
+        _save_session(_load_session(session_id))
+
         # Prepare arguments: only pass timeline if we actually found one
+        def neural_status_cb(msg: str):
+            status_hub[session_id] = msg
+
         ask_kwargs = {
             "video_id": video_id,
+            "video_source": session.get("video_path"),
             "history": history,
-            "return_raw": True # NEW: Request high-fidelity telemetry payload
+            "return_raw": True,
+            "status_callback": neural_status_cb
         }
         if timeline:
             ask_kwargs["timeline"] = timeline
 
         # Run engine with Neural HUD monitoring
+        status_hub[session_id] = "Neural Reasoning: Consulting LLM..."
         result = vc.ask(req.query, **ask_kwargs)
         
         # Extract structured intel
         answer = result.get("answer", "")
-        telemetry = result.get("telemetry", {})
         confidence = result.get("confidence", 75)
+        telemetry_stats = result.get("telemetry", {})
+        snapshots = result.get("snapshots", [])
         
-        # 3. Save the interaction with telemetry metadata
-        _append_message(session_id, "user",    req.query,  video_id)
-        msg = _append_message(session_id, "iris", answer, video_id)
-        
-        # Enrich stored message with neural scores
-        msg["telemetry"]  = telemetry
-        msg["confidence"] = confidence
+        # Append IRIS response to persistent memory
+        _append_message(session_id, "iris", answer, video_id, confidence=confidence, telemetry=telemetry_stats, snapshots=snapshots)
         _save_session(_load_session(session_id)) # Final persistence lock
+        status_hub[session_id] = "Idle"
         
         return {
-            "response": answer, 
+            "response": answer,
             "session_id": session_id,
-            "telemetry": telemetry,
-            "confidence": confidence
+            "confidence": confidence,
+            "telemetry": telemetry_stats,
+            "snapshots": snapshots
         }
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"[IRIS] Neural Error: {str(e)}")
+        error_msg = "I've hit a bit of 'Neural Exhaustion'. My local processors timed out while analyzing this segment. Please try a simpler query or a shorter video."
+        if "timeout" in str(e).lower():
+            error_msg = "My 'Neural Timeout' was triggered. This segment is very complex and my local processors couldn't finish in time. Try asking for a shorter summary!"
+        
+        _append_message(session_id, "iris", error_msg, video_id)
+        return {"response": error_msg, "status": "error"}
 
 
 # ── Ingest ────────────────────────────────────────────────────────────────────
@@ -316,8 +342,17 @@ def _background_ingest(video_source: str, video_id: Optional[str], session_id: s
         
         # We hook into the pipeline's progress callback to update our status hub
         def _progress_cb(node_name: str, msg: str):
+            # Check for interrupt signal
+            if interrupt_hub.get(session_id):
+                print(f"[IRIS] Aborting ingest for {session_id} per user request.")
+                status_hub[session_id] = "Interrupted"
+                raise InterruptedError("Operation cancelled by user.")
+            
             status_hub[session_id] = f"[{node_name}] {msg}"
             print(f"[Neural Telemetry] {session_id} -> {node_name}: {msg}")
+
+        # Ensure interrupt flag is cleared before starting
+        interrupt_hub[session_id] = False
 
         # Ingest with explicit ID binding
         v_id = vc.ingest(video_source, video_id=video_id, progress_callback=_progress_cb) # type: ignore
@@ -431,7 +466,7 @@ def open_browser():
 
 def main_cli():
     print("=========================================")
-    print("  IRIS Intelligence Suite v0.8.8-Stable")
+    print("  IRIS Intelligence Suite v0.9.1-Stable")
     print("  Portal : http://localhost:8000")
     print("  Storage: ./vidchain_storage")
     print("=========================================")

@@ -4,16 +4,23 @@ All notable changes to VidChain are documented here.
 
 ---
 
-## [0.9.1] — 2026-04-22 (The "IRIS Transformation" Update)
+## [0.9.1-Stable] — 2026-04-24 (The "Neural Lens" Release)
 
 ### Added
-- **Complete IRIS Rebranding**: Successfully transitioned the engine identity from B.A.B.U.R.A.O. to **IRIS** (Intelligent Retrieval & Insight System) across the entire codebase, including prompts, UI, and documentation.
-- **Narrative-First Synthesis**: Shifted the project's focus from forensic analysis to a streamlined **Video Summarization Framework**.
+- **Neural Lens (Forensic Snapshots)**: Integrated automatic frame extraction for every search query. IRIS now provides visual evidence cards alongside textual answers.
+- **Neural HUD**: Implemented real-time, chapter-level progress tracking in the Chat Hub.
+- **Evidence Polaroids**: Interactive UI components in the chat that transition from grayscale to color on hover and support instant video seeking.
+- **Status Callback Bridge**: Propagated granular progress signals from the RAG and Summarization engines to the frontend telemetry panels.
 
 ### Changed
-- **Engine Logic**: Updated the recursive Map-Reduce summarizer to prioritize coherent narrative generation over forensic logging.
-- **Documentation**: Overhauled `README.md` and `TECHNICAL_SPECIFICATIONS.md` to align with the new project identity.
-- **Demo Evolution**: Rebranded the embedded demo to an **Insight Monitor** featuring IRIS-powered reports.
+- **Infinite Patience Logic**: Upgraded all neural timeouts to 15 minutes (900s) to handle massive forensic video files without connection drops.
+- **Agentic Router v2**: Purged legacy keyword-based chitchat triggers in favor of a purely neural intent classification system.
+- **UI Lockdown**: Eliminated all horizontal scrolling in the Chat Hub and stabilized the layout for a premium "Spider-Noir" experience.
+- **Instant Persistence**: Implemented immediate message saving so user questions are never lost during long-running background tasks.
+
+### Fixed
+- **NameError (Callable)**: Resolved a critical import error in the summarizer engine.
+- **Neural Ghosting**: Fixed a bug where the HUD would reset to "Idle" before the final report was finished.
 
 ---
 

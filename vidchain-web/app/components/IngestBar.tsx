@@ -17,12 +17,13 @@ interface IngestBarProps {
   onToggleSidebar: () => void;
   onToggleTelemetry: () => void;
   onSettingsClick: () => void;
+  onInterrupt?: () => void;
 }
 
 export function IngestBar({
   sessionState, activeSession, videoPath, setVideoPath, handleIngest, 
   isIngesting, serverOnline, exportInsightReport, liveStatus,
-  onToggleSidebar, onToggleTelemetry, onSettingsClick
+  onToggleSidebar, onToggleTelemetry, onSettingsClick, onInterrupt
 }: IngestBarProps) {
   
   return (
@@ -40,6 +41,21 @@ export function IngestBar({
           <div className="flex items-center gap-3 border-l border-[#1a1a1a] pl-6">
              <span className="text-[11px] font-bold text-white tracking-tight">{activeSession.title}</span>
              <span className="metric-pill">Active Memory</span>
+          </div>
+        )}
+
+        {isIngesting && (
+          <div className="flex items-center gap-4 border-l border-[#1a1a1a] pl-6">
+            <div className="flex items-center gap-2">
+               <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+               <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">{liveStatus}</span>
+            </div>
+            <button 
+              onClick={onInterrupt}
+              className="px-3 py-1 rounded border border-white/20 hover:border-white hover:bg-white hover:text-black text-[9px] font-black uppercase tracking-widest transition-all"
+            >
+              Stop
+            </button>
           </div>
         )}
       </div>
