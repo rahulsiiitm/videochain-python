@@ -10,7 +10,7 @@ def test_inference():
     # 1. Load the Class Map
     class_file = Path("models/classes.txt")
     if not class_file.exists():
-        print("❌ Error: classes.txt not found. Did the training script finish?")
+        print("Error: classes.txt not found. Did the training script finish?")
         return
         
     with open(class_file, "r") as f:
@@ -18,7 +18,7 @@ def test_inference():
 
     # 2. Rebuild the Brain Architecture
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"🚀 Booting Inference Engine on: {device.type.upper()}")
+    print(f"Booting Inference Engine on: {device.type.upper()}")
     
     model = models.mobilenet_v3_small(weights=None) # We don't need internet weights anymore!
     num_features = model.classifier[3].in_features
@@ -45,8 +45,8 @@ def test_inference():
     test_image_name = random.choice(images)
     test_image_path = class_dir / test_image_name
 
-    print(f"\n📸 Analyzing Image: {test_image_name}")
-    print(f"✅ True Category: {random_class.upper()}")
+    print(f"\nAnalyzing Image: {test_image_name}")
+    print(f"True Category: {random_class.upper()}")
 
     # 5. Make the Prediction
     image = Image.open(test_image_path).convert('RGB')
@@ -63,11 +63,11 @@ def test_inference():
     # 6. Display Results
     print("-" * 30)
     if predicted_class == random_class:
-        print(f"🎯 PREDICTION: {predicted_class.upper()} (CORRECT!)")
+        print(f"PREDICTION: {predicted_class.upper()} (CORRECT!)")
     else:
-        print(f"❌ PREDICTION: {predicted_class.upper()} (INCORRECT)")
+        print(f"PREDICTION: {predicted_class.upper()} (INCORRECT)")
         
-    print(f"📊 Confidence: {confidence.item() * 100:.2f}%")
+    print(f"Confidence: {confidence.item() * 100:.2f}%")
     print("-" * 30)
 
 if __name__ == "__main__":

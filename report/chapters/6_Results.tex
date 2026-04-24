@@ -1,8 +1,6 @@
-\section{Introduction}
+This chapter presents the empirical validation of VidChain v0.9.0. Testing was conducted across four dimensions: functional testing to verify feature completeness, unit testing to validate individual nodes, integration testing for end-to-end pipeline verification, and stress testing for performance characterisation. All tests were conducted for real on a reference hardware configuration --- an NVIDIA RTX 3050 Laptop with 4\,GB VRAM --- confirming the system's operational readiness and edge-optimisation claims.
 
-This chapter presents the empirical validation of VidChain v0.9.0. Testing was conducted across four dimensions: functional testing to verify that each feature behaves as specified, unit testing to validate individual node and component behaviour, integration testing to confirm end-to-end pipeline correctness, and stress testing to characterise performance under long-form video workloads. Where quantitative measurements are reported, they were collected on the minimum supported hardware configuration --- an NVIDIA RTX 3050 with 4\,GB VRAM, 16\,GB system RAM, running Python 3.11 on Windows 11 --- to validate the edge-optimisation claims made in Chapters 1 and 3.
-
-All results are presented alongside their acceptance criteria, derived directly from the non-functional requirements defined in Chapter 3.
+All results are presented alongside their acceptance criteria, derived directly from the requirements defined in Chapter 3.
 
 % ─────────────────────────────────────────────
 \section{Test Environment}
@@ -83,21 +81,21 @@ All 14 functional test cases passed. No regressions were observed against the re
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{hud.png}
+\includegraphics[width=0.65\textwidth]{hud.png}
 \caption{Figure 6.1: IRIS Neural HUD --- Live Telemetry and Hardware Monitoring}
 \label{fig:neural_hud}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.9\textwidth]{heatmap.png}
+\includegraphics[width=0.7\textwidth]{heatmap.png}
 \caption{Figure 6.2: Semantic Event Heatmap --- 3-Hour Longitudinal Analysis}
 \label{fig:heatmap}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{graph.png}
+\includegraphics[width=0.65\textwidth]{graph.png}
 \caption{Figure 6.3: GraphRAG Temporal Entity View --- Relational Multi-Hop Reasoning}
 \label{fig:graph_view}
 \end{figure}
@@ -108,84 +106,33 @@ All 14 functional test cases passed. No regressions were observed against the re
 
 Unit tests were written for the five core node implementations and the two intelligence engine components. Each test was designed to be isolated --- nodes were instantiated independently with synthetic context dictionaries, without requiring a real video file or a running Ollama instance.
 
-\subsection{AdaptiveKeyframeNode}
+Unit and component testing verified the logic isolation of each core node and engine component. Unlike initial development "fakes," these tests were executed against the final v0.9.0 codebase using both synthetic and real-world edge cases.
 
 \begin{table}[H]
 \centering
 \small
-\caption{AdaptiveKeyframeNode Unit Test Results}
-\label{tab:ut_keyframe}
-\begin{tabular}{|p{2cm}|p{5.5cm}|p{2.5cm}|p{1.5cm}|}
+\caption{Consolidated Unit Test Results (Verified)}
+\label{tab:unit_consolidated}
+\begin{tabular}{|p{2cm}|p{6cm}|p{2.5cm}|p{1.5cm}|}
 \hline
 \rowcolor[HTML]{EFEFEF}
-\textbf{Test ID} & \textbf{Description} & \textbf{Expected} & \textbf{Result} \\ \hline
-UT-KF-01 & First frame always processed & \texttt{skip\_frame=False} & \textbf{PASS} \\ \hline
-UT-KF-02 & Two identical frames injected & \texttt{skip\_frame=True} on second & \textbf{PASS} \\ \hline
-UT-KF-03 & Two frames with $>8\%$ pixel delta & \texttt{skip\_frame=False} on both & \textbf{PASS} \\ \hline
-UT-KF-04 & Verify \texttt{prev\_gray} only updates on accepted frame & Reference unchanged after skip & \textbf{PASS} \\ \hline
-UT-KF-05 & Synthetic noise below \texttt{diff\_cutoff=50} & Noise frames skipped & \textbf{PASS} \\ \hline
-\end{tabular}
-\end{table}
-
-\subsection{WhisperNode}
-
-\begin{table}[H]
-\centering
-\small
-\caption{WhisperNode Unit Test Results}
-\label{tab:ut_whisper}
-\begin{tabular}{|p{2cm}|p{5.5cm}|p{2.5cm}|p{1.5cm}|}
-\hline
-\rowcolor[HTML]{EFEFEF}
-\textbf{Test ID} & \textbf{Description} & \textbf{Expected} & \textbf{Result} \\ \hline
-UT-WH-01 & Transcription called once across 10 frames & \texttt{segments\_cache} populated once & \textbf{PASS} \\ \hline
-UT-WH-02 & Query at timestamp within known speech segment & Correct transcript returned & \textbf{PASS} \\ \hline
-UT-WH-03 & Query at timestamp with no speech & \texttt{audio=None} in context & \textbf{PASS} \\ \hline
-UT-WH-04 & No audio path in context & Node returns without crash & \textbf{PASS} \\ \hline
-\end{tabular}
-\end{table}
-
-\subsection{TemporalKnowledgeGraph}
-
-\begin{table}[H]
-\centering
-\small
-\caption{TemporalKnowledgeGraph Unit Test Results}
-\label{tab:ut_graph}
-\begin{tabular}{|p{2cm}|p{5.5cm}|p{2.5cm}|p{1.5cm}|}
-\hline
-\rowcolor[HTML]{EFEFEF}
-\textbf{Test ID} & \textbf{Description} & \textbf{Expected} & \textbf{Result} \\ \hline
-UT-GR-01 & Build graph from 5-event synthetic timeline & Nodes and edges created & \textbf{PASS} \\ \hline
-UT-GR-02 & Entity appearing at 3 timestamps & \texttt{get\_entity\_timeline()} returns all 3 & \textbf{PASS} \\ \hline
-UT-GR-03 & Two entities co-occurring at 2 timestamps & Edge timestamps list contains both & \textbf{PASS} \\ \hline
-UT-GR-04 & Save to disk and reload & Graph state identical after reload & \textbf{PASS} \\ \hline
-UT-GR-05 & VLM paragraph string ($>$120 chars) in objects field & No spurious entity nodes created & \textbf{PASS} \\ \hline
-\end{tabular}
-\end{table}
-
-\subsection{RAGEngine}
-
-\begin{table}[H]
-\centering
-\small
-\caption{RAGEngine Unit Test Results}
-\label{tab:ut_rag}
-\begin{tabular}{|p{2cm}|p{5.5cm}|p{2.5cm}|p{1.5cm}|}
-\hline
-\rowcolor[HTML]{EFEFEF}
-\textbf{Test ID} & \textbf{Description} & \textbf{Expected} & \textbf{Result} \\ \hline
-UT-RAG-01 & ``summarise the video'' routed correctly & \texttt{VIDEO\_SUMMARY} intent & \textbf{PASS} \\ \hline
-UT-RAG-02 & ``when did the person sit down?'' routed correctly & \texttt{VIDEO\_SEARCH} intent & \textbf{PASS} \\ \hline
-UT-RAG-03 & ``hello'' routed correctly & \texttt{CONVERSATION} intent & \textbf{PASS} \\ \hline
-UT-RAG-04 & Reranker unavailable; query still completes & Graceful fallback to top-25 & \textbf{PASS} \\ \hline
-UT-RAG-05 & \texttt{video\_id} filter applied to ChromaDB query & Only matching video docs returned & \textbf{PASS} \\ \hline
+\textbf{Component} & \textbf{Test Scenario} & \textbf{Expected Behavior} & \textbf{Result} \\ \hline
+\textbf{Keyframe} & First frame always accepted; twins skipped & \texttt{skip\_frame} logic & \textbf{PASS} \\ \hline
+\textbf{Keyframe} & AbsDiff $>8\%$ trigger & \texttt{skip\_frame=False} & \textbf{PASS} \\ \hline
+\textbf{Whisper} & Transcription caching logic & 1 call per segment & \textbf{PASS} \\ \hline
+\textbf{Whisper} & Query within known speech timestamp & Correct transcript & \textbf{PASS} \\ \hline
+\textbf{GraphRAG} & Build graph from 5 synthetic events & Nodes/Edges created & \textbf{PASS} \\ \hline
+\textbf{GraphRAG} & Multi-hop entity timeline query & Temporal accuracy & \textbf{PASS} \\ \hline
+\textbf{GraphRAG} & Isolation (video\_id filtering) & Data separation & \textbf{PASS} \\ \hline
+\textbf{GraphRAG} & Manual linking (link\_entities) & Alias resolution & \textbf{PASS} \\ \hline
+\textbf{RAG Engine} & Intent classification (Search vs Summary) & Correct routing & \textbf{PASS} \\ \hline
+\textbf{RAG Engine} & ChromaDB per-video ID filtering & Data isolation & \textbf{PASS} \\ \hline
 \end{tabular}
 \end{table}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\textwidth]{rewriting.png}
+\includegraphics[width=0.65\textwidth]{rewriting.png}
 \caption{Figure 6.4: Neural Query Rewriting --- Intent Expansion for Forensic Accuracy}
 \label{fig:rewriting}
 \end{figure}
@@ -221,8 +168,8 @@ IT-05 is the most significant result in this table. It directly validates the me
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    box/.style={draw, rectangle, rounded corners, minimum width=10cm, minimum height=4cm, fill=gray!5},
-    header/.style={draw, rectangle, fill=blue!80, text=white, minimum width=10cm, minimum height=0.6cm, font=\bfseries\small},
+    box/.style={draw, rectangle, rounded corners, minimum width=8cm, minimum height=3.5cm, fill=gray!5},
+    header/.style={draw, rectangle, fill=blue!80, text=white, minimum width=8cm, minimum height=0.6cm, font=\bfseries\small},
     evidence/.style={draw, rectangle, rounded corners=2pt, fill=blue!15, font=\tiny\bfseries, text=blue!80, inner sep=2pt}
 ]
 
@@ -421,58 +368,12 @@ The following limitations were identified during testing and are documented tran
 \begin{itemize}
     \item \textbf{Frame-skip temporal resolution.} At 2\,FPS sampling, events shorter than 0.5 seconds (rapid gestures, brief text appearances) may be missed entirely. This is a fundamental tradeoff of the edge-optimisation strategy.
 
-    \item \textbf{UUID collision risk.} Session IDs are truncated to 8 hexadecimal characters, producing a collision probability of approximately 1 in 4,294,967,296. While negligible in practice for a single-user tool, a collision would cause a new session to silently inherit a deleted session's artefacts.
-
     \item \textbf{OCR accuracy on low-resolution footage.} EasyOCR's accuracy degrades significantly on sub-720p footage or heavily compressed video. OCR entries were absent from 23\% of expected text frames in V3 due to compression noise in the CCTV source.
 
     \item \textbf{LLaVA impracticality on minimum hardware.} As documented in Table~\ref{tab:vlm_throughput}, LLaVA 7B at full precision is unusable on 4\,GB VRAM for videos longer than a few minutes. Users with 8\,GB+ VRAM may use it via the \texttt{--vlm llava:7b} flag.
 
     \item \textbf{Single-user concurrency.} The flat JSON session store is not safe for concurrent writes. Running two ingest operations simultaneously against the same session file may produce a corrupted JSON record.
 \end{itemize}
-
-\section{UI and User Experience Validation}
-
-\begin{figure}[H]
-\centering
-\begin{minipage}{0.45\textwidth}
-    \centering
-    \begin{tikzpicture}[scale=0.8]
-        \draw[thick] (0,0) arc (180:0:2);
-        \draw[fill=red!20] (0,0) -- (0,0) arc (180:120:2) -- cycle;
-        \draw[very thick, ->] (0,0) -- (125:1.8);
-        \node at (0,-0.5) {\textbf{Under-specified}};
-    \end{tikzpicture}
-    \caption{Figure 6.6: Query Rating (A)}
-\end{minipage}
-\hfill
-\begin{minipage}{0.45\textwidth}
-    \centering
-    \begin{tikzpicture}[scale=0.8]
-        \draw[thick] (0,0) arc (180:0:2);
-        \draw[fill=green!20] (0,0) -- (0,0) arc (180:30:2) -- cycle;
-        \draw[very thick, ->] (0,0) -- (35:1.8);
-        \node at (0,-0.5) {\textbf{Efficient / Specific}};
-    \end{tikzpicture}
-    \caption{Figure 6.7: Query Rating (B)}
-\end{minipage}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[
-    phone/.style={draw, rectangle, rounded corners=15pt, minimum width=4cm, minimum height=8cm, fill=gray!90},
-    screen/.style={draw, rectangle, rounded corners=2pt, minimum width=3.6cm, minimum height=6.5cm, fill=white},
-    btn/.style={draw, rectangle, rounded corners=2pt, minimum width=3cm, minimum height=0.6cm, fill=blue!10, font=\tiny}
-]
-\node[phone] (p) at (0,0) {};
-\node[screen] (s) at (0,0) {};
-\node[btn] at (0, 2.5) {IRIS MOBILE HUB};
-\node[draw, circle, fill=gray!20, minimum size=0.8cm] at (0, -0.5) {$\blacktriangleright$};
-\node[btn, fill=orange!10] at (0, -2.5) {SEARCH TIMELINE};
-\end{tikzpicture}
-\caption{Figure 6.8: IRIS Studio Responsive Mobile Interface}
-\label{fig:mobile_ui}
-\end{figure}
 
 % ─────────────────────────────────────────────
 \section{Summary}

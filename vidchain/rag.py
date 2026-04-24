@@ -47,6 +47,7 @@ class RAGEngine:
         top_k: int = 40,          
         rerank_top_k: int = 25,    
         temporal_window: int = 2, 
+        kb_dir: Optional[str] = None,
     ):
         self.model_name = model_name
         self.vector_store = vector_store
@@ -54,6 +55,7 @@ class RAGEngine:
         self.top_k = top_k
         self.rerank_top_k = rerank_top_k
         self.temporal_window = temporal_window
+        self.kb_dir = kb_dir
         
         # Load Reranker once to save VRAM later
         print(f"[INFO] Booting IRIS Reranker...")
@@ -253,11 +255,51 @@ class RAGEngine:
                     # Reroute to a detailed conversational report using the search context
                     user_question = f"Provide a detailed forensic summary based on these observations: {user_question}"
                 else:
-                    return "I cannot summarize the video without its knowledge base. Please re-ingest the video source first."
+                    err_msg = "I cannot summarize the video without its knowledge base. Please re-ingest the video source first."
+                    if "return_raw" in kwargs:
+                        return {"answer": err_msg, "telemetry": {}, "confidence": 0}
+                    return err_msg
             else:
+                video_id = kwargs.get("video_id")
+                # ── Instant Recall Check ────────────────────────────────
+                if self.kb_dir and video_id:
+                    kb_path = os.path.join(self.kb_dir, f"{video_id}.json")
+                    if os.path.exists(kb_path):
+                        try:
+                            with open(kb_path, "r", encoding="utf-8") as f:
+                                kb_data = json.load(f)
+                                if kb_data.get("summary"):
+                                    print(f"[IRIS] Instant Recall: Summary retrieved from cache for {video_id}")
+                                    cached_answer = kb_data["summary"]
+                                    if "return_raw" in kwargs:
+                                        return {"answer": cached_answer, "telemetry": {}, "confidence": 100}
+                                    return cached_answer
+                        except: pass
+
                 print(f"[Agentic AI] Summarizing {len(timeline)} forensic events...")
                 summarizer = VideoSummarizer(model_name=self.model_name)
-                return summarizer.generate(timeline, mode="detailed")
+                answer = summarizer.generate(timeline, mode="detailed")
+                
+                # ── Cache for Future Retrieval ──────────────────────────
+                if self.kb_dir and video_id:
+                    kb_path = os.path.join(self.kb_dir, f"{video_id}.json")
+                    if os.path.exists(kb_path):
+                        try:
+                            with open(kb_path, "r", encoding="utf-8") as f:
+                                kb_data = json.load(f)
+                            kb_data["summary"] = answer
+                            with open(kb_path, "w", encoding="utf-8") as f:
+                                json.dump(kb_data, f, indent=4, ensure_ascii=False)
+                            print(f"[IRIS] Intelligence archived for {video_id}")
+                        except: pass
+
+                if "return_raw" in kwargs:
+                    return {
+                        "answer": answer,
+                        "telemetry": {},
+                        "confidence": 100
+                    }
+                return answer
 
         # ── PHASE 3: FORENSIC QUERY ─────────────────────────────────
         if intent == "VIDEO_SEARCH":

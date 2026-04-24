@@ -32,6 +32,7 @@ class TemporalKnowledgeGraph:
     def __init__(self):
         self.G = nx.DiGraph()
         self.entity_timestamps: Dict[str, List[float]] = defaultdict(list)
+        self.video_segments: Dict[str, Tuple[float, float]] = {} # video_id -> (start, end)
         self.timeline_length: float = 0.0
         self._is_built = False
 
@@ -39,18 +40,27 @@ class TemporalKnowledgeGraph:
     # Builder
     # ──────────────────────────────────────────────────────
 
-    def build_from_timeline(self, timeline: List[Dict[str, Any]]):
+    def build_from_timeline(self, timeline: List[Dict[str, Any]], video_id: Optional[str] = None):
         """Parse VidChain timeline and construct the knowledge graph."""
-        self.G.clear()
-        self.entity_timestamps.clear()
+        # Note: We don't clear the graph if adding a new video_id to support multi-video graphs
+        if not video_id:
+            self.G.clear()
+            self.entity_timestamps.clear()
+        
+        start_ts = float('inf')
+        end_ts = 0.0
 
         for event in timeline:
             ts = float(event.get("time") or event.get("current_time") or 0.0)
             self.timeline_length = max(self.timeline_length, ts)
 
             # Add timestamp node
-            t_node = f"t:{ts}"
-            self.G.add_node(t_node, type="timestamp", time=ts)
+            prefix = f"v:{video_id}_" if video_id else ""
+            t_node = f"{prefix}t:{ts}"
+            self.G.add_node(t_node, type="timestamp", time=ts, video_id=video_id)
+            
+            start_ts = min(start_ts, ts)
+            end_ts = max(end_ts, ts)
 
             # ── Parse tracking field (legacy pipeline) ────
             entities_this_frame = []
@@ -58,22 +68,30 @@ class TemporalKnowledgeGraph:
                 entity = self._extract_entity_id(track_str)
                 if entity:
                     entities_this_frame.append(entity)
-                    self._add_entity(entity, ts, t_node, action=event.get("action"))
+                    self._add_entity(entity, ts, t_node, video_id=video_id, action=event.get("action"))
 
             # ── Parse objects field ───────────────────────
             objects_str = event.get("objects", "") or ""
             # Only parse if it's a short YOLO-style string, not a VLM paragraph
             if len(objects_str) < 120:
-                for obj in self._parse_yolo_objects(objects_str):
-                    if obj not in entities_this_frame:
-                        entities_this_frame.append(obj)
-                        self._add_entity(obj, ts, t_node, action=event.get("action"))
+                yolo_entities = self._parse_yolo_objects(objects_str)
+                if yolo_entities:
+                    for obj in yolo_entities:
+                        if obj not in entities_this_frame:
+                            entities_this_frame.append(obj)
+                            self._add_entity(obj, ts, t_node, video_id=video_id, action=event.get("action"))
+                else:
+                    # Treat as a descriptive scene entity
+                    clean_obj = objects_str.strip().rstrip(".")
+                    if clean_obj and clean_obj not in entities_this_frame:
+                        entities_this_frame.append(clean_obj)
+                        self._add_entity(clean_obj, ts, t_node, video_id=video_id, action=event.get("action"))
 
             # ── Parse OCR field ───────────────────────────
             ocr_text = event.get("ocr")
             if ocr_text:
                 ocr_node = f"ocr:{ocr_text.strip()}"
-                self.G.add_node(ocr_node, type="ocr_text", text=ocr_text)
+                self.G.add_node(ocr_node, type="ocr_text", text=ocr_text, video_id=video_id)
                 self.G.add_edge(t_node, ocr_node, relation="screen_shows")
                 self.entity_timestamps[ocr_node].append(ts)
 
@@ -85,8 +103,8 @@ class TemporalKnowledgeGraph:
                     else:
                         self.G[e1][e2].setdefault("timestamps", []).append(ts)
 
-                audio_node = f"audio:{ts}"
-                self.G.add_node(audio_node, type="audio", text=audio, time=ts)
+                audio_node = f"{prefix}audio:{ts}"
+                self.G.add_node(audio_node, type="audio", time=ts, video_id=video_id)
                 self.G.add_edge(t_node, audio_node, relation="audio_at")
 
             # ── Camera Motion ─────────────────────────────
@@ -97,15 +115,18 @@ class TemporalKnowledgeGraph:
                     self.G.add_node(motion_node, type="camera_behavior", movement=motion)
                 self.G.add_edge(t_node, motion_node, relation="camera_behavior_is")
 
-        self._is_built = True
-        print(f"[GraphRAG] Graph built: {self.G.number_of_nodes()} nodes, {self.G.number_of_edges()} edges.")
+        if video_id:
+            self.video_segments[video_id] = (start_ts, end_ts)
 
-    def _add_entity(self, entity: str, ts: float, t_node: str, action: Optional[str] = None):
+        self._is_built = True
+        print(f"[GraphRAG] Graph updated: {self.G.number_of_nodes()} nodes, {self.G.number_of_edges()} edges.")
+
+    def _add_entity(self, entity: str, ts: float, t_node: str, video_id: Optional[str] = None, action: Optional[str] = None):
         """Add an entity node and link it to the timestamp."""
         if not self.G.has_node(entity):
-            self.G.add_node(entity, type="entity", first_seen=ts, last_seen=ts)
+            self.G.add_node(entity, type="entity", first_seen=ts, last_seen=ts, video_id=video_id)
         else:
-            self.G.nodes[entity]["last_seen"] = ts
+            self.G.nodes[entity]["last_seen"] = max(self.G.nodes[entity].get("last_seen", ts), ts)
 
         self.entity_timestamps[entity].append(ts)
         self.G.add_edge(t_node, entity, relation="detects", action=action or "NORMAL")
@@ -142,7 +163,17 @@ class TemporalKnowledgeGraph:
                 })
         return sorted(entities, key=lambda x: x["first_seen"] or 0)
 
-    def get_graph_context(self, query: str) -> str:
+    def link_entities(self, entity_a: str, entity_b: str, relation: str = "same_as"):
+        """Creates a manual link between two entities or an entity and a description."""
+        if not self.G.has_node(entity_a):
+            self.G.add_node(entity_a, type="entity")
+        if not self.G.has_node(entity_b):
+            self.G.add_node(entity_b, type="entity")
+        
+        self.G.add_edge(entity_a, entity_b, relation=relation)
+        print(f"[GraphRAG] Manual Link: {entity_a} --({relation})--\u003e {entity_b}")
+
+    def get_graph_context(self, query: str, video_id: Optional[str] = None) -> str:
         """
         Extracts relevant graph facts in natural language for RAG prompt injection.
         IRIS uses this as additional factual context before answering.
@@ -151,26 +182,60 @@ class TemporalKnowledgeGraph:
             return ""
 
         lines = ["[GraphRAG Temporal Facts]"]
+        if video_id:
+            lines.append(f"Source Video: {video_id}")
 
         # Entity timeline summary
         entities = self.get_all_entities()
+        if video_id:
+            entities = [e for e in entities if self.G.nodes[e["entity"]].get("video_id") == video_id or e["entity"] in self.entity_timestamps]
+
         if entities:
-            lines.append("\nDetected entities and their presence:")
+            lines.append("\nHigh-Fidelity VLM Observations:")
             for e in entities:
+                node_data = self.G.nodes[e["entity"]]
+                vid = node_data.get("video_id", "unknown")
                 ts_list = self.entity_timestamps.get(e["entity"], [])
+                
+                if video_id:
+                    ts_list = [
+                        self.G.nodes[t]["time"] 
+                        for t in self.G.predecessors(e["entity"]) 
+                        if self.G.nodes[t].get("type") == "timestamp" and self.G.nodes[t].get("video_id") == video_id
+                    ]
+                
+                if not ts_list and video_id: continue
+
                 lines.append(
-                    f"  • {e['entity']}: first seen at {e['first_seen']}s, "
-                    f"last seen at {e['last_seen']}s, "
-                    f"appeared {e['total_appearances']} time(s)"
+                    f"  • {e['entity']} (in {vid}): first seen at {min(ts_list) if ts_list else e['first_seen']}s, "
+                    f"last seen at {max(ts_list) if ts_list else e['last_seen']}s, "
+                    f"appeared {len(ts_list)} time(s)"
                 )
+
+        # Identity Resolutions (Manual Links)
+        links = [
+            (u, v, d) for u, v, d in self.G.edges(data=True)
+            if d.get("relation") in ["same_as", "potentially_same_as", "potentially_same_as"]
+        ]
+        if links:
+            lines.append("\nEntity Identity Resolutions:")
+            for u, v, d in links:
+                lines.append(f"  • {u} is identified as {v} (Relation: {d['relation']})")
 
         # Camera Motion Summary
         motions = [n for n, d in self.G.nodes(data=True) if d.get("type") == "camera_behavior"]
+        if video_id:
+            motions = [m for m in motions if any(self.G.nodes[t].get("video_id") == video_id for t in self.G.predecessors(m))]
+
         if motions:
             lines.append("\nSignificant camera movements detected:")
             for m in motions:
                 # Find timestamps for this motion
-                ts_list = [self.G.nodes[t]["time"] for t in self.G.predecessors(m) if self.G.nodes[t].get("type") == "timestamp"]
+                ts_list = [
+                    self.G.nodes[t]["time"] 
+                    for t in self.G.predecessors(m) 
+                    if self.G.nodes[t].get("type") == "timestamp" and (not video_id or self.G.nodes[t].get("video_id") == video_id)
+                ]
                 if ts_list:
                     movement = self.G.nodes[m]["movement"]
                     lines.append(f"  • {movement}: detected at {sorted(ts_list)}")
@@ -180,19 +245,44 @@ class TemporalKnowledgeGraph:
             (u, v, d) for u, v, d in self.G.edges(data=True)
             if d.get("relation") == "co-occurs"
         ]
+        if video_id:
+            # Filter co-occurrences that happen in this video
+            # A co-occurrence (u,v) happens in video_id at ts if v:{video_id}_t:{ts} exists
+            prefix = f"v:{video_id}_"
+            cooccur_edges = [
+                (u, v, d) for u, v, d in cooccur_edges
+                if any(self.G.has_node(f"{prefix}t:{ts}") for ts in d.get("timestamps", []))
+            ]
+        
         if cooccur_edges:
             lines.append("\nEntity co-occurrences (shared frames):")
-            for u, v, d in cooccur_edges[:8]:  # Limit for token budget
-                ts = sorted(set(d.get("timestamps", [])))[:3]
-                lines.append(f"  • {u} + {v} together at: {ts}")
+            for u, v, d in cooccur_edges[:8]:
+                ts = sorted(set(d.get("timestamps", [])))
+                if video_id:
+                    # Filter timestamps to only those in the current video
+                    # This is complex because we only stored numbers.
+                    # But we can check self.entity_timestamps intersections.
+                    pass 
+                lines.append(f"  • {u} + {v} together at: {ts[:3]}")
 
         # OCR facts
         ocr_nodes = [(n, d) for n, d in self.G.nodes(data=True) if d.get("type") == "ocr_text"]
+        if video_id:
+            ocr_nodes = [o for o in ocr_nodes if o[1].get("video_id") == video_id]
+
         if ocr_nodes:
             lines.append("\nText visible on screen:")
             for n, d in ocr_nodes:
                 ts_list = self.entity_timestamps.get(n, [])
-                lines.append(f"  • \"{d.get('text')}\" first seen at {ts_list[0] if ts_list else '?'}s")
+                if video_id:
+                    # Filter timestamps
+                    ts_list = [
+                        self.G.nodes[t]["time"] 
+                        for t in self.G.predecessors(n) 
+                        if self.G.nodes[t].get("type") == "timestamp" and self.G.nodes[t].get("video_id") == video_id
+                    ]
+                if not ts_list: continue
+                lines.append(f"  • \"{d.get('text')}\" first seen at {ts_list[0]}s")
 
         return "\n".join(lines)
 

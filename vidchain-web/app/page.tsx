@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Activity, Mic, MicOff, AlertTriangle } from "lucide-react";
+import { Send, Activity, Shield, Crosshair, FileText, Plus, Search, Play, Clock, CheckCircle2, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Sidebar } from "./components/Sidebar";
@@ -29,7 +29,6 @@ export default function VidChainDashboard() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
-  // Desktop: inline collapsed. Tablet: overlay.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [telemetryOpen, setTelemetryOpen] = useState(false);
@@ -37,7 +36,6 @@ export default function VidChainDashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [videoPath, setVideoPath] = useState("");
   const [query, setQuery] = useState("");
-  const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [serverOnline, setServerOnline] = useState(false);
   const [isIngesting, setIsIngesting] = useState(false);
   const [isQuerying, setIsQuerying] = useState(false);
@@ -45,6 +43,7 @@ export default function VidChainDashboard() {
   const [liveStatus, setLiveStatus] = useState("Idle");
   const [hardwareStats, setHardwareStats] = useState({ cpu: 0, gpu: 0, vram: 0 });
   const [activeVideoPath, setActiveVideoPath] = useState<string | null>(null);
+  const [sessionTitle, setSessionTitle] = useState("");
   const [activeMetadata, setActiveMetadata] = useState<any[]>([]);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
@@ -58,6 +57,7 @@ export default function VidChainDashboard() {
   const logsEndRef = useRef<HTMLDivElement>(null);
   const ingestPollRef = useRef<NodeJS.Timeout | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<any>(null);
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
@@ -110,7 +110,7 @@ export default function VidChainDashboard() {
             setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, message_count: sData.messages?.length ?? 0 } : s));
           }
           setSessionState(status === "Error" ? "awaiting_video" : "ready");
-          if (status === "Idle") { pushNotification("Chat unlocked."); addLog("Ingest complete.", "success"); setTimeout(() => queryInputRef.current?.focus(), 200); }
+          if (status === "Idle") { pushNotification("Analysis Ready."); addLog("Ingest complete.", "success"); setTimeout(() => queryInputRef.current?.focus(), 200); }
           else addLog("Ingest failed.", "error");
         }
       } catch {}
@@ -120,54 +120,38 @@ export default function VidChainDashboard() {
   const loadSession = useCallback(async (sessionId: string) => {
     if (ingestPollRef.current) clearInterval(ingestPollRef.current);
     setActiveSessionId(sessionId);
-    setSidebarOpen(false); // close overlay on tablet
+    setSidebarOpen(false);
     try {
       const res = await fetch(`${API_BASE}/api/sessions/${sessionId}`);
       if (!res.ok) return;
       const data = await res.json();
       setMessages(data.messages ?? []);
       if (data.video_id) {
-        // Prefer the actual file path for playback, fall back to ID
         setActiveVideoPath(data.video_path || data.video_id);
         const sRes = await fetch(`${API_BASE}/api/sessions/${sessionId}/status`);
         if (sRes.ok) {
           const sData = await sRes.json();
           const status = sData.status || "Idle";
           setLiveStatus(status);
-          if (status === "Idle" || status === "Error") { 
-            setSessionState("ready"); 
-            setIsIngesting(false); 
-          }
-          else { 
-            setSessionState("ingesting"); 
-            setIsIngesting(true); 
-            startIngestPoll(sessionId); 
-          }
-        } else {
-          setSessionState("ready");
-        }
+          if (status === "Idle" || status === "Error") { setSessionState("ready"); setIsIngesting(false); }
+          else { setSessionState("ingesting"); setIsIngesting(true); startIngestPoll(sessionId); }
+        } else { setSessionState("ready"); }
         const mRes = await fetch(`${API_BASE}/api/knowledge/${data.video_id}`);
-        if (mRes.ok) { 
-          const mData = await mRes.json(); 
-          setActiveMetadata(mData.timeline || []); 
-        }
+        if (mRes.ok) { const mData = await mRes.json(); setActiveMetadata(mData.timeline || []); }
       } else {
-        setActiveVideoPath(null); 
-        setActiveMetadata([]); 
-        setSessionState("awaiting_video");
+        setActiveVideoPath(null); setActiveMetadata([]); setSessionState("awaiting_video");
       }
     } catch { addLog("Failed to load session.", "error"); }
   }, [addLog, startIngestPoll]);
 
-  const createSession = async () => {
+  const createNewSession = async () => {
     if (ingestPollRef.current) clearInterval(ingestPollRef.current);
-    // DEFERRED CREATION: Don't hit the API yet.
-    // Set a "pending" ID so the UI knows we are starting a new discovery.
     setActiveSessionId("pending_insight");
     setMessages([]);
     setActiveVideoPath(null);
     setActiveMetadata([]);
     setVideoPath("");
+    setSessionTitle("");
     setIsIngesting(false);
     setSessionState("awaiting_video");
     setSidebarOpen(false);
@@ -184,23 +168,16 @@ export default function VidChainDashboard() {
     if (!sessionToDelete) return;
     const sessionId = sessionToDelete.id;
     setDeleteModalOpen(false);
-
     if (ingestPollRef.current && activeSessionId === sessionId) clearInterval(ingestPollRef.current);
     try {
       await fetch(`${API_BASE}/api/sessions/${sessionId}`, { method: "DELETE" });
       setSessions(prev => prev.filter(s => s.id !== sessionId));
       if (activeSessionId === sessionId) { 
-        setActiveSessionId(null); 
-        setMessages([]); 
-        setActiveVideoPath(null); 
-        setActiveMetadata([]);
-        setSessionState("no_session"); 
-        setIsIngesting(false); 
+        setActiveSessionId(null); setMessages([]); setActiveVideoPath(null); 
+        setActiveMetadata([]); setSessionState("no_session"); setIsIngesting(false); 
       }
-      pushNotification("Insight deleted.");
-    } catch {
-      addLog("Failed to delete session.", "error");
-    }
+      pushNotification("Session Erased.");
+    } catch { addLog("Deletion failed.", "error"); }
   };
 
   const commitRename = async () => {
@@ -214,20 +191,15 @@ export default function VidChainDashboard() {
 
   const handleIngest = async () => {
     if (!videoPath.trim() || isIngesting || !activeSessionId) return;
-    
     let sessionId = activeSessionId;
     setIsIngesting(true);
     setSessionState("ingesting");
-
-    addLog(`Preparing Insight: ${videoPath.split(/[/\\]/).pop()}`, "info");
-
+    addLog(`Loading: ${videoPath.split(/[/\\]/).pop()}`, "info");
     try {
-      // If the session is still "pending", create it now!
       if (sessionId === "pending_insight") {
         const sRes = await fetch(`${API_BASE}/api/sessions`, { 
-          method: "POST", 
-          headers: { "Content-Type": "application/json" }, 
-          body: JSON.stringify({ title: "New Insight Session" }) 
+          method: "POST", headers: { "Content-Type": "application/json" }, 
+          body: JSON.stringify({ title: sessionTitle.trim() || "Untitled Session" }) 
         });
         if (sRes.ok) {
           const sData = await sRes.json();
@@ -236,10 +208,8 @@ export default function VidChainDashboard() {
           setSessions(prev => [{ ...sData, message_count: 0 }, ...prev]);
         } else { throw new Error("Session init failed"); }
       }
-
       const res = await fetch(`${API_BASE}/api/ingest`, { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
+        method: "POST", headers: { "Content-Type": "application/json" }, 
         body: JSON.stringify({ video_source: videoPath, session_id: sessionId }) 
       });
       const data = await res.json();
@@ -248,16 +218,8 @@ export default function VidChainDashboard() {
         setVideoPath("");
         setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, video_id: data.video_id } : s));
         startIngestPoll(sessionId);
-      } else { 
-        addLog(data.detail || "Analysis rejected.", "error"); 
-        setIsIngesting(false); 
-        setSessionState("awaiting_video"); 
-      }
-    } catch (err) { 
-      addLog("Analysis interrupted.", "error"); 
-      setIsIngesting(false); 
-      setSessionState("awaiting_video"); 
-    }
+      } else { addLog(data.detail || "Analysis rejected.", "error"); setIsIngesting(false); setSessionState("awaiting_video"); }
+    } catch (err) { addLog("Analysis failed.", "error"); setIsIngesting(false); setSessionState("awaiting_video"); }
   };
 
   const handleQuery = async (e?: React.FormEvent) => {
@@ -270,28 +232,36 @@ export default function VidChainDashboard() {
       const data = await res.json();
       setMessages(prev => [...prev, { id: `b-${Date.now()}`, sender: "iris", text: data.response ?? "No response.", timestamp: timeStr(), confidence: data.confidence, telemetry: data.telemetry }]);
       setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, message_count: s.message_count + 2 } : s));
-    } catch { addLog("Reasoning engine offline.", "error"); }
+    } catch { addLog("Uplink failed.", "error"); }
     finally { setIsQuerying(false); setTimeout(() => queryInputRef.current?.focus(), 100); }
   };
 
   const exportInsightReport = () => {
     if (!activeSessionId) return;
     const body = messages.map(m => `### ${m.sender.toUpperCase()} [${m.timestamp}]\n${m.text}`).join("\n\n");
-    const blob = new Blob([`# IRIS Insight Report\n\n${body}`], { type: "text/markdown" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `IRIS_Report_${activeSessionId.slice(0, 8)}.md`; a.click();
+    const blob = new Blob([`# Video Insights\n\n${body}`], { type: "text/markdown" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `Insights_${activeSessionId.slice(0, 8)}.md`; a.click();
   };
 
   const jumpToContext = (ts: string) => {
     if (!videoRef.current) return;
     const match = ts.match(/\[([\d.]+)s\]/);
-    if (match) {
-      videoRef.current.currentTime = parseFloat(match[1]);
-      videoRef.current.play();
-      addLog(`Jumped to ${match[1]}s context`, "info");
-    }
+    if (match) { videoRef.current.currentTime = parseFloat(match[1]); videoRef.current.play(); }
+  };
+
+  const copyMessage = (t: string) => {
+    navigator.clipboard.writeText(t);
+    pushNotification("Copied to clipboard.");
+  };
+
+  const startRename = (s: Session, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenamingId(s.id);
+    setRenameValue(s.title);
   };
 
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages]);
+  useEffect(() => { if (logsEndRef.current) logsEndRef.current.scrollIntoView({ behavior: "smooth" }); }, [logs]);
 
   useEffect(() => {
     if (!activeSessionId || isIngesting) return;
@@ -315,215 +285,131 @@ export default function VidChainDashboard() {
   const telemetryProps = {
     activeVideoPath, videoRef, videoPlaying, setVideoPlaying, videoCurrentTime, setVideoCurrentTime,
     videoDuration, setVideoDuration, activeMetadata, liveStatus, logs, logsEndRef,
-    serverOnline, isIngesting, vlmActive, ocrActive, audioActive, trackerActive, graphActive, hardwareStats,
+    serverOnline, isIngesting, hardwareStats,
   };
 
-  // Web pattern background for landing states
-  const WebPattern = () => (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      <svg className="absolute inset-0 w-full h-full opacity-[0.04]" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="web" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-            <line x1="40" y1="0" x2="40" y2="80" stroke="#E8192C" strokeWidth="0.5"/>
-            <line x1="0" y1="40" x2="80" y2="40" stroke="#E8192C" strokeWidth="0.5"/>
-            <line x1="0" y1="0" x2="80" y2="80" stroke="#E8192C" strokeWidth="0.3"/>
-            <line x1="80" y1="0" x2="0" y2="80" stroke="#E8192C" strokeWidth="0.3"/>
-            <circle cx="40" cy="40" r="15" fill="none" stroke="#E8192C" strokeWidth="0.3"/>
-            <circle cx="40" cy="40" r="30" fill="none" stroke="#E8192C" strokeWidth="0.2"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#web)"/>
-      </svg>
-    </div>
-  );
-
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans">
+    <div className="flex h-screen bg-background overflow-hidden relative">
+      
+      <Sidebar
+        sessions={sessions} activeSessionId={activeSessionId} sidebarCollapsed={sidebarCollapsed}
+        setSidebarCollapsed={setSidebarCollapsed} loadSession={loadSession} createSession={createNewSession}
+        deleteSession={deleteSession} startRename={startRename} renamingId={renamingId}
+        renameValue={renameValue} setRenameValue={setRenameValue} commitRename={commitRename}
+        renameInputRef={renameInputRef}
+      />
 
-      {/* Tablet backdrops */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-black/70 z-30 lg:hidden" />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {telemetryOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setTelemetryOpen(false)}
-            className="fixed inset-0 bg-black/70 z-30 lg:hidden" />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar — desktop */}
-      <div className="hidden lg:flex shrink-0">
-        <Sidebar
-          sessions={sessions}
-          activeSessionId={activeSessionId}
-          sidebarCollapsed={sidebarCollapsed}
-          setSidebarCollapsed={setSidebarCollapsed}
-          loadSession={loadSession}
-          createSession={createSession}
-          deleteSession={deleteSession}
-          startRename={(s, e) => {
-            e.stopPropagation();
-            setRenamingId(s.id);
-            setRenameValue(s.title);
-          }}
-          renamingId={renamingId}
-          renameValue={renameValue}
-          setRenameValue={setRenameValue}
-          commitRename={commitRename}
-          renameInputRef={renameInputRef}
-        />
-      </div>
-
-      {/* Sidebar — tablet overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div initial={{ x: -260 }} animate={{ x: 0 }} exit={{ x: -260 }}
-            transition={{ type: "tween", duration: 0.18 }}
-            className="fixed left-0 top-0 h-full z-40 lg:hidden">
-            <Sidebar
-              sessions={sessions}
-              activeSessionId={activeSessionId}
-              sidebarCollapsed={false}
-              setSidebarCollapsed={() => setSidebarOpen(false)}
-              loadSession={loadSession}
-              createSession={createSession}
-              deleteSession={deleteSession}
-              startRename={(s, e) => {
-                e.stopPropagation();
-                setRenamingId(s.id);
-                setRenameValue(s.title);
-              }}
-              renamingId={renamingId}
-              renameValue={renameValue}
-              setRenameValue={setRenameValue}
-              commitRename={commitRename}
-              renameInputRef={renameInputRef}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main */}
-      <main className="flex-1 flex flex-col relative min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 bg-background relative">
         <IngestBar
-          sessionState={sessionState} activeSession={activeSession}
-          videoPath={videoPath} setVideoPath={setVideoPath}
-          handleIngest={handleIngest} isIngesting={isIngesting}
-          serverOnline={serverOnline} exportInsightReport={exportInsightReport}
-          liveStatus={liveStatus}
-          onToggleSidebar={() => setSidebarOpen(v => !v)}
-          onToggleTelemetry={() => setTelemetryOpen(v => !v)}
+          sessionState={sessionState} activeSession={activeSession} videoPath={videoPath}
+          setVideoPath={setVideoPath} handleIngest={handleIngest} isIngesting={isIngesting}
+          serverOnline={serverOnline} exportInsightReport={exportInsightReport} liveStatus={liveStatus}
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onSettingsClick={() => setSettingsOpen(true)}
+          onToggleTelemetry={() => {}}
         />
 
-        <div className="flex-1 relative flex flex-col min-h-0">
+        <div className="flex-1 flex overflow-hidden p-4 gap-4">
           <AnimatePresence mode="wait">
-
-            {/* No session */}
             {sessionState === "no_session" && (
-              <motion.div key="no-session" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                <WebPattern />
-                <div className="relative z-10 flex flex-col items-center">
-                  <h1 className="text-2xl font-black uppercase tracking-[0.2em] text-white mb-1">I R I S</h1>
-                  <p className="text-[9px] text-white/30 uppercase tracking-[0.3em] mb-8">Intelligent Video Assistant</p>
-                  <button onClick={createSession}
-                    className="px-8 py-3 rounded-full bg-sp-red text-white text-[11px] font-black uppercase tracking-widest hover:scale-105 hover:shadow-[0_0_30px_rgba(232,25,44,0.4)] transition-all">
-                    Launch IRIS Suite
-                  </button>
+              <motion.div key="landing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="flex-1 flex items-center justify-center">
+                <div className="max-w-md w-full panel p-10 text-center">
+                   <div className="w-16 h-16 bg-white rounded flex items-center justify-center mx-auto mb-6 shadow-xl">
+                      <Shield className="w-8 h-8 text-black" />
+                   </div>
+                   <h1 className="text-2xl font-bold mb-3 tracking-tighter uppercase">Hello, I'm IRIS</h1>
+                   <p className="text-muted-foreground text-sm mb-8 leading-relaxed font-medium">
+                      Your friendly neighborhood assistant. Just give me a video, and I'll help you explore its story.
+                   </p>
+                   
+                   <div className="space-y-4">
+                      <div className="relative group">
+                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-white transition-colors" />
+                         <input
+                           className="w-full bg-black border border-[#1a1a1a] rounded px-11 py-3 text-sm focus:outline-none focus:border-white transition-all font-medium"
+                           placeholder="Enter video path (e.g. C:\Videos\clip.mp4)"
+                           value={videoPath} onChange={e => setVideoPath(e.target.value)}
+                         />
+                      </div>
+                      <button onClick={handleIngest} disabled={!videoPath || isIngesting}
+                        className="btn-primary w-full h-12 flex items-center justify-center gap-2 disabled:opacity-30">
+                        {isIngesting ? <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : <Play className="w-4 h-4" />}
+                        Explore Video
+                      </button>
+                   </div>
+                   
+                   <div className="mt-10 grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded bg-[#0c0c0c] border border-[#1a1a1a] text-left">
+                         <span className="text-[10px] font-bold text-white uppercase block mb-1">Summarize</span>
+                         <span className="text-[9px] text-muted-foreground font-medium uppercase opacity-50">Friendly Overviews</span>
+                      </div>
+                      <div className="p-4 rounded bg-[#0c0c0c] border border-[#1a1a1a] text-left">
+                         <span className="text-[10px] font-bold text-white uppercase block mb-1">Explain</span>
+                         <span className="text-[9px] text-muted-foreground font-medium uppercase opacity-50">Detailed Insights</span>
+                      </div>
+                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* Awaiting video */}
             {sessionState === "awaiting_video" && (
-              <motion.div key="awaiting-video" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 flex flex-col items-center justify-center p-6 overflow-y-auto">
-                <WebPattern />
-                <div className="relative z-10 w-full max-w-md">
-                  <div className="mb-6 flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(232,25,44,0.3)] border border-white/10">
-                      <img src="/logo.png" alt="IRIS" className="w-full h-full object-cover" />
+              <motion.div key="new-session" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="flex-1 flex items-center justify-center">
+                <div className="w-full max-w-lg panel p-10 bg-[#080808] border border-[#1a1a1a]">
+                  <div className="flex items-center gap-5 mb-10">
+                    <div className="w-12 h-12 rounded bg-[#111] border border-[#222] flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-2 h-2 rounded-full bg-sp-blue-light animate-pulse" />
-                        <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/40">Visual Context Required</p>
-                      </div>
-                      <h2 className="text-xl font-black uppercase tracking-[0.15em] text-white">Upload Video</h2>
+                      <h2 className="text-xl font-bold text-white uppercase tracking-tight">New Session</h2>
+                      <p className="text-xs text-muted-foreground font-medium">Share a video with me to get started.</p>
                     </div>
                   </div>
-                  <p className="text-[10px] text-white/30 mb-8">Connect a video source for IRIS to analyze.</p>
-
-                  <div className="space-y-3">
-                    <input autoFocus
-                      className="w-full bg-sp-web border border-sp-border hover:border-sp-red/40 focus:border-sp-red rounded-xl px-4 py-3.5 text-[11px] font-mono text-white placeholder:text-white/20 transition-all focus:outline-none focus:ring-1 focus:ring-sp-red/20"
-                      placeholder="/absolute/path/to/video.mp4"
-                      value={videoPath} onChange={e => setVideoPath(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && handleIngest()} />
-                    <p className="text-[7px] text-white/20">MP4 · MKV · AVI — local paths only</p>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Session Title</label>
+                      <input className="w-full bg-black border border-[#1a1a1a] focus:border-white rounded px-4 py-2.5 text-[13px] text-white focus:outline-none transition-all font-medium"
+                        placeholder="e.g., Weekend Walk" value={sessionTitle} onChange={e => setSessionTitle(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-50">Video Path</label>
+                      <input autoFocus className="w-full bg-black border border-[#1a1a1a] focus:border-white rounded px-4 py-2.5 text-[13px] font-mono text-white focus:outline-none transition-all"
+                        placeholder="C:\Users\You\Videos\clip.mp4" value={videoPath} onChange={e => setVideoPath(e.target.value)} onKeyDown={e => e.key === "Enter" && handleIngest()} />
+                    </div>
                     <button onClick={handleIngest} disabled={!videoPath.trim()}
-                      className={cn("w-full py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all",
-                        videoPath.trim()
-                          ? "bg-sp-red text-white hover:bg-red-600 shadow-[0_0_20px_rgba(232,25,44,0.25)] hover:shadow-[0_0_30px_rgba(232,25,44,0.4)]"
-                          : "bg-sp-web border border-sp-border text-white/20 cursor-not-allowed")}>
-                      Analyze Video Source
+                      className={cn("w-full py-3 rounded font-bold text-[11px] uppercase tracking-widest transition-all",
+                        videoPath.trim() ? "bg-white text-black" : "bg-[#111] text-muted-foreground cursor-not-allowed border border-[#222]")}>
+                      Explore Video
                     </button>
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* Ingesting */}
             {sessionState === "ingesting" && (
               <motion.div key="ingesting" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                <WebPattern />
-                <div className="relative z-10 w-full max-w-sm">
-                  {/* Spinning web ring */}
-                  <div className="relative w-24 h-24 mx-auto mb-8">
-                    <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 96 96">
-                      <circle cx="48" cy="48" r="44" fill="none" stroke="#E8192C" strokeWidth="1"/>
-                      <circle cx="48" cy="48" r="30" fill="none" stroke="#E8192C" strokeWidth="0.5"/>
-                      <line x1="48" y1="4" x2="48" y2="92" stroke="#E8192C" strokeWidth="0.5"/>
-                      <line x1="4" y1="48" x2="92" y2="48" stroke="#E8192C" strokeWidth="0.5"/>
-                      <line x1="16" y1="16" x2="80" y2="80" stroke="#E8192C" strokeWidth="0.3"/>
-                      <line x1="80" y1="16" x2="16" y2="80" stroke="#E8192C" strokeWidth="0.3"/>
-                    </svg>
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-                      className="absolute inset-0 rounded-full border-2 border-transparent border-t-sp-red" />
-                    <motion.div animate={{ rotate: -360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                      className="absolute inset-4 rounded-full border border-transparent border-t-sp-blue-light/60" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-sp-red flex items-center justify-center">
-                        <Activity className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
+                className="flex-1 flex items-center justify-center">
+                <div className="w-full max-w-md panel p-12 text-center bg-[#080808]">
+                  <div className="mb-10">
+                    <Activity className="w-12 h-12 text-white mx-auto animate-pulse" />
+                  </div>
+                  <h2 className="text-lg font-bold text-white mb-2 uppercase tracking-widest">Exploring Memory</h2>
+                  <p className="text-xs text-muted-foreground mb-8 font-medium">Looking through the video for you...</p>
+                  
+                  <div className="bg-[#111] border border-[#1a1a1a] rounded p-4 mb-10 text-left">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Current Step</p>
+                    <p className="text-xs font-mono font-bold text-white truncate">{liveStatus || "Starting up..."}</p>
                   </div>
 
-                  <h2 className="text-sm font-black uppercase tracking-[0.25em] text-white mb-1">Optimizing Insights</h2>
-                  <p className="text-[9px] text-white/30 uppercase tracking-widest mb-6">Chat available shortly</p>
-
-                  <div className="bg-sp-web border border-sp-border rounded-xl px-4 py-3 mb-4 text-left">
-                    <p className="text-[7px] font-bold uppercase tracking-widest text-white/30 mb-1">Active Node</p>
-                    <motion.p key={liveStatus} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      className="text-[9px] font-mono text-sp-red truncate">
-                      {liveStatus === "Idle" ? "Finalizing..." : liveStatus || "Initializing..."}
-                    </motion.p>
-                  </div>
-
-                  <div className="space-y-2">
-                    {[{ label: "CPU", value: hardwareStats.cpu, color: "#F5C518" }, { label: "GPU", value: hardwareStats.gpu, color: "#E8192C" }, { label: "VRAM", value: hardwareStats.vram, color: "#2952C8" }].map(({ label, value, color }) => (
-                      <div key={label} className="flex items-center gap-3">
-                        <span className="text-[7px] font-bold text-white/30 w-8 text-right">{label}</span>
-                        <div className="flex-1 h-0.5 bg-white/5 rounded-full overflow-hidden">
-                          <motion.div animate={{ width: `${value}%` }} className="h-full rounded-full" style={{ backgroundColor: color }} />
+                  <div className="space-y-4">
+                    {[{ label: "CPU", value: hardwareStats.cpu }, { label: "GPU", value: hardwareStats.gpu }, { label: "MEM", value: hardwareStats.vram }].map(({ label, value }) => (
+                      <div key={label} className="flex items-center gap-4">
+                        <span className="text-[9px] font-bold text-muted-foreground w-8">{label}</span>
+                        <div className="flex-1 h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+                          <motion.div animate={{ width: `${value}%` }} className="h-full bg-white opacity-40" />
                         </div>
-                        <span className="text-[7px] font-mono text-white/30 w-7">{value}%</span>
+                        <span className="text-[9px] font-mono font-bold text-white/20 w-10">{value}%</span>
                       </div>
                     ))}
                   </div>
@@ -531,93 +417,105 @@ export default function VidChainDashboard() {
               </motion.div>
             )}
 
-            {/* Ready — chat */}
             {sessionState === "ready" && (
-              <ChatCanvas key="chat" messages={messages} isQuerying={isQuerying}
-                scrollRef={scrollRef} jumpToContext={jumpToContext}
-                copyMessage={t => { navigator.clipboard.writeText(t); pushNotification("Copied"); }} />
+              <motion.div key="workspace" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="flex-1 flex gap-4 overflow-hidden">
+                
+                <div className="w-[60%] flex flex-col gap-4 overflow-hidden">
+                   <div className="flex-1 panel overflow-hidden bg-black border border-[#1a1a1a]">
+                      <TelemetryPanel {...telemetryProps} layout="workstation" />
+                   </div>
+                </div>
+
+                <div className="w-[40%] flex flex-col gap-4 overflow-hidden">
+                   <div className="flex-1 panel overflow-hidden flex flex-col bg-[#080808] border border-[#1a1a1a] relative">
+                      <div className="px-6 py-4 border-b border-[#1a1a1a] flex items-center justify-between bg-[#080808]">
+                         <div className="flex items-center gap-2">
+                            <Shield className="w-3.5 h-3.5 text-white" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Assistant Hub</span>
+                         </div>
+                         <button onClick={exportInsightReport} className="text-[10px] font-bold text-muted-foreground hover:text-white transition-colors uppercase tracking-widest opacity-60">Save Notes</button>
+                      </div>
+                      
+                      <ChatCanvas
+                        messages={messages} isQuerying={isQuerying} scrollRef={scrollRef}
+                        jumpToContext={jumpToContext} copyMessage={copyMessage}
+                      />
+                      
+                      <div className="p-6 border-t border-[#1a1a1a] bg-black">
+                        <form onSubmit={handleQuery} className="flex items-center gap-2 bg-[#0c0c0e] border border-[#1a1a1a] rounded px-3 py-1.5 focus-within:border-white transition-all">
+                          <input ref={queryInputRef} className="flex-1 bg-transparent py-2 text-[13px] text-white placeholder:text-zinc-700 focus:outline-none min-w-0 font-medium"
+                            placeholder="Ask me anything about the video..." value={query} onChange={e => setQuery(e.target.value)} disabled={isQuerying} />
+                          <button type="submit" disabled={isQuerying || !query.trim()}
+                            className={cn("p-2 rounded transition-all",
+                              query.trim() && !isQuerying ? "text-white" : "text-muted-foreground/10 cursor-not-allowed")}>
+                            {isQuerying ? <Activity className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                          </button>
+                        </form>
+                        <p className="text-[9px] text-center mt-4 text-muted-foreground uppercase tracking-[0.2em] opacity-30 font-bold">
+                           Your Friendly Neighborhood Assistant
+                        </p>
+                      </div>
+                   </div>
+                </div>
+              </motion.div>
             )}
-
           </AnimatePresence>
-
-          {/* Input */}
-          {sessionState === "ready" && (
-            <div className="p-3 sm:p-5 shrink-0 border-t border-sp-border bg-sp-surface/50">
-              <form onSubmit={handleQuery} className="max-w-2xl mx-auto flex items-center gap-2 bg-sp-web border border-sp-border rounded-xl px-3 sm:px-4 py-2 focus-within:border-sp-red/40 transition-all">
-                <input ref={queryInputRef}
-                  className="flex-1 bg-transparent py-1.5 text-[11px] font-medium text-white placeholder:text-white/20 focus:outline-none min-w-0"
-                  placeholder="How can I help you understand this video?"
-                  value={query} onChange={e => setQuery(e.target.value)} disabled={isQuerying} />
-                <button type="button" onClick={() => setIsVoiceActive(!isVoiceActive)}
-                  className={cn("p-1.5 rounded-lg transition-all hidden sm:flex shrink-0", isVoiceActive ? "text-sp-red" : "text-white/20 hover:text-white/60")}>
-                  {isVoiceActive ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
-                </button>
-                <button type="submit" disabled={isQuerying || !query.trim()}
-                  className={cn("shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-                    query.trim() && !isQuerying ? "bg-sp-red text-white hover:bg-red-600" : "bg-sp-border/30 text-white/20 cursor-not-allowed")}>
-                  {isQuerying ? <Activity className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                </button>
-              </form>
-            </div>
-          )}
         </div>
       </main>
 
-      {/* Telemetry — desktop */}
-      <div className="hidden lg:flex shrink-0">
-        <TelemetryPanel {...telemetryProps} />
-      </div>
-
-      {/* Telemetry — tablet overlay */}
-      <AnimatePresence>
-        {telemetryOpen && (
-          <motion.div initial={{ x: 290 }} animate={{ x: 0 }} exit={{ x: 290 }}
-            transition={{ type: "tween", duration: 0.18 }}
-            className="fixed right-0 top-0 h-full z-40 lg:hidden">
-            <TelemetryPanel {...telemetryProps} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Notifications */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2">
+      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3">
         <AnimatePresence>
           {notifications.map(n => (
-            <motion.div key={n.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="bg-sp-surface border border-sp-border px-4 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest text-white/60 shadow-xl backdrop-blur-md">
+            <motion.div key={n.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+              className="bg-[#111] border border-[#222] px-4 py-2.5 rounded text-xs font-bold text-white shadow-2xl flex items-center gap-3">
+              <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
               {n.msg}
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
 
-      {/* Deletion Modal */}
       <AnimatePresence>
         {deleteModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setDeleteModalOpen(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-sm bg-sp-web border border-sp-border rounded-2xl p-6 shadow-2xl">
-              <div className="w-12 h-12 rounded-full bg-sp-red/10 flex items-center justify-center mb-4">
-                <AlertTriangle className="w-6 h-6 text-sp-red" />
-              </div>
-              <h2 className="text-lg font-black uppercase tracking-wider text-white mb-2">Purge Memory?</h2>
-              <p className="text-[11px] text-white/40 leading-relaxed mb-6">
-                You are about to permanently delete <span className="text-white">"{sessionToDelete?.title}"</span>. 
-                This will wipe all visual context, knowledge graphs, and vector data associated with this session.
-              </p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-sm panel bg-[#080808] border border-[#1a1a1a] p-8 text-center">
+              <h2 className="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Erase Memory?</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-8 font-medium">This will remove all insights for <span className="text-white">"{sessionToDelete?.title}"</span>. Are you sure?</p>
               <div className="flex gap-3">
-                <button onClick={() => setDeleteModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-sp-surface border border-sp-border text-[10px] font-bold uppercase tracking-widest text-sp-muted hover:text-white transition-all">
-                  Keep Session
-                </button>
-                <button onClick={confirmDelete}
-                  className="flex-1 py-2.5 rounded-xl bg-sp-red text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 transition-all shadow-[0_0_20px_rgba(232,25,44,0.3)]">
-                  Confirm Purge
-                </button>
+                <button onClick={() => setDeleteModalOpen(false)} className="flex-1 btn-secondary">Wait, No</button>
+                <button onClick={confirmDelete} className="flex-1 bg-white text-black py-2 rounded text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all">Yes, Erase</button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {settingsOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-sm panel bg-[#080808] border border-[#1a1a1a] p-8">
+              <h2 className="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Settings</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed mb-8 font-medium">Assistant preferences and local server configuration.</p>
+              
+              <div className="space-y-4 mb-8">
+                 <div className="flex items-center justify-between p-3 rounded bg-black border border-[#1a1a1a]">
+                    <span className="text-xs font-bold text-white uppercase tracking-widest">Noir Grain</span>
+                    <div className="w-10 h-5 bg-white rounded-full flex items-center px-1">
+                       <div className="w-3 h-3 bg-black rounded-full" />
+                    </div>
+                 </div>
+                 <div className="flex items-center justify-between p-3 rounded bg-black border border-[#1a1a1a]">
+                    <span className="text-xs font-bold text-white uppercase tracking-widest">Auto-Scroll</span>
+                    <div className="w-10 h-5 bg-white rounded-full flex items-center justify-end px-1">
+                       <div className="w-3 h-3 bg-black rounded-full" />
+                    </div>
+                 </div>
+              </div>
+
+              <button onClick={() => setSettingsOpen(false)} className="w-full btn-primary">Done</button>
             </motion.div>
           </div>
         )}

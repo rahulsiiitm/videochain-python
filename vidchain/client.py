@@ -41,14 +41,20 @@ class VidChain:
             collection_name=self.config["collection_name"]
         )
 
+        self.summarizer = VideoSummarizer(
+            model_name=self.config["llm_provider"]
+        )
+
+        # ── Knowledge Base Directory ──────────────────────────────────
+        self.kb_dir = os.path.join(db_path, "knowledge_bases") if db_path else None
+        if self.kb_dir:
+            os.makedirs(self.kb_dir, exist_ok=True)
+
         self.rag_engine = RAGEngine(
             model_name=self.config["llm_provider"],
             vector_store=self.vector_store,
-            embedding_model=self.config["embedding_provider"]
-        )
-
-        self.summarizer = VideoSummarizer(
-            model_name=self.config["llm_provider"]
+            embedding_model=self.config["embedding_provider"],
+            kb_dir=self.kb_dir
         )
 
         # Lazy-loaded vision engines

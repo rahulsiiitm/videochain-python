@@ -1,17 +1,14 @@
 "use client";
 
 import React from "react";
-import { Download, Activity, ShieldCheck, Loader2, PanelLeft, PanelRight, Wifi, WifiOff } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Share2, Settings, Shield, Globe, Terminal } from "lucide-react";
 import { cn } from "./utils";
 
-type SessionState = "no_session" | "awaiting_video" | "ingesting" | "ready";
-
 interface IngestBarProps {
-  sessionState: SessionState;
+  sessionState: string;
   activeSession: any;
   videoPath: string;
-  setVideoPath: (path: string) => void;
+  setVideoPath: (val: string) => void;
   handleIngest: () => void;
   isIngesting: boolean;
   serverOnline: boolean;
@@ -19,89 +16,49 @@ interface IngestBarProps {
   liveStatus: string;
   onToggleSidebar: () => void;
   onToggleTelemetry: () => void;
+  onSettingsClick: () => void;
 }
 
 export function IngestBar({
-  sessionState, activeSession, videoPath, setVideoPath, handleIngest,
+  sessionState, activeSession, videoPath, setVideoPath, handleIngest, 
   isIngesting, serverOnline, exportInsightReport, liveStatus,
-  onToggleSidebar, onToggleTelemetry,
+  onToggleSidebar, onToggleTelemetry, onSettingsClick
 }: IngestBarProps) {
+  
   return (
-    <header className="h-14 border-b border-sp-border bg-sp-surface/80 backdrop-blur-md flex items-center px-3 sm:px-4 gap-2 sm:gap-3 shrink-0 z-20">
-
-      {/* Tablet-only: sidebar toggle */}
-      <button onClick={onToggleSidebar}
-        className="p-2 rounded-lg text-sp-muted hover:text-white hover:bg-white/5 transition-all lg:hidden shrink-0">
-        <PanelLeft className="w-4 h-4" />
-      </button>
-
-      {/* Session name */}
-      <div className="flex items-center gap-2 shrink-0">
-        <div className="w-1.5 h-1.5 rounded-full bg-sp-red" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-white/60 hidden sm:block">
-          {activeSession ? activeSession.title?.slice(0, 20) : "No Session"}
-        </span>
-      </div>
-
-      <div className="w-px h-5 bg-sp-border hidden sm:block shrink-0" />
-
-      {/* Status pill */}
-      <div className="flex-1 min-w-0">
-        <AnimatePresence mode="wait">
-          {sessionState === "ingesting" && (
-            <motion.div key="ingesting" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="flex items-center gap-2 min-w-0">
-              <Loader2 className="w-3 h-3 text-sp-red animate-spin shrink-0" />
-              <motion.span key={liveStatus} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="text-[9px] font-mono text-white/50 truncate">
-                {liveStatus === "Idle" ? "Finalizing..." : liveStatus}
-              </motion.span>
-            </motion.div>
-          )}
-          {sessionState === "ready" && (
-            <motion.div key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="flex items-center gap-2 min-w-0">
-              <ShieldCheck className="w-3 h-3 text-green-500 shrink-0" />
-              <span className="text-[9px] font-mono text-white/40 truncate">{activeSession?.video_id}</span>
-            </motion.div>
-          )}
-          {(sessionState === "awaiting_video" || sessionState === "no_session") && (
-            <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="hidden sm:flex items-center gap-2">
-              <Activity className="w-3 h-3 text-sp-muted" />
-              <span className="text-[9px] text-white/30 font-mono">
-                {sessionState === "no_session" ? "Connect to IRIS" : "Ready for Visual Input"}
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Right side */}
-      <div className="flex items-center gap-2 shrink-0">
-        {/* Server status */}
-        <div className={cn("flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-widest hidden sm:flex",
-          serverOnline ? "text-green-500" : "text-sp-red")}>
-          {serverOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-          <span className="hidden md:block">{serverOnline ? "Online" : "Offline"}</span>
+    <header className="h-16 shrink-0 border-b border-[#1a1a1a] bg-[#050505] flex items-center justify-between px-6 relative z-20">
+      
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <div className={cn("w-1.5 h-1.5 rounded-full", serverOnline ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "bg-zinc-800")} />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground opacity-60">
+            {serverOnline ? "Ready to Help" : "Signal Lost"}
+          </span>
         </div>
+        
+        {activeSession && sessionState === "ready" && (
+          <div className="flex items-center gap-3 border-l border-[#1a1a1a] pl-6">
+             <span className="text-[11px] font-bold text-white tracking-tight">{activeSession.title}</span>
+             <span className="metric-pill">Active Memory</span>
+          </div>
+        )}
+      </div>
 
-        <div className="w-px h-5 bg-sp-border hidden sm:block" />
-
-        <button onClick={exportInsightReport} disabled={sessionState !== "ready"}
-          className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all border",
-            sessionState === "ready"
-              ? "border-sp-blue/40 text-sp-blue-light hover:bg-sp-blue hover:text-white hover:border-sp-blue"
-              : "border-sp-border/30 text-sp-muted/40 cursor-not-allowed")}>
-          <Download className="w-3 h-3" />
-          <span className="hidden sm:inline">Export</span>
-        </button>
-
-        {/* Tablet-only: telemetry toggle */}
-        <button onClick={onToggleTelemetry}
-          className="p-2 rounded-lg text-sp-muted hover:text-white hover:bg-white/5 transition-all lg:hidden">
-          <PanelRight className="w-4 h-4" />
-        </button>
+      <div className="flex items-center gap-3">
+        {sessionState === "ready" && (
+          <button onClick={exportInsightReport}
+            className="btn-secondary py-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+            <Share2 className="w-3.5 h-3.5" />
+            Share Insights
+          </button>
+        )}
+        
+        <div className="flex items-center gap-2 ml-4">
+           <button onClick={onSettingsClick}
+             className="p-2 rounded text-muted-foreground hover:text-white hover:bg-[#111] transition-all">
+              <Settings className="w-4 h-4" />
+           </button>
+        </div>
       </div>
     </header>
   );
