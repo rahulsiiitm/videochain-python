@@ -97,8 +97,8 @@ class VideoSummarizer:
         grouped_summaries = []
         api_base = "http://localhost:11434" if "ollama" in self.model_name.lower() else None
         
-        for i in range(0, len(summaries), 5):
-            batch = "\n\n".join(summaries[i:i+5])
+        for i in range(0, len(summaries), 10):
+            batch = "\n\n".join(summaries[i:i+10])
             prompt = f"Combine these sequential video summaries into one flowing narrative:\n\n{batch}"
             
             response = completion(
