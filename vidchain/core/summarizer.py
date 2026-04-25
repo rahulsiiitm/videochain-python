@@ -48,7 +48,7 @@ class VideoSummarizer:
             chunks.append(current_chunk)
         return chunks
 
-    def generate(self, timeline: List[Dict[str, Any]], mode: str = "concise", status_callback: Optional[Callable[[str], None]] = None) -> str:
+    def generate(self, timeline: List[Dict[str, Any]], mode: str = "concise", original_request: Optional[str] = None, status_callback: Optional[Callable[[str], None]] = None) -> str:
         if not timeline:
             return "No data available to summarize."
 
@@ -56,7 +56,7 @@ class VideoSummarizer:
         
         chunks = self._chunk_by_token_limit(timeline)
         chapter_summaries = self._map_phase(chunks, status_callback)
-        final_narrative = self._recursive_reduce(chapter_summaries, mode, status_callback)
+        final_narrative = self._recursive_reduce(chapter_summaries, mode, original_request, status_callback)
         
         return final_narrative
 
@@ -87,9 +87,9 @@ class VideoSummarizer:
             summaries.append(response.choices[0].message.content)
         return summaries
 
-    def _recursive_reduce(self, summaries: List[str], mode: str, status_callback: Optional[Callable[[str], None]] = None) -> str:
+    def _recursive_reduce(self, summaries: List[str], mode: str, original_request: Optional[str] = None, status_callback: Optional[Callable[[str], None]] = None) -> str:
         if len(summaries) == 1:
-            return self._final_polish(summaries[0], mode, status_callback)
+            return self._final_polish(summaries[0], mode, original_request, status_callback)
 
         status_msg = f"Neural HUD: Reducing {len(summaries)} chapter summaries..."
         print(f"  -> {status_msg}")
@@ -109,9 +109,9 @@ class VideoSummarizer:
             )
             grouped_summaries.append(response.choices[0].message.content)
 
-        return self._recursive_reduce(grouped_summaries, mode, status_callback)
+        return self._recursive_reduce(grouped_summaries, mode, original_request, status_callback)
 
-    def _final_polish(self, raw_summary: str, mode: str, status_callback: Optional[Callable[[str], None]] = None) -> str:
+    def _final_polish(self, raw_summary: str, mode: str, original_request: Optional[str] = None, status_callback: Optional[Callable[[str], None]] = None) -> str:
         status_msg = "Neural HUD: Finalizing high-fidelity report..."
         if status_callback: status_callback(status_msg)
         system_prompt = """
@@ -126,9 +126,11 @@ class VideoSummarizer:
         - If 'concise', provide a punchy, one-paragraph narrative.
         - If 'detailed', provide a flowing chronological account with timestamps.
         - TEMPORAL PERSISTENCE: Assume that the actions and visuals from one timestamp persist throughout any gap until the next event is logged.
+        - CRITICAL: If the user gave a specific format instruction (e.g. 'one sentence', 'in a word', 'briefly'), you MUST honor it exactly — override default mode behavior.
         """
         
-        user_prompt = f"Polish this preliminary intelligence scan into a final report (Mode: {mode}):\n\n{raw_summary}"
+        format_instruction = f"\n\nThe user's original request was: \"{original_request}\"\nYou MUST honor the exact format they asked for." if original_request else ""
+        user_prompt = f"Polish this preliminary intelligence scan into a final report (Mode: {mode}).{format_instruction}\n\n{raw_summary}"
         api_base = "http://localhost:11434" if "ollama" in self.model_name.lower() else None
         
         try:

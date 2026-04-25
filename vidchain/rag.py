@@ -282,7 +282,13 @@ class RAGEngine:
                 print(f"[Agentic AI] Summarizing {len(timeline)} forensic events...")
                 summarizer = VideoSummarizer(model_name=self.model_name)
                 status_cb = kwargs.get("status_callback")
-                answer = summarizer.generate(timeline, mode="detailed", status_callback=status_cb)
+                # Detect desired output length from user's own words
+                _q_lower = user_question.lower()
+                if any(w in _q_lower for w in ["one sentence", "1 sentence", "brief", "short", "quick", "tldr", "tl;dr", "in a word"]):
+                    _mode = "concise"
+                else:
+                    _mode = "detailed"
+                answer = summarizer.generate(timeline, mode=_mode, original_request=user_question, status_callback=status_cb)
                 
                 # ── Cache for Future Retrieval ──────────────────────────
                 if self.kb_dir and video_id:
