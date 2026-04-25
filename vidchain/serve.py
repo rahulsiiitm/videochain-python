@@ -10,8 +10,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict
-
-from fastapi.staticfiles import StaticFiles
 from vidchain.client import VidChain
 from vidchain.telemetry import HardwareMonitor
 
@@ -75,7 +73,7 @@ def _save_session(session: dict):
     with open(_session_path(session["id"]), "w", encoding="utf-8") as f:
         json.dump(session, f, ensure_ascii=False, indent=2)
 
-def _create_session(title: str = "New Insight Session") -> dict:
+def _create_session(title: str = "New Insight Session", save: bool = True) -> dict:
     session = {
         "id": str(uuid.uuid4())[:8],
         "title": title,
@@ -83,7 +81,8 @@ def _create_session(title: str = "New Insight Session") -> dict:
         "updated_at": time.time(),
         "messages": []
     }
-    _save_session(session)
+    if save:
+        _save_session(session)
     return session
 
 def _append_message(session_id: str, sender: str, text: str, video_id: Optional[str] = None, confidence: Optional[int] = None, telemetry: Optional[dict] = None, snapshots: Optional[list] = None) -> dict:

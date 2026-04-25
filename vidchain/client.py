@@ -57,11 +57,6 @@ class VidChain:
             kb_dir=self.kb_dir
         )
 
-        # Lazy-loaded vision engines
-        self.yolo_engine   = None
-        self.action_engine = None
-        self.scene_engine  = None
-        
         # GraphRAG knowledge graph (Isolated per video)
         self.knowledge_graph = TemporalKnowledgeGraph()
         self.active_timeline: List[dict] = []  
@@ -79,29 +74,6 @@ class VidChain:
                 self.global_graph.load_from_disk(global_p)
                 if self.config["verbose"]:
                     print(f"[IRIS] Master Intelligence Loaded: {self.global_graph.describe()}")
-
-    # ------------------------------------------------------------------
-    # Internal engine management
-    # ------------------------------------------------------------------
-
-    def _init_engines(self):
-        if self.yolo_engine is None:
-            from vidchain.vision import VisionEngine as YoloEngine
-            if self.config["verbose"]:
-                print("[VidChain] Initializing YOLO Vision Engine...")
-            self.yolo_engine = YoloEngine(model_path="yolov8s.pt", confidence_threshold=0.6)
-
-        if self.action_engine is None:
-            from vidchain.processors.vision_model import VisionEngine as ActionEngine
-            if self.config["verbose"]:
-                print("[VidChain] Initializing Action Engine...")
-            self.action_engine = ActionEngine(model_path="models/vidchain_vision.pth")
-
-        if self.scene_engine is None:
-            from vidchain.processors.scene_model import SceneEngine
-            if self.config["verbose"]:
-                print("[VidChain] Initializing Scene Engine (CLIP)...")
-            self.scene_engine = SceneEngine()
 
     # ------------------------------------------------------------------
     # Core pipeline
@@ -265,26 +237,6 @@ class VidChain:
             pass
             
         return self.rag_engine.query(query, stream=stream, history=history, video_id=video_id, **kwargs)
-
-    def graph_query(self, entity: str, video_id: Optional[str] = None) -> Dict[str, Any]:
-        """Direct knowledge graph lookup for a specific entity context."""
-        if video_id:
-            self._load_video_context(video_id)
-            
-        if not self.knowledge_graph._is_built:
-            return {"error": "Graph not built yet for this context."}
-        return {
-            "entity": entity,
-            "timeline": self.knowledge_graph.get_entity_timeline(entity),
-            "all_entities": self.knowledge_graph.get_all_entities(),
-            "graph_summary": self.knowledge_graph.describe()
-        }
-
-    def summarize_video(self, video_id: str, depth: str = "concise") -> str:
-        docs = self.vector_store.get_video_context(video_id)
-        if not docs:
-            return f"[ERROR] No data found for Video ID: {video_id}"
-        return self.summarizer.generate(docs, mode=depth)  # type: ignore
 
     # ------------------------------------------------------------------
     # Developer utilities
