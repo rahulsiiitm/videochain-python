@@ -1,15 +1,15 @@
-# VidChain: The "LangChain for Videos"
-> **v1.0.0-Stable** — The "Production Stable" Release. A high-fidelity, local-first multimodal RAG framework for surgical video intelligence.
+# VidChain: High-Fidelity Multimodal RAG Framework
+> **v1.0.0-Stable** — A local-first multimodal Retrieval-Augmented Generation (RAG) framework for forensic video intelligence.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v1.0.0--Stable-green) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
 
-![VidChain v0.9 Dashboard](assets/iris_v09_dashboard.png)
+![VidChain v1.0 Dashboard](image.png)
 
 ---
 
-## High-Integrity Neural Architecture
+## System Overview
 
-VidChain is powered by the **IRIS Engine** (Intelligent Retrieval & Insight System). This engine fuses visual, auditory, and temporal data into a queryable intelligence layer, providing high-fidelity video summarization and insights.
+VidChain is powered by the **IRIS Engine** (Intelligent Retrieval & Insight System). The framework parses video files through a modular sensory matrix, fusing visual, auditory, digital (OCR), and temporal data into a queryable intelligence layer. It is designed for forensic analysis, security auditing, and automated video summarization with strict local-hardware privacy constraints.
 
 ```mermaid
 graph TD
@@ -54,38 +54,127 @@ graph TD
     style DISCOVERY fill:#11111b,stroke:#e8192c,stroke-width:3px;
 ```
 
----
+## Key Capabilities
 
-## 🚀 Key v1.0.0-Stable Capabilities
+- **4-Route Agentic Router**: Optimized intent classification dividing queries into Narrative Summarization, Local Forensic Search, Global Master Intelligence, and Conversational Dialogue.
+- **Global Master Intelligence**: Cross-video entity tracking. IRIS builds a macro-graph of entities across isolated sessions, enabling broad pattern recognition and historical lookups.
+- **Temporal Persistence**: Sophisticated chronological reasoning. IRIS bridges gaps between frames, recognizing that states persist between active sensor logs.
+- **Recursive Map-Reduce Summarizer**: High-density narrative synthesis capable of collapsing hours of video data into coherent, chronological reports without hitting LLM context limits.
+- **Neural Concurrency Locking**: Production-hardened safety mechanisms preventing state corruption during simultaneous ingestion and querying tasks.
+- **Local-First Privacy**: 100% air-gapped reasoning. Data remains entirely on the host hardware.
 
--   **4-Route Agentic Router**: Optimized intent classification for Summary, Forensic Search, Global Master Intelligence, and Professional Dialogue.
--   **Global Master Intelligence**: First-of-its-kind cross-video entity tracking. IRIS remembers entities across isolated sessions, enabling broad forensic pattern recognition.
--   **Neural Concurrency Locking**: Production-hardened safety. Prevents data corruption during simultaneous ingestion/query tasks.
--   **Temporal Persistence**: Sophisticated time-reasoning. IRIS bridges gaps between frames, recognizing that events persist even when sensors aren't active.
--   **Recursive Map-Reduce Summarizer**: High-density narrative synthesis for long-form video evidence.
--   **Local-First Privacy**: 100% air-gapped reasoning. No data ever leaves your hardware.
+## Installation and Deployment
 
-## 🚀 One-Command Deployment (Zero-Config)
+### Prerequisites
+- **Python**: 3.11 or higher
+- **CUDA**: 12.1 or higher (Required for hardware acceleration)
+- **Ollama**: Must be installed and running for local LLM/VLM execution.
+- **Node.js**: v18+ (Required for the Next.js Web Portal)
 
-VidChain is designed to be truly "Plug-and-Play." Run the following on any machine (Windows/Linux) to prepare your forensic environment:
+### Installation Steps
 
+1. **Install Core Dependencies**
 ```bash
-# 1. Install VidChain + PyTorch (CUDA-Optimized)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && pip install vidchain
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 ```
 
-### 🛡️ Hardware-Agnostic Engine
-VidChain automatically audits your hardware during startup:
-- **CUDA Detected**: IRIS activates the High-Fidelity GPU pipeline for real-time analysis.
-- **CPU Fallback**: No GPU? No problem. IRIS gracefully switches to CPU mode with zero code changes, ensuring 100% portability.
-- **Ghost FFmpeg**: No need to install system dependencies; VidChain bundles and injects its own forensic media drivers.
+2. **Install VidChain**
+```bash
+git clone https://github.com/rahulsiiitm/videochain-python
+cd videochain-python
+pip install -e .
+```
 
----
+3. **Pull Required Neural Weights**
+```bash
+ollama pull moondream   # Vision Language Model for scene semantics
+ollama pull llama3      # Large Language Model for reasoning and routing
+```
 
-## 🛠️ Developer SDK: Building a Custom IRIS Pipeline
+### Hardware-Agnostic Engine
+VidChain automatically audits hardware during initialization:
+- **CUDA Available**: Activates high-fidelity GPU pipelines for real-time analysis.
+- **CPU Fallback**: Gracefully degrades to CPU mode with zero code modifications required.
 
-### Example: High-Sensitivity Surveillance Audit
-This example demonstrates how to build a custom pipeline that prioritizes motion tracking and OCR (digital trace) extraction.
+## Command Line Interface (CLI)
+
+VidChain provides several CLI tools for operational flexibility.
+
+### 1. `vidchain-serve`
+Launches the FastAPI backend and hosts the Next.js React frontend dashboard.
+```bash
+vidchain-serve
+```
+- Hosts the REST API at `http://localhost:8000`.
+- Automatically opens the Spider-Net web dashboard in the default browser at `http://localhost:3000`.
+- Implements a 7-second "Neural Warmup" to stabilize models before accepting requests.
+
+### 2. `vidchain-analyze`
+Executes headless video ingestion and analysis directly from the terminal.
+```bash
+vidchain-analyze path/to/video.mp4 --vlm moondream
+```
+- `--fast`: Bypasses the VLM and uses YOLO for high-speed object detection (ideal for long-form CCTV).
+- `--emotion`: Injects the DeepFace emotion analysis node.
+- `--action`: Injects the MobileNetV3 situational action node.
+
+### Changing the Neural Engines (LLM/VLM)
+
+VidChain uses LiteLLM under the hood, meaning you can hot-swap the underlying AI models directly from the command line depending on your local hardware capabilities:
+
+- **Change Reasoning Engine (LLM)**:
+  ```bash
+  vidchain-analyze path/to/video.mp4 --llm "ollama/llama3"
+  vidchain-analyze path/to/video.mp4 --llm "gemini/gemini-2.5-flash"
+  ```
+  *(Default is `gemini/gemini-2.5-flash`. **Note**: To use Gemini or other cloud models, you must export your API key as an environment variable, e.g., `export GEMINI_API_KEY="your_api_key"`).*
+
+- **Change Vision Engine (VLM)**:
+  ```bash
+  vidchain-analyze path/to/video.mp4 --vlm "llava:7b"
+  ```
+  *(Default is `moondream` via Ollama)*
+
+## Developer SDK: The Modular Sensor Matrix
+
+VidChain utilizes a LangChain-inspired composable architecture. Developers can assemble custom pipelines by chaining specific sensory nodes.
+
+### Core Sensory Nodes
+
+| Node Class | Modality | Primary Application |
+| :--- | :--- | :--- |
+| `AdaptiveKeyframeNode` | Logic | Gaussian-differential sampling to drop redundant frames and reduce compute load. |
+| `LlavaNode` | Visual | High-fidelity scene semantics, descriptive captions, and situational context. |
+| `YoloNode` | Visual | High-speed, discrete object detection (fallback for `LlavaNode`). |
+| `WhisperNode` | Audio | Speech-to-text transcription and acoustic anomaly detection (e.g., shouts). |
+| `OcrNode` | Text | Digital trace extraction (license plates, computer screens, documents). |
+| `TrackerNode` | Motion | Persistent object tracking (IoU) and camera motion estimation (Optical Flow). |
+| `EmotionNode` | Behavioral | Facial sentiment analysis (requires visible faces). |
+| `ActionNode` | Behavioral | High-speed classification of human activities. |
+
+### Basic Usage (Default Pipeline)
+
+The simplest way to integrate VidChain into an existing Python application is to use the default high-fidelity VLM pipeline.
+
+```python
+from vidchain import VidChain
+
+# 1. Initialize the IRIS Intelligence Vault
+vc = VidChain(db_path="./forensic_vault")
+
+# 2. Ingest Video (Automatically uses AdaptiveKeyframe, Llava, Whisper, etc.)
+video_id = vc.ingest(video_source="interview_01.mp4")
+
+# 3. Query the Engine
+response = vc.ask("What is the main topic of discussion?", video_id=video_id)
+print(response["text"])
+
+# 4. Generate an Executive Summary
+summary = vc.summarize_video(video_id=video_id, mode="concise")
+print(summary)
+```
+
+### SDK Example: Custom Forensic Pipeline
 
 ```python
 from vidchain import VidChain
@@ -97,113 +186,49 @@ from vidchain.nodes import (
     TrackerNode
 )
 
-# 1. Initialize the IRIS Engine
-vc = VidChain(db_path="./surveillance_vault")
+# 1. Initialize the Orchestrator
+vc = VidChain(db_path="./forensic_vault")
 
-# 2. Assemble a Custom Sensory Chain
+# 2. Assemble a High-Sensitivity Custom Chain
 surveillance_chain = VideoChain(nodes=[
-    AdaptiveKeyframeNode(change_threshold=1.5), # High sensitivity
+    AdaptiveKeyframeNode(change_threshold=1.5), # High sensitivity for subtle movements
     LlavaNode(model="moondream"),              # Scene semantics
     OcrNode(),                                 # Digital trace extraction
-    TrackerNode()                              # Spatio-temporal motion flow
+    TrackerNode()                              # Spatio-temporal motion mapping
 ])
 
-# 3. Execute the Pipeline
-metadata = vc.ingest(
-    video_path="gate_camera_04.mp4", 
+# 3. Execute Ingestion
+video_id = vc.ingest(
+    video_source="gate_camera_04.mp4", 
     chain=surveillance_chain
 )
 
-# 4. Perform Surgical Reasoning
-query = "Was there any vehicle with a visible license plate after 14:00?"
-response = vc.query(query, session_id="gate_audit_01")
+# 4. Perform Agentic Query
+query = "Were there any vehicles with visible license plates after 14:00?"
+response = vc.ask(query, video_id=video_id)
 
-print(f"\nIRIS Intelligence Report:\n{response['text']}")
+print(response)
 ```
 
-### Core Sensory Nodes
-| Node | Modality | Best For |
-| :--- | :--- | :--- |
-| `LlavaNode` | Visual | Scene semantics, object descriptions, behavioral analysis. |
-| `WhisperNode` | Audio | Speech-to-text, acoustic anomaly detection. |
-| `OcrNode` | Text | Reading license plates, screens, and documents. |
-| `TrackerNode` | Motion | Persistent object tracking and co-occurrence mapping. |
-| `AdaptiveKeyframeNode` | Logic | Gaussian-differential sampling to reduce GPU load. |
+## REST API Reference
 
----
+When running `vidchain-serve`, the system exposes a FastAPI backend for external integrations.
 
-## Key Features (v1.0 Evolution)
+- `GET /api/health`: Returns system status and the list of ingested video IDs.
+- `POST /api/sessions`: Creates a new isolated neural session.
+- `POST /api/ingest`: Accepts a video file path and initializes background processing.
+- `POST /api/query`: Submits a natural language query against a specific session, triggering the Agentic Router.
+- `GET /api/media-stream`: Serves absolute local video paths securely for frontend playback.
 
-### Production-Grade Concurrency Locking
-The v1.0 milestone introduces **Neural Concurrency Locking** in the server layer. IRIS now provides session-level state protection, preventing data corruption from simultaneous tasks and ensuring a rock-solid multi-user experience.
-
-### Time-Aware Temporal Persistence
-IRIS now understands the flow of time. By implementing **Temporal Persistence**, the system assumes that actions and visuals from one sensor log persist throughout any temporal gaps, leading to much more accurate and coherent forensic narratives.
-
-### IRIS: The Intelligent Assistant
-The v0.9 milestone introduces **IRIS**, a friendly and smart AI assistant that helps users understand their video content. IRIS handles natural language queries, complex reasoning, and executive summaries.
+## Architectural Details
 
 ### Isolated GraphRAG Intelligence
-Every VidChain "Insight Session" now generates a dedicated, persistent knowledge graph. 
-- **Neural Isolation**: Zero leakage between sessions.
-- **Entity Tracking**: Deep co-occurrence tracking across the video timeline.
-- **Secure Purge**: Physically wipes all associated neural artifacts on deletion.
+Each ingested video generates a dedicated, persistent Temporal Knowledge Graph (`.pkl`). The RAG engine retrieves semantically relevant chunks from ChromaDB and fuses them with structured factual data (co-occurrences, tracking IDs, timestamps) from the graph. Memory boundaries are strictly enforced to prevent cross-video hallucinations.
 
-### VidChain Media Gateway
-No more broken paths. VidChain now features a dedicated streaming gateway that resolves absolute local paths, enabling high-fidelity playback of MKV, MP4, and AVI files.
-
-### The Neural Lens (v0.9.1 Upgrade)
-IRIS now provides visual proof for her findings.
-- **Forensic Snapshots**: Automatic frame extraction for every search query.
-- **Evidence Polaroids**: Interactive, high-contrast evidence cards in the chat hub.
-- **Neural HUD**: Real-time, chapter-level progress tracking during deep summarization.
-- **Infinite Patience**: Robust 900s neural timeout handling for massive forensic files.
+### The Neural Lens
+The system automatically pairs textual answers with Base64-encoded visual snapshots extracted directly from the referenced timestamp. This provides immediate, undeniable visual proof for any AI-generated claim.
 
 ---
-
-## Setup & Installation
-
-```bash
-git clone https://github.com/rahulsiiitm/videochain-python
-cd videochain-python
-pip install -e .
-
-# Pull Neural Weights (Ollama)
-ollama pull moondream   # Scene Semantics
-ollama pull llama3      # Reasoning Hub
-
-# Start the Suite
-vidchain-serve
-```
-
----
-
-## Detailed Evolution (v0.9 to v1.0)
-
-### v1.0.0 (The Production Stable Release)
-- **Hardening**: Implemented session-level concurrency locking for multi-user stability.
-- **Reasoning**: Introduced "Temporal Persistence" for duration-aware chronological analysis.
-- **Persona**: Refined IRIS into an "On-Point" assistant—friendly but direct and fluff-free.
-- **Metadata**: Elevated development status to Production/Stable for global release.
-
-### v0.9.1 (The Neural Lens Release)
-- **Visuals**: Implemented the "Neural Lens" for automatic forensic snapshot extraction.
-- **HUD**: Integrated real-time, chapter-level status updates (Neural HUD) into the Chat Hub.
-- **Stability**: Implemented Infinite Patience logic with 900s timeouts for large-scale summarization.
-- **Logic**: Upgraded to Agentic Router v2, purging legacy keyword-based chitchat triggers.
-
-### v0.9.0 (The Insight Release)
-- **Architecture**: Implemented Neural Isolation for per-session knowledge graphs.
-- **Media**: Introduced the VidChain Media Gateway for absolute Windows path streaming.
-- **Persona**: Fully integrated IRIS as the primary interaction agent.
-- **UI**: High-fidelity custom modals for memory purging.
-
-### v0.8.8 (The Speed Milestone)
-- **Optimization**: Snappy Ingest protocol. Decoupled auto-summarization from ingestion.
-- **Logic**: Implemented recursive map-reduce for long-video summarization.
-
----
-
-## Author
-**Rahul Sharma** — IIIT Manipur  
-*SEM Project Final Release: v1.0.0-Stable*
+**Author:** Rahul Sharma — IIIT Manipur  
+**License:** MIT  
+**Status:** Production / v1.0.0-Stable
