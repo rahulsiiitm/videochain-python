@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "VidChain"
+name = "vidchain"
 version = "1.0.0"
 description = "VidChain: High-fidelity multimodal RAG framework featuring the IRIS Intelligence Agent"
 readme = "README.md"
