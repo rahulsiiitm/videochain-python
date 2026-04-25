@@ -3,7 +3,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v1.0.0--Stable-green) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
 
-![VidChain v1.0 Dashboard](image.png)
+![VidChain v1.0 Dashboard](assets/image.png)
 
 ---
 
