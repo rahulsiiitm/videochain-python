@@ -194,7 +194,7 @@ class VidChain:
             if self.config["verbose"]:
                 print(f"[IRIS] Global Intelligence Sync'd -> {global_p}")
 
-        # ── Write knowledge_base.json ─────────────────────────────────
+        # ── Write knowledge_base.json (Persistent Storage Only) ───────
         if self.config.get("save_kb_json", True):
             kb = {
                 "metadata": {
@@ -206,10 +206,6 @@ class VidChain:
                 },
                 "timeline": fused_timeline
             }
-            # Save to standard path for backward compatibility
-            kb_path = self.config.get("kb_json_path", "knowledge_base.json")
-            with open(kb_path, "w", encoding="utf-8") as f:
-                json.dump(kb, f, indent=4, ensure_ascii=False)
             
             # Save to persistent storage if available
             db_path = self.config.get("db_path")
