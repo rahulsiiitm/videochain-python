@@ -422,7 +422,7 @@ IRIS (Intelligent Retrieval \& Insight System) is not a single module but an eme
 
 \subsection{Memory Isolation Protocol}
 
-A critical architectural guarantee introduced in v0.9.0 is per-session memory isolation. Each ingested video produces three isolated artefacts on disk: a ChromaDB collection entry keyed by \texttt{video\_id}, a pickled NetworkX graph at \texttt{knowledge\_graphs/graph\_\{video\_id\}.pkl}, and a JSON knowledge base at \texttt{knowledge\_bases/\{video\_id\}.json}. When the user switches sessions, \texttt{VidChain.\_load\_video\_context()} hot-swaps the active graph by deserialising the correct \texttt{.pkl} file. ChromaDB queries are always filtered with a \texttt{where: \{video\_id: ...\}} clause. This guarantees that no information from one video session can bleed into the retrieval results of another --- a property referred to in the codebase as ``Cross-Video Noise'' prevention.
+A critical architectural guarantee introduced in v1.0.0 is per-session memory isolation. Each ingested video produces three isolated artefacts on disk: a ChromaDB collection entry keyed by \texttt{video\_id}, a pickled NetworkX graph at \texttt{knowledge\_graphs/graph\_\{video\_id\}.pkl}, and a JSON knowledge base at \texttt{knowledge\_bases/\{video\_id\}.json}. When the user switches sessions, \texttt{VidChain.\_load\_video\_context()} hot-swaps the active graph by deserialising the correct \texttt{.pkl} file. ChromaDB queries are always filtered with a \texttt{where: \{video\_id: ...\}} clause. This guarantees that no information from one video session can bleed into the retrieval results of another --- a property referred to in the codebase as ``Cross-Video Noise'' prevention.
 
 \subsection{Recursive Map-Reduce Summarisation}
 

@@ -1,4 +1,4 @@
-# VidChain v0.9.0 Developer Quickstart
+# VidChain v1.0.0 Developer Quickstart
 > Featuring the IRIS Intelligence Assistant.
 
 This guide explains how to integrate the VidChain Framework as a library into your own security and forensics applications, powered by the IRIS (Intelligent Retrieval & Insight System) agent.
@@ -6,7 +6,7 @@ This guide explains how to integrate the VidChain Framework as a library into yo
 ---
 
 ## 1. Core Architecture
-VidChain v0.9.0-Final is built on a Modular Sensor Matrix. You construct a VideoChain (the "nervous system") and inject it into the VidChain orchestrator (the "brain"). IRIS acts as the intelligent interface that translates complex graph data into human-readable insights.
+VidChain v1.0.0-Stable is built on a Modular Sensor Matrix. You construct a VideoChain (the "nervous system") and inject it into the VidChain orchestrator (the "brain"). IRIS acts as the intelligent interface that translates complex graph data into human-readable insights.
 
 ---
 
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 - **Python**: 3.11+
 - **CUDA**: 12.1+ (Essential for VLM/Whisper acceleration)
 - **Ollama**: Must be active for LLM/VLM nodes (moondream, llama3).
-- **Memory Isolation**: v0.9.0 automatically handles per-video graph isolation.
+- **Memory Isolation**: v1.0.0 automatically handles per-video graph isolation.
 
 ---
-**VidChain v0.9.0-Final | IRIS Intelligence Suite**
+**VidChain v1.0.0-Stable | IRIS Intelligence Suite**

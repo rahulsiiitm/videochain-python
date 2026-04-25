@@ -1,4 +1,4 @@
-# VidChain: Technical Specifications (v0.9.1-Stable)
+# VidChain: Technical Specifications (v1.0.0-Stable)
 
 ## 1. Engine Core (IRIS 2.0)
 - **Architecture**: Evolved Asynchronous sensory matrix with Neural Isolation.
@@ -18,10 +18,10 @@
 ## 3. Hardware Requirements
 - **Minimum**: 16GB RAM, 4GB VRAM (NVIDIA RTX 3050+).
 - **Optimized**: 32GB RAM, 12GB VRAM (NVIDIA RTX 4070+).
-- **Neural HUD**: Real-time chapter-level progress tracking and Hardware Telemetry (v0.9.1).
+- **Neural HUD**: Real-time chapter-level progress tracking and Hardware Telemetry (v1.0.0).
 
 ## 4. Release History
-### Current Phase: v0.9.1-Stable (The Neural Lens Milestone)
+### Current Phase: v1.0.0-Stable (The Final Release)
 - **Forensic Snapshots**: Automatic visual evidence extraction for search queries.
 - **Neural HUD**: Chapter-by-chapter real-time progress transparency.
 - **Stability Lockdown**: Implemented 900s timeouts for large-scale video summarization.
@@ -29,4 +29,4 @@
 - **UI Lockdown**: Eliminated horizontal scrolling and stabilized "Spider-Noir" interface.
 
 ---
-**VidChain v0.9.1-Stable | High-Fidelity Video Intelligence Framework**
+**VidChain v1.0.0-Stable | High-Fidelity Video Intelligence Framework**

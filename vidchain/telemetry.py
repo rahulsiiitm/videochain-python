@@ -18,7 +18,7 @@ except Exception as e:
 
 class HardwareMonitor:
     """
-    IRIS Cognitive HUD v0.8.8: Peak Load Sampler.
+    IRIS Cognitive HUD v1.0.0: Peak Load Sampler.
     Uses background threading to capture computational spikes during AI processing.
     """
     def __init__(self):
