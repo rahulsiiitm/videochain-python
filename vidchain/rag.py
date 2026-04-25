@@ -91,24 +91,21 @@ class RAGEngine:
 
     @staticmethod
     def _build_system_prompt(context: str) -> str:
-        """Constructs a Friendly Video Assistant persona."""
+        """Constructs a Friendly but Direct Video Assistant persona."""
         return f"""
-        You are I.R.I.S. (Intelligent Retrieval & Insight System), a friendly and professional Video Assistant.
-        Your goal is to help users understand their video content by providing clear, concise summaries and answering questions accurately.
+        You are I.R.I.S. (Intelligent Retrieval & Insight System), a friendly and professional Video Assistant. 
+        Your goal is to help users understand their video content with clear, helpful, and ON-POINT responses.
 
-        YOUR MISSION:
-        Be the "eyes" for the user. Summarize what happened in the video based on the provided sensor logs (Speech, Text, and Visuals).
-
-        OPERATIONAL RULES:
-        1. BE HELPFUL & CONCISE: Provide clear answers. Avoid overly technical or "forensic" jargon unless specifically asked.
-        2. CHRONOLOGICAL STORYTELLING: When asked for a summary, describe the events as they unfolded in time.
-        3. HONESTY: If the sensor logs don't contain the answer, just say "I'm not sure about that based on the current logs."
+        CORE DIRECTIVES:
+        1. BE DIRECT & FRIENDLY: Keep your helpful IRIS persona. A very brief friendly greeting is okay, but get to the answer immediately. No long introductory paragraphs.
+        2. ON-POINT CONTENT: Do not provide a full video summary unless explicitly asked. Focus entirely on answering the user's specific question.
+        3. CHRONOLOGICAL EVIDENCE: Support your answers with specific timestamps from the sensor logs.
         4. SENSOR GROUND TRUTH: 
            - Speech (Whisper) and Screen Text (OCR) are 100% accurate.
            - Visuals/Llava: Use for general appearance and context.
            - Camera Motion: Use to differentiate between subject movement and camera panning.
-           
-        5. TEMPORAL CONTEXT: Use the Provided GraphRAG facts to cross-reference multi-video events and camera behavior.
+        5. TEMPORAL PERSISTENCE: If you see a time gap between two logs (e.g., [10s] and [15s]), assume the state, visuals, and actions of the first log persisted throughout that entire duration until the next log begins.
+        6. TEMPORAL CONTEXT: Use the Provided GraphRAG facts to cross-reference multi-video events and camera behavior.
 
         SENSOR LOG DATA:
         {context}
@@ -170,13 +167,14 @@ class RAGEngine:
     # ------------------------------------------------------------------
     
     def _route_intent(self, user_input: str) -> str:
-        """Agentic Router: Decides if we search, summarize, or just chat."""
+        """Agentic Router: Decides if we search locally, globally, summarize, or just chat."""
         prompt = f"""You are the intent classifier for the IRIS Intelligence Suite.
         Classify this message into EXACTLY ONE category:
 
-        1. VIDEO_SUMMARY: Specifically asking for a summary, overview, story, or "what happened" in the video.
-        2. VIDEO_SEARCH: Specifically asking about who, when, what, or where (forensic query).
-        3. CONVERSATION: General greetings, meta-talk, or unrelated questions.
+        1. VIDEO_SUMMARY: Specifically asking for a summary, overview, story, or "what happened" in THIS video.
+        2. VIDEO_SEARCH: Specifically asking about who, when, what, or where in THIS specific video (forensic query).
+        3. GLOBAL_SEARCH: Asking about entities, patterns, or history across ALL videos or "have you seen this before".
+        4. CONVERSATION: General greetings, meta-talk, or unrelated questions.
 
         User Message: "{user_input}"
         Output only the category name."""
@@ -192,6 +190,7 @@ class RAGEngine:
             )
             res_content = response.choices[0].message.content.strip().upper() #type: ignore
             
+            if "GLOBAL" in res_content: return "GLOBAL_SEARCH"
             if "SUMMARY" in res_content: return "VIDEO_SUMMARY"
             if "SEARCH" in res_content or "VIDEO" in res_content: return "VIDEO_SEARCH"
             return "CONVERSATION"
@@ -308,12 +307,19 @@ class RAGEngine:
 
         # ── PHASE 3: FORENSIC QUERY ─────────────────────────────────
         top_nodes = []
-        if intent == "VIDEO_SEARCH":
-            # Hybrid Retrieval: Vector + Temporal Graph
+        if intent == "GLOBAL_SEARCH":
+            # Cross-video retrieval: Search everything in ChromaDB
+            context_str, top_nodes = self._retrieve(user_question, video_id=None)
+            print(f"[Agentic AI] Global Intelligence scanning all forensic assets...")
+        elif intent == "VIDEO_SEARCH":
+            # Localized retrieval: Search only the current video context
             context_str, top_nodes = self._retrieve(user_question, video_id=kwargs.get("video_id"))
             
         # ── PHASE 1: CONVERSATION (or combined reasoning) ────────────
         system_prompt = self._build_system_prompt(context_str)
+        if intent == "GLOBAL_SEARCH":
+            system_prompt += "\n\nNote: You are in GLOBAL MASTER INTELLIGENCE mode. Access your entire video database to find patterns across all videos."
+        
         if graph_context:
             system_prompt = self._inject_graph_context(system_prompt, graph_context)
         

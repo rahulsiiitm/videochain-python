@@ -1,7 +1,7 @@
 # VidChain: The "LangChain for Videos"
-> **v0.9.1-Stable** — Featuring the **Neural Lens** for forensic visual evidence. A high-fidelity, local-first multimodal RAG framework for surgical video intelligence.
+> **v1.0.0-Stable** — The "Production Stable" Release. A high-fidelity, local-first multimodal RAG framework for surgical video intelligence.
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v0.9.1--Stable-red) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
+![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v1.0.0--Stable-green) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/)
 
 ![VidChain v0.9 Dashboard](assets/iris_v09_dashboard.png)
 
@@ -37,16 +37,17 @@ graph TD
     %% --- Persistence ---
     subgraph "4. VidChain Memory Vault"
         FUSE --> KV[(ChromaDB Vector Store)]
-        FUSE --> KG[[Isolated Knowledge Graph]]
+        FUSE --> KG[[Hybrid Global/Local GraphRAG]]
     end
 
     %% --- Interaction Stage ---
     subgraph "5. IRIS Intelligence Agent"
-        USER[User Query] --> IR{Intent Router}
-        IR -- "Insight Search" --> RAG[GraphRAG Retrieval Loop]
-        RAG <--> KV
-        RAG <--> KG
-        RAG --> DISCOVERY([VidChain Insight Canvas])
+        USER[User Query] --> IR{4-Route Intent Router}
+        IR -- "1. Narrative" --> SUM[Map-Reduce Summarizer]
+        IR -- "2. Forensic" --> RAG[Local GraphRAG]
+        IR -- "3. Master Intel" --> GLOBAL[Global Cross-Video RAG]
+        IR -- "4. Dialogue" --> CHAT[Conversational Logic]
+        SUM & RAG & GLOBAL & CHAT --> DISCOVERY([VidChain Insight Canvas])
     end
 
     style VS fill:#1e1e2e,stroke:#74c7ec,stroke-width:2px;
@@ -55,9 +56,33 @@ graph TD
 
 ---
 
-## Developer SDK: Building a Custom IRIS Pipeline
+## 🚀 Key v1.0.0-Stable Capabilities
 
-VidChain is built on a modular "Node & Chain" architecture. You can assemble surgical intelligence pipelines by combining specific sensory nodes.
+-   **4-Route Agentic Router**: Optimized intent classification for Summary, Forensic Search, Global Master Intelligence, and Professional Dialogue.
+-   **Global Master Intelligence**: First-of-its-kind cross-video entity tracking. IRIS remembers entities across isolated sessions, enabling broad forensic pattern recognition.
+-   **Neural Concurrency Locking**: Production-hardened safety. Prevents data corruption during simultaneous ingestion/query tasks.
+-   **Temporal Persistence**: Sophisticated time-reasoning. IRIS bridges gaps between frames, recognizing that events persist even when sensors aren't active.
+-   **Recursive Map-Reduce Summarizer**: High-density narrative synthesis for long-form video evidence.
+-   **Local-First Privacy**: 100% air-gapped reasoning. No data ever leaves your hardware.
+
+## 🚀 One-Command Deployment (Zero-Config)
+
+VidChain is designed to be truly "Plug-and-Play." Run the following on any machine (Windows/Linux) to prepare your forensic environment:
+
+```bash
+# 1. Install VidChain + PyTorch (CUDA-Optimized)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && pip install vidchain
+```
+
+### 🛡️ Hardware-Agnostic Engine
+VidChain automatically audits your hardware during startup:
+- **CUDA Detected**: IRIS activates the High-Fidelity GPU pipeline for real-time analysis.
+- **CPU Fallback**: No GPU? No problem. IRIS gracefully switches to CPU mode with zero code changes, ensuring 100% portability.
+- **Ghost FFmpeg**: No need to install system dependencies; VidChain bundles and injects its own forensic media drivers.
+
+---
+
+## 🛠️ Developer SDK: Building a Custom IRIS Pipeline
 
 ### Example: High-Sensitivity Surveillance Audit
 This example demonstrates how to build a custom pipeline that prioritizes motion tracking and OCR (digital trace) extraction.
@@ -107,7 +132,13 @@ print(f"\nIRIS Intelligence Report:\n{response['text']}")
 
 ---
 
-## Key Features (v0.9 Evolution)
+## Key Features (v1.0 Evolution)
+
+### Production-Grade Concurrency Locking
+The v1.0 milestone introduces **Neural Concurrency Locking** in the server layer. IRIS now provides session-level state protection, preventing data corruption from simultaneous tasks and ensuring a rock-solid multi-user experience.
+
+### Time-Aware Temporal Persistence
+IRIS now understands the flow of time. By implementing **Temporal Persistence**, the system assumes that actions and visuals from one sensor log persist throughout any temporal gaps, leading to much more accurate and coherent forensic narratives.
 
 ### IRIS: The Intelligent Assistant
 The v0.9 milestone introduces **IRIS**, a friendly and smart AI assistant that helps users understand their video content. IRIS handles natural language queries, complex reasoning, and executive summaries.
@@ -147,7 +178,13 @@ vidchain-serve
 
 ---
 
-## Detailed Evolution (v0.8 to v0.9)
+## Detailed Evolution (v0.9 to v1.0)
+
+### v1.0.0 (The Production Stable Release)
+- **Hardening**: Implemented session-level concurrency locking for multi-user stability.
+- **Reasoning**: Introduced "Temporal Persistence" for duration-aware chronological analysis.
+- **Persona**: Refined IRIS into an "On-Point" assistant—friendly but direct and fluff-free.
+- **Metadata**: Elevated development status to Production/Stable for global release.
 
 ### v0.9.1 (The Neural Lens Release)
 - **Visuals**: Implemented the "Neural Lens" for automatic forensic snapshot extraction.
@@ -169,4 +206,4 @@ vidchain-serve
 
 ## Author
 **Rahul Sharma** — IIIT Manipur  
-*SEM Project Phase 0.9.1-Stable*
+*SEM Project Final Release: v1.0.0-Stable*

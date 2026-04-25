@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "VidChain"
-version = "0.9.1"
+version = "1.0.0"
 description = "VidChain: High-fidelity multimodal RAG framework featuring the IRIS Intelligence Agent"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -14,7 +14,7 @@ keywords = [
     "whisper", "yolo", "ollama", "surveillance", "nlp"
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",

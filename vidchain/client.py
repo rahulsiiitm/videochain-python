@@ -66,10 +66,19 @@ class VidChain:
         self.knowledge_graph = TemporalKnowledgeGraph()
         self.active_timeline: List[dict] = []  
         
+        # ── Master Intelligence (Global Knowledge Graph) ────────────────
+        self.global_graph = TemporalKnowledgeGraph()
+        
         # In multi-video mode, graphs are loaded on-demand by video_id
         self.graph_dir = os.path.join(db_path, "knowledge_graphs") if db_path else None
         if self.graph_dir:
             os.makedirs(self.graph_dir, exist_ok=True)
+            # Load Master Graph for cross-video intelligence
+            global_p = os.path.join(self.graph_dir, "global_graph.pkl")
+            if os.path.exists(global_p):
+                self.global_graph.load_from_disk(global_p)
+                if self.config["verbose"]:
+                    print(f"[IRIS] Master Intelligence Loaded: {self.global_graph.describe()}")
 
     # ------------------------------------------------------------------
     # Internal engine management
@@ -163,17 +172,27 @@ class VidChain:
         )
         self.rag_engine.is_ready = True
         
-        # ── Build GraphRAG Knowledge Graph ────────────────────────────
-        self.knowledge_graph.build_from_timeline(fused_timeline)
+        # ── Build GraphRAG Knowledge Graphs ────────────────────────────
+        # 1. Update Local Session Graph
+        self.knowledge_graph.build_from_timeline(fused_timeline, video_id=v_id)
+        # 2. Update Master Intelligence Graph (Additive)
+        self.global_graph.build_from_timeline(fused_timeline, video_id=v_id)
+        
         if self.config["verbose"]:
-            print(f"[IRIS] {self.knowledge_graph.describe()}")
+            print(f"[IRIS] Local Intel: {self.knowledge_graph.describe()}")
+            print(f"[IRIS] Master Intel: {self.global_graph.describe()}")
             
-        # ── Save Isolated Graph ───────────────────────────────────────
+        # ── Save Isolated Graphs ───────────────────────────────────────
         if self.graph_dir:
+            # Save local
             per_video_graph = os.path.join(self.graph_dir, f"graph_{v_id}.pkl")
             self.knowledge_graph.save_to_disk(per_video_graph)
+            # Save Master
+            global_p = os.path.join(self.graph_dir, "global_graph.pkl")
+            self.global_graph.save_to_disk(global_p)
+            
             if self.config["verbose"]:
-                print(f"[IRIS] Isolated Knowledge Graph secured -> {per_video_graph}")
+                print(f"[IRIS] Global Intelligence Sync'd -> {global_p}")
 
         # ── Write knowledge_base.json ─────────────────────────────────
         if self.config.get("save_kb_json", True):
@@ -226,18 +245,27 @@ class VidChain:
         stream: bool = False, 
         **kwargs
     ) -> str:
-        # Load the specific graph for this video context
+        # 1. Load the specific graph for this video context
         self._load_video_context(video_id)
 
-        # Inject Graph Context
-        if self.knowledge_graph._is_built and "graph_context" not in kwargs:
-            kwargs["graph_context"] = self.knowledge_graph.get_graph_context(query)
+        # 2. Extract Local Context (High-Precision)
+        local_context = ""
+        if self.knowledge_graph._is_built:
+            local_context = self.knowledge_graph.get_graph_context(query, video_id=video_id)
+        
+        # 3. Extract Global Context (Cross-Video Intel)
+        global_context = ""
+        if self.global_graph._is_built:
+            global_context = self.global_graph.get_graph_context(query)
+            
+        # 4. Neural Intersection: Combine both for the RAG Engine
+        combined_graph_context = f"{local_context}\n\n[GLOBAL MASTER INTELLIGENCE]\n{global_context}"
+        if "graph_context" not in kwargs:
+            kwargs["graph_context"] = combined_graph_context
             
         # Context Binding: 
         # Ensure we are strictly using the provided timeline or searching the correct video_id.
         if "timeline" not in kwargs or not kwargs["timeline"]:
-            # If no timeline provided, the RAGEngine will perform its own vector search 
-            # filtered by the video_id provided above.
             pass
             
         return self.rag_engine.query(query, stream=stream, history=history, video_id=video_id, **kwargs)
@@ -302,10 +330,39 @@ class VidChain:
 
     def purge_storage(self, video_id: Optional[str] = None):
         if video_id:
+            # 1. Purge Vectors
             self.vector_store.delete_video(video_id)
+            
+            # 2. Scrub Global Intelligence (Neural Amnesia)
+            if self.global_graph:
+                self.global_graph.remove_video_context(video_id)
+                # Save the updated Master Graph
+                if self.graph_dir:
+                    global_p = os.path.join(self.graph_dir, "global_graph.pkl")
+                    self.global_graph.save_to_disk(global_p)
+
+            # 3. Scrub Physical Artifacts
+            if self.graph_dir:
+                p = os.path.join(self.graph_dir, f"graph_{video_id}.pkl")
+                if os.path.exists(p): os.remove(p)
+            db_path = self.config.get("db_path")
+            if db_path:
+                p = os.path.join(db_path, "knowledge_bases", f"{video_id}.json")
+                if os.path.exists(p): os.remove(p)
+
             if self.config["verbose"]:
-                print(f"[VidChain] Purged video: {video_id}")
+                print(f"[VidChain] Forensic memory fully purged for: {video_id}")
         else:
+            # 1. Clear Vectors
             self.vector_store.client.delete_collection(self.config["collection_name"])
+            
+            # 2. Scrub Master Graph
+            if self.graph_dir:
+                global_p = os.path.join(self.graph_dir, "global_graph.pkl")
+                if os.path.exists(global_p): os.remove(global_p)
+                # Reset in-memory
+                from vidchain.vectorstores.graph import TemporalKnowledgeGraph
+                self.global_graph = TemporalKnowledgeGraph()
+                
             if self.config["verbose"]:
-                print("[VidChain] All storage purged.")
+                print("[VidChain] All global storage and master intelligence purged.")

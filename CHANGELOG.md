@@ -4,6 +4,26 @@ All notable changes to VidChain are documented here.
 
 ---
 
+## [1.0.0-Stable] — 2026-04-25 (The "Production Stable" Release)
+
+### Added
+- **4-Route Agentic Router**: Upgraded the IRIS core with a specialized intent classification loop for Narrative, Forensic, Master Intelligence, and Dialogue routing.
+- **Global Master Intelligence**: Implemented a cross-video Hybrid GraphRAG system for entity tracking across isolated sessions.
+- **Neural Concurrency Locking**: Implemented session-level state protection in `serve.py`. IRIS now politely blocks simultaneous tasks in the same session to prevent JSON data corruption.
+- **Temporal Persistence Logic**: Upgraded IRIS and the Summarizer to understand action duration. The system now assumes states (visuals/actions) persist between timestamp gaps, enabling more accurate chronological reasoning.
+- **Production Status**: Officially elevated the package development status to `Production/Stable` in system metadata.
+
+### Changed
+- **On-Point Persona (v2)**: Refined the I.R.I.S. system prompt to be direct, helpful, and friendly while strictly banning conversational fluff and long-winded preambles.
+- **Surgical Summarization**: Updated the Map-Reduce engine to deliver flowing narratives without boilerplate headers like "Additional Insights" or "Video Summary."
+- **Global Branding**: Synchronized all version tags to `v1.0.0-Stable` across the CLI, API, and Frontend dashboard.
+
+### Fixed
+- **Intent Mismatch**: Resolved a routing bug where specific forensic search queries would occasionally trigger full-video summarization cycles.
+- **Neural Double-Tap**: Cleaned up decorator redundancies in the RAG engine.
+
+---
+
 ## [0.9.1-Stable] — 2026-04-24 (The "Neural Lens" Release)
 
 ### Added

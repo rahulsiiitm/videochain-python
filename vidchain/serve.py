@@ -18,7 +18,7 @@ from vidchain.telemetry import HardwareMonitor
 app = FastAPI(
     title="IRIS (Intelligent Retrieval & Insight System)",
     description="Local 'Intelligent Retrieval & Insight System' API — Persistent Edition",
-    version="0.9.1-Stable"
+    version="1.0.0-Stable"
 )
 
 # ── Secure Media Gateway ──────────────────────────────────────────────────────
@@ -261,6 +261,15 @@ def delete_session(session_id: str):
 def query_video(req: QueryRequest):
     if not vc:
         raise HTTPException(status_code=500, detail="VidChain Engine offline")
+        
+    # ── Concurrency Locking (v1.0.0 Production Hardening) ───────────
+    session_id = req.session_id
+    current_status = status_hub.get(session_id, "Idle")
+    if current_status not in ["Idle", "Error", "Interrupted"]:
+        raise HTTPException(
+            status_code=400, 
+            detail="IRIS is currently busy. Please wait for the current background task to finish before asking questions."
+        )
 
     # Load session and identify context
     session = _load_session(req.session_id) if req.session_id else None
@@ -330,6 +339,7 @@ def query_video(req: QueryRequest):
             error_msg = "My 'Neural Timeout' was triggered. This segment is very complex and my local processors couldn't finish in time. Try asking for a shorter summary!"
         
         _append_message(session_id, "iris", error_msg, video_id)
+        status_hub[session_id] = "Error"
         return {"response": error_msg, "status": "error"}
 
 
@@ -376,20 +386,29 @@ def ingest_video(req: IngestRequest, background_tasks: BackgroundTasks):
     if not os.path.exists(req.video_source):
         raise HTTPException(status_code=404, detail=f"File not found: {req.video_source}")
 
-    # Create or validate session
-    # ── Early Context Locking ─────────────────────────────────────
-    # We resolve the ID early and lock it to the session root 
-    # so that the UI/RAG can permanently anchor to it.
-    video_id = req.video_id or str(uuid.uuid4())[:8]
+    # Resolve session identity
     session_id = req.session_id
+    session = _load_session(session_id) if session_id else None
+    if not session:
+        session = _create_session()
+        session_id = session["id"]
 
-    session = _load_session(session_id)
-    if session:
-        session["video_id"] = video_id
-        session["video_path"] = req.video_source # Store the real disk path for playback
-        session["updated_at"] = time.time()
-        _save_session(session)
+    # ── Concurrency Locking (v1.0.0 Production Hardening) ───────────
+    current_status = status_hub.get(session_id, "Idle")
+    if current_status not in ["Idle", "Error", "Interrupted"]:
+        raise HTTPException(
+            status_code=400, 
+            detail="IRIS is currently busy processing this session. Please wait for the current operation to finish."
+        )
 
+    # ── Early Context Locking ─────────────────────────────────────
+    video_id = req.video_id or str(uuid.uuid4())[:8]
+    session["video_id"] = video_id
+    session["video_path"] = req.video_source
+    session["updated_at"] = time.time()
+    _save_session(session)
+
+    status_hub[session_id] = "Starting Ingestion..."
     background_tasks.add_task(_background_ingest, req.video_source, video_id, session_id)
     return {
         "status": "processing",
@@ -466,7 +485,7 @@ def open_browser():
 
 def main_cli():
     print("=========================================")
-    print("  IRIS Intelligence Suite v0.9.1-Stable")
+    print("  IRIS Intelligence Suite v1.0.0-Stable")
     print("  Portal : http://localhost:8000")
     print("  Storage: ./vidchain_storage")
     print("=========================================")

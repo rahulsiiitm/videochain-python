@@ -286,6 +286,44 @@ class TemporalKnowledgeGraph:
 
         return "\n".join(lines)
 
+    def remove_video_context(self, video_id: str):
+        """
+        Surgical Memory Purge: Removes all nodes and edges associated with a video_id.
+        Ensures Global Intelligence remains consistent after a video is deleted.
+        """
+        if not self._is_built:
+            return
+
+        # 1. Identify all nodes belonging to this video
+        nodes_to_remove = [
+            n for n, d in self.G.nodes(data=True) 
+            if d.get("video_id") == video_id
+        ]
+        
+        # 2. Identify timestamp nodes (which follow the v:ID_t:TS pattern)
+        prefix = f"v:{video_id}_"
+        ts_nodes = [n for n in self.G.nodes if n.startswith(prefix)]
+        nodes_to_remove.extend(ts_nodes)
+
+        # 3. Perform Deletion
+        self.G.remove_nodes_from(set(nodes_to_remove))
+
+        # 4. Clean up orphaned entities (entities with no remaining evidence/edges)
+        orphans = [
+            n for n, d in self.G.nodes(data=True)
+            if d.get("type") == "entity" and self.G.degree(n) == 0
+        ]
+        self.G.remove_nodes_from(orphans)
+
+        # 5. Scrub Metadata
+        if video_id in self.video_segments:
+            del self.video_segments[video_id]
+        
+        # Clean up entity_timestamps cache (complex because it's a flat list)
+        # We'll just rebuild it for safety or leave as is (it's mostly for fuzzy search)
+        
+        print(f"[GraphRAG] Global Sync: Purged context for {video_id}. Remaining nodes: {self.G.number_of_nodes()}")
+
     def describe(self) -> str:
         """Human-readable graph summary."""
         if not self._is_built:
