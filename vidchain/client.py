@@ -9,7 +9,6 @@ import os
 import uuid
 import json
 from typing import Optional, Dict, Any, Callable, List
-from vidchain.core.summarizer import VideoSummarizer
 from vidchain.rag import RAGEngine
 from vidchain.vectorstores.chroma import ChromaStore
 from vidchain.vectorstores.graph import TemporalKnowledgeGraph
@@ -41,9 +40,6 @@ class VidChain:
             collection_name=self.config["collection_name"]
         )
 
-        self.summarizer = VideoSummarizer(
-            model_name=self.config["llm_provider"]
-        )
 
         # ── Knowledge Base Directory ──────────────────────────────────
         self.kb_dir = os.path.join(db_path, "knowledge_bases") if db_path else None
@@ -271,7 +267,6 @@ class VidChain:
             print(f"[VidChain] Switching LLM -> {model_identifier}")
         self.config["llm_provider"] = model_identifier
         self.rag_engine.model_name  = model_identifier
-        self.summarizer.model_name  = model_identifier
 
     def list_indexed_videos(self) -> List[str]:
         return list(set(self.vector_store.list_videos()))
@@ -290,12 +285,25 @@ class VidChain:
                     self.global_graph.save_to_disk(global_p)
 
             # 3. Scrub Physical Artifacts
-            if self.graph_dir:
-                p = os.path.join(self.graph_dir, f"graph_{video_id}.pkl")
-                if os.path.exists(p): os.remove(p)
             db_path = self.config.get("db_path")
             if db_path:
-                p = os.path.join(db_path, "knowledge_bases", f"{video_id}.json")
+                kb_path = os.path.join(db_path, "knowledge_bases", f"{video_id}.json")
+                if os.path.exists(kb_path):
+                    try:
+                        with open(kb_path, "r", encoding="utf-8") as f:
+                            kb_data = json.load(f)
+                            v_path = kb_data.get("metadata", {}).get("source")
+                            if v_path:
+                                audio_p = v_path.rsplit(".", 1)[0] + "_pipeline_temp.wav"
+                                if os.path.exists(audio_p):
+                                    os.remove(audio_p)
+                                    if self.config["verbose"]:
+                                        print(f"[VidChain] Purged temp audio: {audio_p}")
+                    except: pass
+                    os.remove(kb_path)
+            
+            if self.graph_dir:
+                p = os.path.join(self.graph_dir, f"graph_{video_id}.pkl")
                 if os.path.exists(p): os.remove(p)
 
             if self.config["verbose"]:

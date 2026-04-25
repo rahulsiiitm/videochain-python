@@ -234,18 +234,6 @@ def delete_session(session_id: str):
         except Exception as e:
             print(f"[Purge Error] ChromaDB: {e}")
 
-        # 2. Delete Knowledge Graph (.pkl)
-        graph_path = os.path.join(STORAGE_DIR, "knowledge_graphs", f"graph_{video_id}.pkl")
-        if os.path.exists(graph_path):
-            try: os.remove(graph_path)
-            except: pass
-
-        # 3. Delete Knowledge Base (.json)
-        kb_path = os.path.join(STORAGE_DIR, "knowledge_bases", f"{video_id}.json")
-        if os.path.exists(kb_path):
-            try: os.remove(kb_path)
-            except: pass
-
     # ── Session Deletion ───────────────────────────────────────────
     p = _session_path(session_id)
     if os.path.exists(p):

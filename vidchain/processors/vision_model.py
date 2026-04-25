@@ -1,11 +1,7 @@
-import cv2
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
 from PIL import Image
-import librosa
-import numpy as np
-import json
 import os
 import sys
 
@@ -94,87 +90,4 @@ class VisionEngine:
             return "uncertain", confidence
 
         return label, confidence
-
-
-# ==========================
-# Video Processing Helpers
-# ==========================
-def extract_frames(video_path, frame_skip=5):
-    cap = cv2.VideoCapture(video_path)
-    frames = []
-    count = 0
-    while True:
-        ret, frame = cap.read()
-        if not ret: break
-        if count % frame_skip == 0:
-            frames.append(frame)
-        count += 1
-    cap.release()
-    return frames
-
-def extract_audio(video_path):
-    audio, sr = librosa.load(video_path, sr=None)
-    return audio, sr
-
-def analyze_audio(audio, sr):
-    energy = float(np.mean(audio ** 2))
-    duration = len(audio) / sr
-    return {"energy": energy, "duration": duration}
-
-def analyze_frames(frames, vision_engine):
-    results = []
-    prev_frame = None
-    for i, frame in enumerate(frames):
-        label, conf = vision_engine.predict(frame)
-        motion_score = 0
-        if prev_frame is not None:
-            diff = cv2.absdiff(prev_frame, frame)
-            motion_score = float(np.mean(diff))
-        results.append({
-            "frame_index": i,
-            "label": label,
-            "confidence": float(conf),
-            "motion": motion_score
-        })
-        prev_frame = frame
-    return results
-
-def fuse_results(frame_data, audio_data):
-    label_counts = {}
-    for f in frame_data:
-        if f["label"] != "uncertain":
-            label_counts[f["label"]] = label_counts.get(f["label"], 0) + 1
-    final_label = max(label_counts, key=lambda x: label_counts[x]) if label_counts else "unknown"
-    avg_conf = float(np.mean([f["confidence"] for f in frame_data]))
-    return {
-        "final_prediction": final_label,
-        "average_confidence": avg_conf,
-        "audio_energy": audio_data["energy"],
-        "detected_events": label_counts
-    }
-
-def generate_json(fusion_result, frame_data):
-    output = {"summary": fusion_result, "frames": frame_data}
-    return json.dumps(output, indent=4)
-
-def process_video(video_path, model_path="models/vidchain_vision.pth"):
-    vision = VisionEngine(model_path=model_path)
-    print("📹 Extracting frames...")
-    frames = extract_frames(video_path)
-    print("🔊 Extracting audio...")
-    audio, sr = extract_audio(video_path)
-    print("🧠 Analyzing frames...")
-    frame_data = analyze_frames(frames, vision)
-    print("🎧 Analyzing audio...")
-    audio_data = analyze_audio(audio, sr)
-    print("🔗 Fusing results...")
-    fusion = fuse_results(frame_data, audio_data)
-    print("📄 Generating JSON...")
-    return generate_json(fusion, frame_data)
-
-if __name__ == "__main__":
-    video_path = "sample.mp4"
-    output = process_video(video_path)
-    print(output)
-    with open("output.json", "w") as f:
-        f.write(output)
+

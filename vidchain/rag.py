@@ -253,7 +253,7 @@ class RAGEngine:
             if not timeline or len(timeline) == 0:
                 print(f"[Agentic AI] [FALLBACK] Timeline missing for summary. Pivoting to Aggressive Forensic Search...")
                 # Automatic Fallback: Use search retrieval to build a summary context
-                context_str = self._retrieve("Top forensic events and overall summary of the video", video_id=kwargs.get("video_id"))
+                context_str, _ = self._retrieve("Top forensic events and overall summary of the video", video_id=kwargs.get("video_id"))
                 if context_str:
                     # Reroute to a detailed conversational report using the search context
                     user_question = f"Provide a detailed forensic summary based on these observations: {user_question}"

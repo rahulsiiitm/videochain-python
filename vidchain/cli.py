@@ -136,7 +136,7 @@ def main():
         
         # ── NEW: Automatic Forensic Executive Summary ──────────
         print("\n[SYSTEM] Generating Forensic Executive Summary...")
-        summary = vc.summarize_video(video_id, depth="detailed")
+        summary = vc.ask("Provide a detailed forensic executive summary of this video.", video_id=video_id)
         print("\n" + "="*60)
         print("📜 INTELLIGENCE REPORT")
         print("="*60)
