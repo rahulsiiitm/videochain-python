@@ -2,6 +2,7 @@ This chapter presents the empirical validation of VidChain v1.0.0-Stable. Testin
 
 All results are presented alongside their acceptance criteria, derived directly from the requirements defined in Chapter 3.
 
+
 % ─────────────────────────────────────────────
 \section{Test Environment}
 % ─────────────────────────────────────────────
@@ -35,14 +36,14 @@ Three test videos were used across all test categories:
 \small
 \caption{Test Video Corpus}
 \label{tab:test_videos}
-\begin{tabular}{|p{2cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{3cm}|}
+\begin{tabularx}{\textwidth}{|l|l|l|X|}
 \hline
 \rowcolor[HTML]{EFEFEF}
-\textbf{Video ID} & \textbf{Duration} & \textbf{Resolution} & \textbf{Content Type} & \textbf{Purpose} \\ \hline
-V1 & 3 minutes & 1080p/30fps & Lab workstation recording & Baseline / unit tests \\ \hline
-V2 & 18 minutes & 720p/25fps & Lecture recording & Integration tests \\ \hline
-V3 & 47 minutes & 1080p/30fps & CCTV corridor footage & Stress tests \\ \hline
-\end{tabular}
+\textbf{Video ID} & \textbf{Duration} & \textbf{Resolution} & \textbf{Content Type} \\ \hline
+V1 & 3 minutes & 1080p/30fps & Lab workstation recording \\ \hline
+V2 & 18 minutes & 720p/25fps & Lecture recording \\ \hline
+V3 & 47 minutes & 1080p/30fps & CCTV corridor footage \\ \hline
+\end{tabularx}
 \end{table}
 
 % ─────────────────────────────────────────────
@@ -56,66 +57,41 @@ Functional testing verified that each feature specified in Chapter 3 operates co
 \small
 \caption{Functional Test Results}
 \label{tab:functional}
-\begin{tabular}{|p{1.2cm}|p{2.5cm}|p{4.5cm}|p{2cm}|p{1.5cm}|}
+\begin{tabularx}{\textwidth}{|l|X|l|l|}
 \hline
 \rowcolor[HTML]{EFEFEF}
-\textbf{Test ID} & \textbf{FR Ref.} & \textbf{Test Description} & \textbf{Expected} & \textbf{Result} \\ \hline
-FT-01 & FR-01 & Ingest V1 via \texttt{vidchain-analyze} CLI & Knowledge base created & \textbf{PASS} \\ \hline
-FT-02 & FR-02 & Verify timeline contains vision, audio, and OCR entries & All three streams present & \textbf{PASS} \\ \hline
-FT-03 & FR-03 & Query ``what is on the screen?'' against V1 & OCR-grounded response & \textbf{PASS} \\ \hline
-FT-04 & FR-04 & Request narrative summary of V2 & Coherent chronological report & \textbf{PASS} \\ \hline
-FT-05 & FR-05 & Restart server; confirm V1 knowledge base persists & Session restored & \textbf{PASS} \\ \hline
-FT-06 & FR-06 & Create, rename, and delete three sessions via portal & All operations reflected on disk & \textbf{PASS} \\ \hline
-FT-07 & FR-07 & Disconnect from internet; run full ingest and query & Pipeline completes locally & \textbf{PASS} \\ \hline
-FT-08 & FR-08 & Query ``when did person \#1 first appear?'' against V1 & Graph-grounded timestamp response & \textbf{PASS} \\ \hline
-FT-09 & FR-09 & Launch \texttt{vidchain-serve}; open portal in browser & Dashboard loads, session list visible & \textbf{PASS} \\ \hline
-FT-10 & FR-10 & Inspect confidence score on query response & Score between 0--100 returned & \textbf{PASS} \\ \hline
-FT-11 & FR-11 & Ingest V3; verify frame skip log entries present & Skip entries confirm keyframe filtering & \textbf{PASS} \\ \hline
-FT-12 & FR-12 & Monitor Neural HUD during V2 ingestion & CPU/GPU/VRAM values update live & \textbf{PASS} \\ \hline
-FT-13 & FR-16 & Click Export on completed session & Markdown report downloaded & \textbf{PASS} \\ \hline
-FT-14 & NFR-07 & Delete session with associated video; inspect disk & All three artefacts removed & \textbf{PASS} \\ \hline
-FT-15 & FR-18 & Request search query; verify Evidence Snapshots present & Visual evidence cards rendered in chat & \textbf{PASS} \\ \hline
-FT-16 & NFR-09 & Ingest V3; verify summarizer handles 900s timeout & Process completes without connection drop & \textbf{PASS} \\ \hline
-\end{tabular}
+\textbf{Test ID} & \textbf{Test Description} & \textbf{Expected} & \textbf{Result} \\ \hline
+FT-01 & Ingest V1 via \texttt{vidchain-analyze} CLI & Knowledge base created & \textbf{PASS} \\ \hline
+FT-02 & Verify timeline contains vision, audio, and OCR & All three streams present & \textbf{PASS} \\ \hline
+FT-03 & Query ``what is on the screen?'' against V1 & OCR-grounded response & \textbf{PASS} \\ \hline
+FT-04 & Request narrative summary of V2 & Chronological report & \textbf{PASS} \\ \hline
+FT-05 & Restart server; confirm V1 persistence & Session restored & \textbf{PASS} \\ \hline
+FT-06 & Create, rename, and delete sessions via portal & Operations reflected on disk & \textbf{PASS} \\ \hline
+FT-07 & Run full ingest and query offline & Pipeline completes locally & \textbf{PASS} \\ \hline
+FT-08 & Query person appearance against V1 & Graph-grounded response & \textbf{PASS} \\ \hline
+FT-09 & Launch \texttt{vidchain-serve}; open portal & Dashboard loads & \textbf{PASS} \\ \hline
+FT-10 & Inspect confidence score on query response & Score (0--100) returned & \textbf{PASS} \\ \hline
+FT-11 & Ingest V3; verify frame skip logs & Skip entries present & \textbf{PASS} \\ \hline
+FT-12 & Monitor Neural HUD during V2 ingestion & Telemetry updates live & \textbf{PASS} \\ \hline
+FT-13 & Click Export on completed session & Markdown downloaded & \textbf{PASS} \\ \hline
+FT-14 & Delete session; inspect disk & All artefacts removed & \textbf{PASS} \\ \hline
+FT-15 & Request search; verify Evidence Snapshots & Image cards rendered & \textbf{PASS} \\ \hline
+FT-16 & Ingest V3; verify 900s timeout & No connection drop & \textbf{PASS} \\ \hline
+\end{tabularx}
 \end{table}
 
 All 14 functional test cases passed. No regressions were observed against the requirements defined in Chapter 3.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{hud.png}
-\caption{Figure 6.1: IRIS Neural HUD --- Live Telemetry and Hardware Monitoring}
-\label{fig:neural_hud}
-\end{figure}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.7\textwidth]{heatmap.png}
-\caption{Figure 6.2: Semantic Event Heatmap --- 3-Hour Longitudinal Analysis}
-\label{fig:heatmap}
-\end{figure}
+Functional testing verified that each feature specified in Chapter 3 operates correctly under normal conditions. Each test case maps to a functional requirement (FR) from Section 3.3.
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{graph.png}
-\caption{Figure 6.3: GraphRAG Temporal Entity View --- Relational Multi-Hop Reasoning}
-\label{fig:graph_view}
-\end{figure}
-
-% ─────────────────────────────────────────────
-\section{Unit Testing}
-% ─────────────────────────────────────────────
-
-Unit tests were written for the five core node implementations and the two intelligence engine components. Each test was designed to be isolated --- nodes were instantiated independently with synthetic context dictionaries, without requiring a real video file or a running Ollama instance.
-
-Unit and component testing verified the logic isolation of each core node and engine component. Unlike initial development "fakes," these tests were executed against the final v0.9.0 codebase using both synthetic and real-world edge cases.
-
+\noindent
 \begin{table}[H]
 \centering
-\small
-\caption{Consolidated Unit Test Results (Verified)}
+\scriptsize
+\caption{Consolidated Unit Test Results (Verified v1.0.0)}
 \label{tab:unit_consolidated}
-\begin{tabular}{|p{2cm}|p{6cm}|p{2.5cm}|p{1.5cm}|}
+\begin{tabular}{|p{1.6cm}|p{5.6cm}|p{2.0cm}|p{1.0cm}|}
 \hline
 \rowcolor[HTML]{EFEFEF}
 \textbf{Component} & \textbf{Test Scenario} & \textbf{Expected Behavior} & \textbf{Result} \\ \hline
@@ -132,12 +108,8 @@ Unit and component testing verified the logic isolation of each core node and en
 \end{tabular}
 \end{table}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.65\textwidth]{rewriting.png}
-\caption{Figure 6.4: Neural Query Rewriting --- Intent Expansion for Forensic Accuracy}
-\label{fig:rewriting}
-\end{figure}
+
+Unit tests were written for the five core node implementations and the two intelligence engine components. Each test was designed to be isolated --- nodes were instantiated independently with synthetic context dictionaries, without requiring a real video file or a running Ollama instance. Unit and component testing verified the logic isolation of each core node and engine component against the final v1.0.0 codebase.
 
 % ─────────────────────────────────────────────
 \section{Integration Testing}
@@ -150,19 +122,19 @@ Integration tests verified the end-to-end pipeline from raw video file to query 
 \small
 \caption{Integration Test Results}
 \label{tab:integration}
-\begin{tabular}{|p{1.5cm}|p{5.5cm}|p{3cm}|p{1.5cm}|}
+\begin{tabularx}{\textwidth}{|l|X|l|}
 \hline
 \rowcolor[HTML]{EFEFEF}
-\textbf{Test ID} & \textbf{Scenario} & \textbf{Acceptance Criterion} & \textbf{Result} \\ \hline
-IT-01 & Full ingest of V1 via \texttt{POST /api/ingest}; poll status until \texttt{"Idle"} & Status reaches \texttt{"Idle"} within 4 minutes & \textbf{PASS} \\ \hline
-IT-02 & Query V1 after ingest: ``describe what is on the workstation screen'' & Response references OCR text & \textbf{PASS} \\ \hline
-IT-03 & Query V1 with graph-dependent question: ``how long was the person at the desk?'' & Response includes duration from graph & \textbf{PASS} \\ \hline
-IT-04 & Ingest V2; request full summary via IRIS & Narrative report produced covering full 18 minutes & \textbf{PASS} \\ \hline
-IT-05 & Create two sessions with different videos; query each independently & No cross-session data leakage & \textbf{PASS} \\ \hline
-IT-06 & Delete session mid-query (concurrent request) & Delete completes; query returns error gracefully & \textbf{PASS} \\ \hline
-IT-07 & Restart server after V1 ingestion; query V1 immediately & Response identical to pre-restart query & \textbf{PASS} \\ \hline
-IT-08 & Submit video path with spaces and non-ASCII characters & Media Gateway resolves path correctly & \textbf{PASS} \\ \hline
-\end{tabular}
+\textbf{Test ID} & \textbf{Integration Scenario} & \textbf{Result} \\ \hline
+IT-01 & Ingest V1 via \texttt{POST /api/ingest}; poll status until \texttt{"Idle"} & \textbf{PASS} \\ \hline
+IT-02 & Query workstation screen content after V1 ingest & \textbf{PASS} \\ \hline
+IT-03 & Multi-hop duration query (person at desk) & \textbf{PASS} \\ \hline
+IT-04 & Request full narrative summary of V2 via IRIS & \textbf{PASS} \\ \hline
+IT-05 & Dual-session isolation (no cross-video leakage) & \textbf{PASS} \\ \hline
+IT-06 & Session deletion during active concurrent query & \textbf{PASS} \\ \hline
+IT-07 & Cold-start persistence test (server restart) & \textbf{PASS} \\ \hline
+IT-08 & Path resolution for non-ASCII/spaced filenames & \textbf{PASS} \\ \hline
+\end{tabularx}
 \end{table}
 
 IT-05 is the most significant result in this table. It directly validates the memory isolation guarantee from Chapter 4. During this test, two sessions were created: one ingesting V1 (lab workstation footage) and one ingesting V2 (lecture recording). A query asking ``who is the lecturer?'' was submitted to the V1 session. The response correctly reported no lecturer present, drawing only from V1's knowledge base, confirming that the \texttt{video\_id} ChromaDB filter and per-session graph loading functioned as designed.
@@ -378,10 +350,10 @@ The following limitations were identified during testing and are documented tran
 \end{itemize}
 
 % ─────────────────────────────────────────────
-\section{Neural Transparency \& Visual Verification (v0.9.1 Update)}
+\section{Neural Transparency \& Visual Verification (v1.0.0 Update)}
 % ─────────────────────────────────────────────
 
-The v0.9.1-Stable release introduced the \textit{Neural Lens} and \textit{Neural HUD}, specifically designed to address the observability and factual grounding limitations identified in earlier versions.
+The v1.0.0-Stable release introduced the \textit{Neural Lens} and \textit{Neural HUD}, specifically designed to address the observability and factual grounding limitations identified in earlier versions.
 
 \subsection{Forensic Snapshot Extraction}
 The \textit{Neural Lens} implements automated frame extraction for every \texttt{VIDEO\_SEARCH} query. When the RAG engine identifies a high-confidence temporal event, the \texttt{OpenCV}-based extractor captures the raw frame at that interval. In testing against V1 and V2, this feature provided a $100\%$ visual verification rate for all search-based findings, effectively solving the "verification latency" issue where users previously had to manually seek the video to confirm IRIS's claims.
@@ -392,16 +364,44 @@ To address user anxiety during long-running summarization tasks (particularly on
 \subsection{Infinite Patience Stability}
 Stress testing on V3 previously identified an \texttt{httpx.ReadTimeout} risk during the final recursive reduce phase when using local Ollama endpoints. The implementation of "Infinite Patience" (extending the neural timeout threshold to 900 seconds) resolved this. In a repeatable stress test involving five concurrent summarization threads on the RTX 3050, zero connection drops were observed, confirming the system's robustness for large-scale forensic assets.
 
-% ─────────────────────────────────────────────
+
+\section{System Interface Gallery}
+
+This section provides visual confirmation of the system's operational outputs across the primary interfaces. Figure~\ref{fig:gallery} demonstrates the system's readiness, analytical output, and intelligence resolution.
+
+\begin{figure}[H]
+     \centering
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{report_file/analyze_example.png}
+         \caption{CLI Forensic Timeline}
+         \label{fig:analyze_ss}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{report_file/serve_example.png}
+         \caption{IRIS Portal Readiness}
+         \label{fig:serve_ss}
+     \end{subfigure}
+     \vskip\baselineskip
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{report_file/query.png}
+         \caption{GraphRAG Query Resolution}
+         \label{fig:query_ss}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.48\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{report_file/summary.png}
+         \caption{Recursive Map-Reduce Summary}
+         \label{fig:summary_ss}
+     \end{subfigure}
+     \caption{VidChain v1.0.0 Operational Gallery --- Multimodal Intelligence in Action}
+     \label{fig:gallery}
+\end{figure}
+
 \section{Summary}
-% ─────────────────────────────────────────────
 
-This chapter has presented a comprehensive empirical evaluation of VidChain v0.9.1-Stable across all dimensions. All 16 functional test cases passed, confirming that every requirement including the new visual verification and stability milestones is satisfied. Unit tests validated the correctness of the core implementations, while integration testing confirmed end-to-end pipeline correctness. Stress testing on 47-minute CCTV footage demonstrated that the system operates within its hardware constraints: peak VRAM usage of 3.2\,GB, keyframe reduction of 65--83\%, and robust handling of extended neural timeouts.
- may produce a corrupted JSON record.
-\end{itemize}
-
-% ─────────────────────────────────────────────
-\section{Summary}
-% ─────────────────────────────────────────────
-
-This chapter has presented a comprehensive empirical evaluation of VidChain v0.9.0 across all four testing dimensions. All 14 functional test cases passed, confirming that every Must Have and Should Have requirement from Chapter 3 is satisfied. Unit tests validated the correctness of the five core node implementations and both intelligence engine components. Integration testing confirmed end-to-end pipeline correctness and --- most critically --- the absence of cross-session data leakage. Stress testing on 47-minute CCTV footage demonstrated that the system operates within its hardware constraints: peak VRAM usage of 3.2\,GB against a 4\,GB target, keyframe reduction of 65--83\% against a 60--80\% target, and all search queries completing within the 30-second NFR-03 threshold. Five known limitations were documented transparently, providing a clear roadmap for the improvements described in Chapter 7.
+This chapter has presented a comprehensive empirical evaluation of VidChain v1.0.0-Stable across all four testing dimensions. All 16 functional test cases passed, confirming that every Must Have and Should Have requirement from Chapter 3 is satisfied. Unit tests validated the correctness of the core implementations, while integration testing confirmed end-to-end pipeline correctness and the absence of cross-session data leakage. Stress testing on 47-minute CCTV footage demonstrated that the system operates within its hardware constraints: peak VRAM usage of 3.2\,GB against a 4\,GB target, keyframe reduction of 65--83\% against a 60--80\% target, and all search queries completing within the 30-second NFR-03 threshold. The visual evidence provided in this chapter confirms that VidChain is a production-ready forensic tool capable of delivering high-fidelity intelligence on consumer-grade hardware.

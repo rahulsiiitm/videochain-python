@@ -1,0 +1,91 @@
+@startuml VidChain_ER_Diagram_Proper
+
+!theme plain
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 60
+
+' ---------------------------------------------------------
+' 1. PERSISTENT STORAGE ENTITIES
+' ---------------------------------------------------------
+
+entity "Video_Source" as video {
+    * video_id : String(8) <<PK>>
+    --
+    file_path : String
+    fps : Float
+}
+
+entity "JSON_Knowledge_Base" as kb {
+    * video_id : String(8) <<FK>>
+    --
+    summary : Text
+    timeline_raw : JSON (Full Sensor Logs)
+}
+
+' ---------------------------------------------------------
+' 2. VECTOR STORE (ChromaDB)
+' ---------------------------------------------------------
+
+entity "Vector_Collection" as chroma {
+    * collection_name : String
+    --
+    embedding_model : "bge-base-en-v1.5"
+}
+
+entity "Vector_Document" as doc {
+    * doc_id : String <<PK>> (v_id + index)
+    --
+    video_id : String(8) <<FK>>
+    content : Text (Serialized Logs)
+    embedding : Vector(768)
+    metadata : JSON (Filtering Keys)
+}
+
+' ---------------------------------------------------------
+' 3. GRAPH STORE (GraphRAG)
+' ---------------------------------------------------------
+
+entity "Knowledge_Graph" as kg {
+    * video_id : String(8) <<PK>>
+    --
+    graph_file : ".pkl"
+    node_count : Integer
+}
+
+entity "Graph_Node" as node {
+    * node_key : String <<PK>>
+    --
+    type : Enum (timestamp, entity, ocr, audio, motion)
+    properties : JSON (first_seen, movement, etc.)
+}
+
+entity "Graph_Edge" as edge {
+    * edge_id : UUID <<PK>>
+    --
+    source_key : String <<FK>>
+    target_key : String <<FK>>
+    relation : Enum (detects, co-occurs, shows, same_as)
+}
+
+' ---------------------------------------------------------
+' RELATIONSHIPS
+' ---------------------------------------------------------
+
+' Core Video Hierarchy
+video ||--|| kb : "archived in"
+video ||--o{ doc : "indexed in"
+video ||--|| kg : "modeled in"
+
+' Vector Store Structure
+chroma ||--o{ doc : "contains"
+
+' Graph Structure
+kg ||--o{ node : "contains"
+node ||--o{ edge : "source"
+node ||--o{ edge : "target"
+
+' Cross-Reference (Logical)
+doc ||..|| node : "shares temporal context"
+
+@enduml

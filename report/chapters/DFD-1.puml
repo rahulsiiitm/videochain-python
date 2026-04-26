@@ -1,0 +1,89 @@
+@startuml DFD1_VidChain_Final_Fixed
+
+!theme plain
+left to right direction
+skinparam defaultTextAlignment center
+skinparam linetype polyline
+skinparam nodesep 35
+skinparam ranksep 60
+
+' Professional Styling
+skinparam usecase {
+    BackgroundColor #EBF5FB
+    BorderColor #2E86C1
+    FontSize 11
+}
+skinparam database {
+    BackgroundColor #FEF9E7
+    BorderColor #F1C40F
+}
+skinparam rectangle {
+    BackgroundColor #EAFAF1
+    BorderColor #27AE60
+}
+
+title Level-1 Data Flow Diagram: VidChain Forensic Pipeline (Clean Layout)
+
+' --- ENTITIES ---
+rectangle "Local Storage\n(File System)" as storage
+rectangle "Researcher\n(Analyst)" as researcher
+
+' --- INTELLIGENCE STORE ---
+package "Reasoning Layer" {
+    database "D1: ChromaDB\n(Vectors)" as D1
+    database "D2: Local KG\n(Entities)" as D2
+    database "D3: Global KG\n(Cross-Video)" as D3
+}
+
+' --- CORE ORCHESTRATION ---
+usecase "P1: Orchestrator\n(VideoChain)" as P1
+usecase "P2: Frame Filter\n(Keyframes)" as P2
+usecase "P3: Tracker Node\n(Persistence)" as P3
+
+' --- SENSORY MATRIX ---
+package "Sensory Matrix" {
+    usecase "P4: Whisper\n(Speech)" as P4
+    usecase "P5: Llava\n(Vision)" as P5
+    usecase "P6: OCR\n(Text)" as P6
+    usecase "P7: Action\n(Activity)" as P7
+    usecase "P8: Emotion\n(Behavior)" as P8
+}
+
+' --- QUERY & REPORTING ---
+usecase "P9: RAG Engine\n(IRIS)" as P9
+usecase "P10: Summariser\n(Map-Reduce)" as P10
+
+' --- DATA FLOWS (Fixed Overlaps) ---
+storage --> P1 : "Raw Video"
+P1 --> P4 : "Audio (.wav)"
+P1 --> P2 : "Frames"
+
+P2 --> P3 : "Keyframes"
+P3 --> P5 : "Frames + Motion"
+P3 --> P6
+P3 --> P7
+P3 --> P8
+
+' Sensory Feedback (Consolidated Label)
+P4 --> P1 : "Sensor Logs\n(JSON)"
+P5 --> P1
+P6 --> P1
+P7 --> P1
+P8 --> P1
+P3 --> P1
+
+' Indexing Flow (Vertical spread to avoid text collision)
+P1 -[#blue,bold]-> D1 : "Embeddings"
+P1 -[#blue,bold]-- D2 : "Local Graph"
+P1 -[#blue,bold]-- D3 : "Global Graph"
+
+' Query Path (Cleaner Spacing)
+researcher --> P9 : "Forensic Query"
+P9 .. D1 : "Vector Search"
+P9 .. D2 : "Graph Search"
+P9 .. D3
+
+P9 --> P10 : "Context Chunks"
+P10 --> researcher : "Intelligence Report"
+
+@enduml

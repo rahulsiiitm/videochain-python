@@ -79,16 +79,16 @@ VidChain is designed to bridge the gap between resource-intensive server-grade V
 \small
 \caption{Comparative Analysis: VidChain vs.\ State-of-the-Art Solutions}
 \label{tab:differentiation}
-\begin{tabular}{|p{2.5cm}|p{4.5cm}|p{4.5cm}|}
+\begin{tabularx}{\textwidth}{|l|X|X|}
 \hline
 \rowcolor[HTML]{EFEFEF} 
 \textbf{Feature} & \textbf{SOTA (Server-Grade VLMs)} & \textbf{VidChain (IRIS Engine)} \\ \hline
 \textbf{Hardware} & Server GPUs (40--80\,GB VRAM) & \textbf{Edge-optimised; 4\,GB VRAM} \\ \hline
-\textbf{Data Privacy} & Cloud API dependent (privacy risk) & \textbf{Local-first, air-gapped} \\ \hline
-\textbf{Reasoning} & Associative pattern matching & \textbf{Recursive Map-Reduce \& GraphRAG} \\ \hline
-\textbf{Long-Term Memory} & Fixed context window & \textbf{Hierarchical timeline} \\ \hline
-\textbf{Trustability} & Black-box generation (hallucination risk) & \textbf{Confidence-scored outputs} \\ \hline
-\end{tabular}
+\textbf{Data Privacy} & Cloud API dependent & \textbf{Local-first, air-gapped} \\ \hline
+\textbf{Reasoning} & Associative pattern matching & \textbf{Map-Reduce \& GraphRAG} \\ \hline
+\textbf{Memory} & Fixed context window & \textbf{Hierarchical timeline} \\ \hline
+\textbf{Trust} & Hallucination risk & \textbf{Confidence-scored outputs} \\ \hline
+\end{tabularx}
 \end{table}
 
 \section{Motivation and Purpose}
@@ -119,29 +119,3 @@ The remainder of this report is structured to provide a comprehensive technical 
     \item \textbf{Chapter 6: Results, Testing \& Analysis} presents empirical performance data and case studies.
     \item \textbf{Chapter 7: Conclusion \& Future Scope} summarizes the project's impact and v1.0 roadmap.
 \end{itemize}
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[
-    node distance=1.8cm,
-    block/.style={rectangle, draw, fill=blue!10, text width=6cm, text centered, rounded corners, minimum height=1cm},
-    line/.style={draw, -latex'}
-]
-\node [block] (ch1) {Chapter 1: Introduction \\ (Context \& Objectives)};
-\node [block, below of=ch1] (ch2) {Chapter 2: Literature Survey \\ (Technological Context)};
-\node [block, below of=ch2] (ch3) {Chapter 3: Requirements \\ (Technical Constraints)};
-\node [block, below of=ch3] (ch4) {Chapter 4: System Design \\ (Architecture \& Logic)};
-\node [block, below of=ch4] (ch5) {Chapter 5: Implementation \\ (Code-Level Development)};
-\node [block, below of=ch5] (ch6) {Chapter 6: Results \& Analysis \\ (Testing \& Benchmarking)};
-\node [block, below of=ch6] (ch7) {Chapter 7: Conclusion \\ (Summary \& Roadmap)};
-
-\path [line] (ch1) -- (ch2);
-\path [line] (ch2) -- (ch3);
-\path [line] (ch3) -- (ch4);
-\path [line] (ch4) -- (ch5);
-\path [line] (ch5) -- (ch6);
-\path [line] (ch6) -- (ch7);
-\end{tikzpicture}
-\caption{Structural Flow of the Report}
-\label{fig:report_flow}
-\end{figure}

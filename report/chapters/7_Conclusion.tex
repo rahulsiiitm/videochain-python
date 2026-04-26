@@ -12,7 +12,7 @@ The project successfully designed and implemented an end-to-end intelligent fore
     \item \textbf{Temporal GraphRAG:} Implemented a temporal knowledge graph using NetworkX to enable "multi-hop" relational querying, allowing the system to connect events separated by long temporal gaps.
     \item \textbf{Recursive Narrative Synthesis:} Developed a hierarchical Map-Reduce summarization engine that collapses hours of footage into coherent narratives without exceeding local LLM context limits.
     \item \textbf{Hardware-Optimized Orchestration:} Achieved professional-grade multimodal analysis within a strict 4\,GB VRAM floor, making the system viable for edge-hardware like the NVIDIA RTX 3050.
-    \item \textbf{Neural HUD and Telemetry (v2):} Designed a real-time monitoring interface (Spider-Net Portal) that provides chapter-level progress updates and live hardware utilization stats during ingestion.
+    \item \textbf{Neural HUD and Telemetry:} Designed a real-time monitoring interface (Spider-Net Portal) that provides chapter-level progress updates and live hardware utilization stats during ingestion.
     \item \textbf{Transparency and Visual Evidence:} Delivered research-grade responses enriched with forensic metadata and the \textit{Neural Lens} visual evidence snapshots for instant factual verification.
     \item \textbf{Production Hardening (Infinite Patience):} Implemented 900s timeout thresholds and concurrency locking, ensuring system stability during large-scale Map-Reduce summarization cycles.
 \end{enumerate}
@@ -23,18 +23,18 @@ VidChain distinguishes itself from existing general-purpose AI and computer visi
 
 \begin{table}[H]
 \centering
-\small
+\scriptsize
 \caption{Comparison of VidChain with Existing Multimodal Tools}
 \label{tab:comparison}
-\begin{tabular}{|p{2.5cm}|c|c|c|c|c|}
+\begin{tabular}{|p{2.2cm}|c|c|c|c|c|}
 \hline
 \rowcolor[HTML]{EFEFEF}
-\textbf{Tool} & \textbf{Temporal Graph} & \textbf{Local Execution} & \textbf{Audio-OCR Fusion} & \textbf{4GB VRAM Support} & \textbf{Unified Workflow} \\ \hline
-\textbf{VidChain (IRIS v1.0.0-Stable)} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\ \hline
+\textbf{Tool} & \textbf{GraphRAG} & \textbf{Local Exec.} & \textbf{Audio-OCR} & \textbf{4GB Support} & \textbf{Unified} \\ \hline
+\textbf{VidChain (v1.0.0)} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\ \hline
 GPT-4V / Claude & No & No & Limited & No & No \\ \hline
 Video-LLaVA & No & Yes & No & No & Yes \\ \hline
-LangChain (Std.) & No & Yes & Manual & No & No \\ \hline
-Google Vertex AI & No & No & Yes & No & Yes \\ \hline
+LangChain & No & Yes & Manual & No & No \\ \hline
+Google Vertex & No & No & Yes & No & Yes \\ \hline
 \end{tabular}
 \end{table}
 

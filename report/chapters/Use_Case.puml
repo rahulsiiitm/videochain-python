@@ -1,0 +1,92 @@
+@startuml VidChain_Professional_Use_Case
+
+!theme plain
+left to right direction
+skinparam packageStyle rectangle
+skinparam roundcorner 5
+skinparam shadowing false
+
+' ---------------------------------------------------------
+' STYLING
+' ---------------------------------------------------------
+skinparam actor {
+    BackgroundColor #EBF5FB
+    BorderColor #2E86C1
+}
+skinparam usecase {
+    BackgroundColor #FEF9E7
+    BorderColor #F1C40F
+}
+
+' ---------------------------------------------------------
+' ACTORS
+' ---------------------------------------------------------
+actor "Forensic Researcher\n(Primary Investigator)" as user
+actor "System Administrator\n(Infrastructure)" as admin
+
+' External Systems
+actor "Media Storage" as storage <<Subsystem>>
+actor "Ollama / Whisper" as ai <<Inference API>>
+actor "ChromaDB / KG" as db <<Persistence>>
+
+' ---------------------------------------------------------
+' SYSTEM BOUNDARY
+' ---------------------------------------------------------
+rectangle "VidChain: Multimodal Forensic Intelligence Suite" {
+
+    package "Data Ingestion & Processing" {
+        usecase "Ingest Video Evidence" as UC_Ingest
+        usecase "Extract Audio/Frames" as UC_Extract
+        usecase "Filter Keyframes" as UC_Filter
+        usecase "Execute Modular Sensors" as UC_Sensor
+    }
+
+    package "Intelligence & Retrieval" {
+        usecase "Natural Language Reasoning" as UC_Query
+        usecase "Cross-Modal Retrieval" as UC_Retrieval
+        usecase "Entity Persistence Tracking" as UC_Track
+        usecase "Generate Forensic Report" as UC_Report
+    }
+
+    package "System Management" {
+        usecase "Session Context Switching" as UC_Session
+        usecase "Purge Video Evidence" as UC_Purge
+        usecase "Sync Global Intelligence" as UC_Sync
+    }
+
+    ' Relationships within the system
+    UC_Ingest ..> UC_Extract : <<include>>
+    UC_Ingest ..> UC_Filter : <<include>>
+    UC_Ingest ..> UC_Sensor : <<include>>
+    
+    UC_Query ..> UC_Retrieval : <<include>>
+    UC_Query ..> UC_Track : <<include>>
+    UC_Report ..> UC_Query : <<include>>
+    
+    UC_Session ..> UC_Retrieval : <<extend>>
+}
+
+' ---------------------------------------------------------
+' ACTOR INTERACTIONS
+' ---------------------------------------------------------
+
+user -- UC_Ingest
+user -- UC_Query
+user -- UC_Report
+user -- UC_Track
+
+admin -- UC_Session
+admin -- UC_Purge
+admin -- UC_Sync
+
+' ---------------------------------------------------------
+' EXTERNAL SYSTEM LINKS
+' ---------------------------------------------------------
+
+UC_Extract -- storage
+UC_Sensor -- ai
+UC_Query -- ai
+UC_Retrieval -- db
+UC_Sync -- db
+
+@enduml
