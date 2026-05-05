@@ -1,0 +1,73 @@
+@startuml
+skinparam handwritten false
+skinparam monochrome true
+skinparam packageStyle rect
+skinparam defaultFontName "Helvetica"
+skinparam class {
+    BackgroundColor white
+    ArrowColor black
+    BorderColor black
+}
+
+abstract class BaseNode {
+    + {abstract} process(context: dict) : dict
+}
+
+class AdaptiveKeyframeNode {
+    - prev_gray: Mat
+    - threshold: float
+    + process(context: dict) : dict
+}
+
+class VLMNode {
+    - model: Moondream
+    + process(context: dict) : dict
+}
+
+class WhisperNode {
+    - model: Whisper
+    - segments_cache: list
+    + process(context: dict) : dict
+}
+
+class OCRNode {
+    - reader: EasyOCR
+    + process(context: dict) : dict
+}
+
+class TrackerNode {
+    - model: YOLOv8
+    + process(context: dict) : dict
+}
+
+class VideoChain {
+    - nodes: List[BaseNode]
+    - media_gateway: MediaGateway
+    + add_node(node: BaseNode)
+    + run(video_path: str) : list
+}
+
+class IRIS_Orchestrator {
+    - chain: VideoChain
+    - rag_engine: RAGEngine
+    - graph: TemporalKnowledgeGraph
+    + ask(query: str) : str
+    + ingest(video_path: str)
+}
+
+BaseNode <|-- AdaptiveKeyframeNode
+BaseNode <|-- VLMNode
+BaseNode <|-- WhisperNode
+BaseNode <|-- OCRNode
+BaseNode <|-- TrackerNode
+
+VideoChain "1" *-- "many" BaseNode : orchestrates
+IRIS_Orchestrator "1" *-- "1" VideoChain : utilizes
+
+note right of BaseNode
+  Every node receives a 'context' dict
+  containing the current frame and 
+  accumulated sensor logs.
+end note
+
+@enduml

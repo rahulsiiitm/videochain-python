@@ -37,6 +37,19 @@ VidChain is organised into four vertical layers, each with a single, well-define
 
 \textbf{Layer 4 (Interface)} exposes the system through four access points: a FastAPI edge server as the primary integration point, the IRIS Web Portal built in Next.js, the VidChain Studio desktop application, and the \texttt{vidchain-analyze} CLI for headless use.
 
+\section{Detailed Architectural Blueprint}
+
+While the five-layer model defines the logical boundaries, the Detailed Architecture Blueprint (Figure~\ref{fig:detailed_arch}) illustrates the physical data flow and component orchestration. The Media Gateway acts as the primary buffer, decoupling the asynchronous node scheduler from the synchronous video decoder. Every expert node (VLM, ASR, OCR, Tracker) executes in isolation, communicating only through the IRIS context dictionary. This ensures that a failure in one modality (e.g., a noisy audio track failing to transcribe) does not halt the visual or textual extraction pipelines.
+
+\newgeometry{left=0.2cm, right=0.2cm, top=0.2cm, bottom=0.2cm}
+\begin{sidewaysfigure}
+\centering
+\includegraphics[width=0.90\textheight]{detailed_architecture.pdf}
+\caption{Detailed Architecture Blueprint --- Component Interaction and Data-Flow Paths}
+\label{fig:detailed_arch}
+\end{sidewaysfigure}
+\restoregeometry
+
 \section{Data Flow Diagram}
 
 The data flow is presented at two levels of abstraction. Figure~\ref{fig:dfd0} shows the Level-0 Context Diagram, illustrating the system boundaries and the interactions between the VidChain Intelligence System and external entities: the Researcher (providing queries and receiving insights), Local Storage (supplying raw media), and the AI Inference Models (performing neural processing).

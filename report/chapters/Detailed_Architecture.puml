@@ -1,0 +1,67 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rect
+skinparam defaultFontName "Helvetica"
+skinparam component {
+    BackgroundColor white
+    ArrowColor black
+    BorderColor black
+}
+
+package "User Interface" {
+    [Spider-Net Portal (React)] as UI
+    [CLI Client] as CLI
+}
+
+package "IRIS Orchestration Layer" {
+    [API Gateway (FastAPI)] as API
+    [RAG Engine] as RAG
+    [Recursive Summarizer] as Sum
+}
+
+package "VidChain Intelligence Pipeline" {
+    [Media Gateway] as MG
+    [Node Scheduler] as NS
+    
+    package "Specialized Expert Nodes" {
+        [Adaptive Keyframe] as KF
+        [VLM (Moondream)] as VLM
+        [ASR (Whisper)] as ASR
+        [OCR (EasyOCR)] as OCR
+        [Entity Tracker (YOLOv8)] as YOLO
+    }
+}
+
+database "Persistent Knowledge Base" {
+    [ChromaDB (Vector Store)] as Vector
+    [NetworkX (Knowledge Graph)] as Graph
+    [Metadata Storage (JSON)] as Meta
+}
+
+UI --> API
+CLI --> API
+API --> RAG
+API --> MG : Triggers Ingest
+
+MG --> NS : Frames
+NS --> KF
+KF --> VLM
+KF --> ASR
+KF --> OCR
+KF --> YOLO
+
+VLM --> NS : Sensory Logs
+ASR --> NS
+OCR --> NS
+YOLO --> NS
+
+NS --> Vector : Semantic Embeddings
+NS --> Graph : Temporal Edges
+NS --> Meta : Raw Timeline
+
+RAG --> Vector : Retrieval
+RAG --> Graph : multi-hop deduction
+RAG --> Sum : Context Windowing
+Sum --> UI : Narrative Report
+
+@enduml

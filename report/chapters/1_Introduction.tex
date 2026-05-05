@@ -9,58 +9,23 @@ This section provides a comprehensive overview of the VidChain framework, detail
 \subsection{General System Architecture}
 VidChain is an AI-driven video intelligence suite designed to bridge the gap between raw optical sight and structured narrative insight. Unlike monolithic Vision-Language Models (VLMs), VidChain is built on a \textbf{Composable Node-Based Architecture}. The system decomposes complex video understanding into specialized, independent modules—Vision, Audio, OCR, and Emotion—all coordinated by the **IRIS (Intelligent Retrieval \& Insight System)** orchestrator. This decentralized approach ensures that each modality is processed with maximum precision before being fused into a shared, state-aware context.
 
-\subsection{Overall Project Flow}
-The operational pipeline of VidChain follows a structured sequence to transform raw pixels into queryable intelligence:
+\subsection{The Intelligence Pipeline}
+The operational workflow of VidChain is designed as a continuous pipeline that transforms raw optical data into structured forensic intelligence. This process begins with \textbf{Video Ingestion and Pre-processing}, where raw media is segmented and audio tracks are extracted for high-fidelity transcription. Once prepared, the \textbf{Multimodal Processing} stage activates specialized nodes for vision, audio, and OCR extraction. Unlike linear systems, VidChain utilizes these extraction signals to populate a \textbf{Temporal Knowledge Graph}, establishing a persistent memory of entity interactions across the timeline. Finally, this structural data is combined with vector embeddings and processed through a \textbf{Recursive Map-Reduce engine}, allowing for the generation of grounded, long-form narrative reports that remain within the context limits of local LLM architectures.
 
-\begin{enumerate}
-    \item \textbf{Video Ingestion \& Pre-processing:} Raw video files are parsed and segmented. If audio is present, it is extracted and pre-processed for high-fidelity transcription.
-    \item \textbf{Multimodal Node Processing:} The IRIS Orchestrator triggers parallel nodes. The Vision node performs object detection and CLIP-based scene anchoring; the Audio node (Whisper) generates time-stamped transcriptions; and the OCR node extracts on-screen text.
-    \item \textbf{Temporal Knowledge Graph Construction:} Extracted metadata is injected into a NetworkX-based GraphRAG system. This builds a "temporal memory" where entities are tracked as nodes and their interactions as edges across the timeline.
-    \item \textbf{Vector Embedding \& Storage:} Contextual summaries of each scene are embedded using HuggingFace sentence-transformers and stored in a Chroma DB vector store for fast semantic retrieval.
-    \item \textbf{Narrative Synthesis:} For long-form content, the Recursive Map-Reduce engine collapses raw events into a coherent, clinical narrative report.
-    \item \textbf{Query Processing \& LLM Generation:} When a user submits a natural language query, IRIS performs hybrid retrieval (Graph + Vector) and generates a grounded response using a locally hosted LLM via OLLAMA.
-\end{enumerate}
-
-\subsection{Key Technical Features}
-The system incorporates several advanced features designed to enhance both performance and user experience:
-\begin{itemize}
-    \item \textbf{Agentic Intent Routing:} IRIS automatically classifies user queries into "Search," "Summary," or "Conversation" to optimize the retrieval strategy.
-    \item \textbf{Neural Verification Pulse:} Every generated insight is cross-referenced against the temporal graph to produce a confidence score, reducing the risk of model hallucinations.
-    \item \textbf{Recursive Summarization:} Supports processing of multi-hour footage by hierarchically reducing content density without losing narrative continuity.
-    \item \textbf{Edge-Optimization:} Designed to run entirely on consumer hardware (e.g., RTX 3050) using VRAM-aware lazy loading and model quantization.
-    \item \textbf{VidChain Studio GUI:} A standalone CustomTkinter interface providing real-time telemetry, video playback with synchronized logs, and a conversational AI chat panel.
-\end{itemize}
+\subsection{Core Innovations}
+The framework introduces several technical innovations designed for high-stakes forensic environments. Through \textbf{Agentic Intent Routing}, the system dynamically adapts its retrieval strategy based on the user's query type, whether it be a specific entity search or a broad thematic summary. To ensure reliability, a \textbf{Neural Verification Pulse} cross-references generated insights against the knowledge graph to assign a confidence score to each claim. Furthermore, the architecture is fully \textbf{Edge-Optimized}, utilizing VRAM-aware lazy loading and quantization to maintain high performance on consumer-grade hardware without requiring cloud dependency.
 
 \section{Problem Statement}
 
-\subsection{Rationale for Video Intelligence}
-In an era of information overload, the ability to extract meaningful narratives from video data is essential for research, safety, and content management. Whether it involves reviewing an academic vision test, analyzing surveillance footage for specific interactions, or staying updated on massive video archives, effective analysis requires access to credible, structured, and queryable information. Traditional tools provide the "what" (detections) but fail to provide the "when," "where," and "why" (contextual insight).
+\subsection{Barriers to Advanced Video Analysis}
+The primary challenge in modern video analysis is the profound disconnect between detection and understanding. While traditional systems can identify isolated objects, they struggle with the \textbf{Information Overload} inherent in processing hundreds of thousands of frames, often leading to analyst fatigue. This is compounded by the \textbf{Semantic Gap}, where systems fail to translate a series of detections into a coherent narrative of human activity. Furthermore, conventional tools lack the interactivity required for iterative investigation, forcing researchers to rely on static logs rather than natural language reasoning.
 
-\subsection{Barriers to Effective Analysis}
-Despite the growing accessibility of video content, users face several fundamental challenges:
-\begin{itemize}
-    \item \textbf{Information Overload:} The sheer volume of frames in a single hour of video (approx. 108,000 frames) makes human identification of specific "plot points" nearly impossible without assistance.
-    \item \textbf{The Semantic Gap:} There is a disconnect between detecting a "laptop" and understanding a "student working on a research project."
-    \item \textbf{Non-Interactive Tools:} Conventional video players and logging software fail to support iterative, natural language interactions with the video content.
-\end{itemize}
-
-\subsection{Challenges in Modern AI Workflows}
-Integrating automated tools into video analysis introduces additional obstacles:
-\begin{itemize}
-    \item \textbf{LLM Context Limits:} Standard LLMs suffer from a "Context Window Wall," where the combined metadata of a long video exceeds their memory.
-    \item \textbf{Sensory Hallucination:} Frame-by-frame analysis often produces "action flickering"—static objects incorrectly flagged as moving or phantom audio events.
-    \item \textbf{Lack of Entity Persistence:} Systems often fail to recognize that a subject seen at minute five is the same subject seen at minute fifty.
-\end{itemize}
+\subsection{Critical Challenges in AI Orchestration}
+Implementing automated video intelligence introduces significant technical hurdles, most notably the \textbf{Context Window Wall}, where the metadata volume of long-form video exceeds the memory capacity of standard Large Language Models. Additionally, frame-by-frame analysis often suffers from \textbf{Sensory Hallucination} and a lack of \textbf{Entity Persistence}, where the system fails to recognise that a subject seen in the opening minutes is the same individual appearing later in the archive. 
 
 \subsection{Project Objectives}
-VidChain has been developed to address these challenges through the following design goals:
-\begin{enumerate}
-    \item \textbf{Develop a decentralized multimodal fusion pipeline} to process Vision, Audio, OCR, and Emotion signals independently and accurately.
-    \item \textbf{Implement a Recursive Map-Reduce engine} to enable the summarization of long-form video within standard LLM context limits.
-    \item \textbf{Construct a Temporal Knowledge Graph (GraphRAG)} for efficient entity tracking and multi-hop relational reasoning.
-    \item \textbf{Integrate local LLM execution via OLLAMA} to ensure user privacy and eliminate dependence on expensive cloud APIs.
-    \item \textbf{Enable Neural Verification} to score the confidence of generated narratives based on hard sensor data.
-\end{enumerate}
+The primary objective of this project is to develop a decentralized multimodal fusion pipeline that processes vision, audio, and textual signals with forensic accuracy. This includes the implementation of a Recursive Map-Reduce engine for long-form summarization and the construction of a GraphRAG-based temporal memory for efficient multi-hop relational reasoning. 
+Furthermore, the project aims to integrate local LLM execution via OLLAMA to ensure absolute user privacy and eliminate cloud dependency, while enabling Neural Verification protocols to score the confidence of generated narratives based on verified sensor data.
 
 \section{Contributions to the Sector}
 VidChain introduces several architectural innovations to the field of multimodal RAG and video summarization:

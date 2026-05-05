@@ -6,57 +6,31 @@ This chapter defines the formal requirements that guided the design and developm
 
 \subsection{The Academic Researcher}
 
-The primary persona for this system is an academic researcher working in fields such as computer vision, human-computer interaction, or behavioural analysis. This persona typically works with recorded video data, including lecture recordings, lab experiment footage, and field study captures, and needs to extract structured, queryable information from long sessions without manually reviewing every minute of footage.
+The primary persona for VidChain is an academic researcher operating within high-stakes fields such as computer vision, human-computer interaction, or behavioral forensics. This individual typically manages vast repositories of recorded video—ranging from lab experiment footage and field studies to longitudinal observation archives. Their central objective is to transform these raw pixels into structured, queryable evidence without the prohibitively high temporal cost of manual scrubbing. 
 
-\textbf{Goals:}
-\begin{itemize}
-    \item Extract timestamped events, spoken dialogue, and on-screen text from research recordings.
-    \item Query video content using natural language rather than manual scrubbing.
-    \item Generate structured summaries suitable for inclusion in research notes or reports.
-    \item Run analysis locally without uploading sensitive research data to external cloud services.
-\end{itemize}
-
-\textbf{Pain Points:}
-\begin{itemize}
-    \item Existing tools require either cloud APIs (raising data privacy concerns) or server-grade hardware that is inaccessible to individual researchers.
-    \item Standard video players offer no semantic search capability, so finding a specific moment requires manual effort.
-    \item Most AI-powered video tools produce flat, unstructured outputs with no temporal continuity between observations.
-\end{itemize}
-
-\textbf{Technical Comfort Level:} Moderate to high. Comfortable running a command-line tool or a local web interface, but does not want to configure deep infrastructure.
-
-\textbf{Hardware Profile:} A personal workstation or university-issued laptop, typically equipped with a consumer NVIDIA GPU in the 4--12\,GB VRAM range (e.g., RTX 3050, RTX 4060). No access to dedicated compute clusters for personal projects.
+In their current workflow, researchers face a critical "blind spot" where existing tools either demand invasive cloud-based processing (risking sensitive data privacy) or require server-grade infrastructure that is financially and technically inaccessible. Consequently, their analysis often remains shallow, consisting of disjointed observations rather than synthesized narratives. The technical comfort level of this persona is high; they prioritize local-first tools that offer high-precision multimodal extraction—specifically vision, transcriptions, and OCR—within the constraints of standard consumer GPUs (e.g., NVIDIA RTX 3050).
 
 \section{Functional Requirements}
 
-Functional requirements describe what the system must do. They are organised using the MoSCoW prioritisation framework.
+The functional requirements of VidChain define the core capabilities of the IRIS engine, prioritized using the MoSCoW framework. Unlike traditional video players, the system must orchestrate a decentralized pipeline to ensure forensic-grade data grounding.
 
-\subsection{Must Have}
-
-\begin{itemize}
-    \item \textbf{Video Ingestion.} The system must accept a local video file path and process it through the full multimodal pipeline, producing a structured, searchable knowledge base.
-
-    \item \textbf{Multimodal Extraction.} The system must extract at minimum three independent data streams per video: visual scene descriptions (via VLM or YOLO), speech transcription (via Whisper), and on-screen text (via OCR).
-
-    \item \textbf{Natural Language Query.} The system must allow the user to query ingested video content using free-form natural language and return a coherent, timestamped response.
-
-    \item \textbf{Temporal Summarisation.} The system must be capable of producing a narrative summary of an entire video using the Recursive Map-Reduce pipeline, without exceeding LLM context window limits.
-
-    \item \textbf{Persistent Storage.} All ingested video knowledge bases, vector stores, and knowledge graphs must persist to disk and survive server restarts.
-
-    \item \textbf{Session Management.} The system must support multiple independent sessions, each isolated to a specific video context, with create, rename, and delete operations.
-
-    \item \textbf{Local-First Execution.} The entire pipeline, including LLM inference, embedding, and retrieval, must run locally without requiring any external API calls, unless the user explicitly configures a cloud LLM.
-\end{itemize}
-
-\subsection{Should Have}
-
-\begin{itemize}
-    \item \textbf{GraphRAG Integration.} The system should construct a Temporal Knowledge Graph per video session, enabling multi-hop entity queries that flat vector search cannot resolve.
-
-    \item \textbf{Web Dashboard.} The system should provide a browser-based interface exposing the chat, video player, semantic heatmap, and live telemetry without requiring a separate installation.
-
-    \item \textbf{Confidence Scoring.} IRIS should self-evaluate and return a confidence score alongside each response, giving the user a signal of how well the answer is grounded in evidence.
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{|l|l|X|}
+\hline
+\textbf{Ref.} & \textbf{Priority} & \textbf{Description} \\ \hline
+FR-1 & \textbf{MUST} & \textbf{Multimodal Ingestion}: Accept local media and process vision, audio (Whisper), and OCR streams simultaneously. \\ \hline
+FR-2 & \textbf{MUST} & \textbf{Hybrid Querying}: Enable natural language interaction with the video using combined vector and graph-based retrieval. \\ \hline
+FR-3 & \textbf{MUST} & \textbf{Local Execution}: Perform all inference (LLM, Embeddings) locally via OLLAMA/ChromaDB to ensure data privacy. \\ \hline
+FR-4 & \textbf{SHOULD} & \textbf{Confidence Scoring}: Self-evaluate generated insights and return a grounding score for each narrative claim. \\ \hline
+FR-5 & \textbf{SHOULD} & \textbf{GraphRAG Support}: Build a temporal knowledge graph to resolve multi-hop entity tracking across disjoint scenes. \\ \hline
+FR-6 & \textbf{COULD} & \textbf{Semantic Heatmap}: Visualize the temporal distribution of search results across the video timeline for faster navigation. \\ \hline
+\end{tabularx}
+\caption{MoSCoW Functional Requirements Specification}
+\label{tab:moscow_fr}
+\end{table}
 
     \item \textbf{Adaptive Keyframe Filtering.} The pipeline should skip visually redundant frames before they reach heavy compute nodes, reducing GPU load without sacrificing coverage.
 
@@ -87,53 +61,20 @@ Functional requirements describe what the system must do. They are organised usi
 
 \section{Non-Functional Requirements}
 
-Non-functional requirements define the quality attributes and operational constraints of the system.
+Non-functional requirements define the operational constraints and quality attributes that ensure the VidChain engine remains robust under forensic workloads. These are categorized into performance, reliability, and privacy metrics.
 
-\subsection{Performance}
+\subsection{Performance and Efficiency}
+The system is designed for high-efficiency multimodal extraction on consumer hardware. A primary performance requirement is the 60\% reduction in frame processing achieved by the \textbf{AdaptiveKeyframeNode} on static or low-motion footage. During development, this node demonstrated up to 80\% savings, significantly preserving the GPU budget for meaningful visual analysis. Furthermore, the **Moondream VLM** must maintain an inference latency of under 5 seconds per keyframe on the minimum 4\,GB VRAM configuration, a target that was consistently met (2--5 seconds) across the v1.0.0 testing suite. Finally, the **FastAPI gateway** must ensure a query response latency of under 30 seconds for complex RAG operations.
 
-\begin{itemize}
-    \item The \texttt{AdaptiveKeyframeNode} must achieve at least 60\% frame reduction on static or low-motion footage compared to uniform frame sampling, preserving GPU budget for meaningful frames. Benchmarks from v1.0.0 confirm 60--80\% savings on surveillance-style content.
+\subsection{Reliability and Fault Tolerance}
+Reliability is managed through a decentralized "Fail-Fast but Persist" architecture. Every inference stage, including Whisper, VLM, OCR, and DeepFace, must fail independently; a crash in any single node is prohibited from terminating the entire pipeline. This ensures that the system always returns partial, groundable results to the user. Additionally, the system provides cross-platform media resolution via the **VidChain Media Gateway**, ensuring that video playback functions correctly across both Windows and Unix-based local environments.
 
-    \item The Moondream VLM must process each accepted keyframe in under 5 seconds on the minimum supported hardware configuration (4\,GB VRAM). This was validated at approximately 2--5 seconds per frame during development.
-
-    \item The FastAPI server must respond to \texttt{/api/query} requests within 30 seconds under normal operating conditions on the minimum hardware profile.
-\end{itemize}
-
-\subsection{Reliability}
-
-\begin{itemize}
-    \item Every inference stage (Whisper, VLM, OCR, DeepFace, YOLO) must fail independently. A crash in one node must not terminate the pipeline; partial results must always be returned.
-
-    \item The system must resolve video playback correctly for absolute local paths on Windows and Unix-based systems, handled by the VidChain Media Gateway (\texttt{/api/media-stream}).
-\end{itemize}
-
-\subsection{Privacy and Security}
-
-\begin{itemize}
-    \item No video data, transcripts, or query results may be transmitted to external servers unless the user has explicitly configured a remote LLM provider via \texttt{litellm}.
-
-    \item Session deletion must trigger a full memory purge, including ChromaDB vectors, the associated \texttt{.pkl} knowledge graph, and the \texttt{.json} knowledge base archive.
-\end{itemize}
-
-\subsection{Usability}
-
-\begin{itemize}
-    \item A user must be able to ingest a video and receive a natural language summary with no more than two commands (\texttt{vidchain-serve} followed by a browser interaction), without writing any code.
-
-    \item The web dashboard must be responsive and functional on screens with a minimum width of 768\,px (tablet and above).
-\end{itemize}
-
-\subsection{Maintainability}
-
-\begin{itemize}
-    \item All pipeline components must conform to the \texttt{BaseNode} interface, allowing new modalities to be injected into any \texttt{VideoChain} without modifying existing nodes.
-
-    \item The codebase must maintain zero redundant legacy files; deprecated modules (\texttt{processor.py}, \texttt{audio\_loader.py}) are retained only as stub references and carry explicit deprecation notices.
-\end{itemize}
+\subsection{Privacy and Data Integrity}
+VidChain is a local-first system; consequently, no video data, transcripts, or query results are permitted to leave the local network unless the user explicitly configures a remote provider. Security is further enforced through strict session management, where deleting a session triggers an atomic purge of all associated metadata, including ChromaDB vectors, NetworkX knowledge graphs, and JSON archives.
 
 \section{Hardware Constraints}
 
-The following constraints are drawn directly from the project's technical specifications and \texttt{pyproject.toml} dependency declarations.
+The system's architectural trade-offs are driven by the requirement to run on consumer hardware, particularly laptops with limited VRAM.
 
 \begin{table}[H]
 \centering
@@ -149,30 +90,11 @@ The following constraints are drawn directly from the project's technical specif
 \textbf{CUDA Version} & 12.1+ & 12.1+ \\ \hline
 \textbf{Python} & 3.11+ & 3.11 or 3.12 \\ \hline
 \textbf{Storage} & \textasciitilde{}10\,GB (models + DB) & 20\,GB+ (multiple sessions) \\ \hline
-\textbf{Ollama} & Required (active instance) & Required (active instance) \\ \hline
 \end{tabular}
 \end{table}
 
-\textbf{PyTorch} is intentionally unpinned in \texttt{pyproject.toml} and must be installed manually with the correct CUDA variant:
-
-\begin{verbatim}
-pip install torch torchvision torchaudio \
-    --index-url https://download.pytorch.org/whl/cu121
-\end{verbatim}
-
-This decision was made to avoid shipping an incorrect CUDA build on machines with different driver versions, which is a common failure point in edge-deployed AI systems.
-
-\subsection{Edge Optimisation Strategy}
-
-The 4\,GB VRAM constraint is not a limitation imposed on the system, it is a design target. Several architectural decisions exist specifically to honour it:
-
-\begin{itemize}
-    \item The \texttt{AdaptiveKeyframeNode} eliminates redundant frames before they reach the GPU, minimising peak VRAM pressure.
-    \item Moondream was chosen as the default VLM over LLaVA 7B because it delivers comparable scene understanding at approximately 186$\times$ lower latency on 4\,GB hardware.
-    \item The \texttt{EmotionNode} (DeepFace) is threaded on CPU explicitly to avoid competing with VLM/YOLO for VRAM.
-    \item YOLO is kept as a fast-mode fallback via the \texttt{--fast} CLI flag for long videos where VLM throughput would be prohibitive.
-    \item The \texttt{VisionEngine} forces \texttt{FP32} precision (\texttt{half=False}) to prevent layer-fusion crashes on RTX 30-series laptops, which exhibit a known FP16 instability under certain Ultralytics builds.
-\end{itemize}
+\subsection{VRAM Budgeting and Optimization}
+The 4\,GB VRAM target informed several critical design decisions. To honor this constraint, VidChain utilizes \textbf{FP32 precision} for the VisionEngine to avoid the FP16 instabilities common in 30-series laptop GPUs, while simultaneously offloading the \textbf{EmotionNode (DeepFace)} to the CPU to prevent VRAM competition. The choice of \textbf{Moondream} as the default VLM was pivotal, as it delivers high-fidelity scene understanding at 186$\times$ lower latency than standard 7B-parameter models on edge hardware. These optimizations, combined with the **Adaptive Keyframe filtering**, ensure that the IRIS engine remains operational even during peak inference loads on consumer-grade machines.
 
 \section{Summary}
 

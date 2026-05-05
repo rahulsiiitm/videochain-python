@@ -12,6 +12,7 @@ The \texttt{VideoChain.run()} method is the central execution loop of the entire
 
 \begin{algorithm}[H]
 \caption{\texttt{VideoChain.run(video\_path)}}
+\begin{algbox}
 \begin{algorithmic}[1]
 \Require $video\_path$: path to a local video file
 \Ensure $timeline$: list of fused event dictionaries
@@ -48,6 +49,7 @@ The \texttt{VideoChain.run()} method is the central execution loop of the entire
 \State Close video capture
 \State \Return $(timeline,\ audio\_path)$
 \end{algorithmic}
+\end{algbox}
 \end{algorithm}
 
 \subsection{Implementation Notes}
@@ -94,6 +96,7 @@ The \texttt{AdaptiveKeyframeNode} acts as a computational firewall. Its purpose 
 
 \begin{algorithm}[H]
 \caption{\texttt{AdaptiveKeyframeNode.process(context)}}
+\begin{algbox}
 \begin{algorithmic}[1]
 \Require Context $C$ containing \texttt{current\_frame} $F$
 \Ensure $C[\texttt{skip\_frame}]$ set appropriately
@@ -119,6 +122,7 @@ The \texttt{AdaptiveKeyframeNode} acts as a computational firewall. Its purpose 
 
 \State \Return $C$
 \end{algorithmic}
+\end{algbox}
 \end{algorithm}
 
 \subsection{Implementation Notes}
@@ -133,6 +137,7 @@ The \texttt{AdaptiveKeyframeNode} acts as a computational firewall. Its purpose 
 
 \begin{algorithm}[H]
 \caption{\texttt{TemporalKnowledgeGraph.build\_from\_timeline(timeline)}}
+\begin{algbox}
 \begin{algorithmic}[1]
 \Require $timeline$: list of fused event dictionaries
 \Ensure Directed graph $G$ populated with temporal entity facts
@@ -161,6 +166,7 @@ The \texttt{AdaptiveKeyframeNode} acts as a computational firewall. Its purpose 
     \EndIf
 \EndFor
 \end{algorithmic}
+\end{algbox}
 \end{algorithm}
 
 \subsection{Implementation Notes}
@@ -202,6 +208,7 @@ The \texttt{AdaptiveKeyframeNode} acts as a computational firewall. Its purpose 
 
 \begin{algorithm}[H]
 \caption{Recursive Narrative Map-Reduce}
+\begin{algbox}
 \begin{algorithmic}[1]
 \Procedure{GenerateSummary}{$\mathcal{T},\ mode$}
     \State $chunks \gets \texttt{ChunkByWordLimit}(\mathcal{T},\ 1500)$
@@ -223,6 +230,7 @@ The \texttt{AdaptiveKeyframeNode} acts as a computational firewall. Its purpose 
     \State \Return \Call{RecursiveReduce}{$\mathcal{R},\ mode$}
 \EndProcedure
 \end{algorithmic}
+\end{algbox}
 \end{algorithm}
 
 \section{RAG Engine and Session Management}
@@ -231,6 +239,7 @@ The \texttt{AdaptiveKeyframeNode} acts as a computational firewall. Its purpose 
 
 \begin{algorithm}[H]
 \caption{Session Lifecycle: Ingest and Delete}
+\begin{algbox}
 \begin{algorithmic}[1]
 
 \Statex \textbf{Ingest}
@@ -248,6 +257,7 @@ The \texttt{AdaptiveKeyframeNode} acts as a computational firewall. Its purpose 
 \State Delete \texttt{knowledge\_bases/\{video\_id\}.json}
 \State Delete \texttt{sessions/\{session\_id\}.json}
 \end{algorithmic}
+\end{algbox}
 \end{algorithm}
 
 \subsection{Implementation Notes}

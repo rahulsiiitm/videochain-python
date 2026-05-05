@@ -26,36 +26,52 @@ While effective for broad semantic matching, Cosine Similarity often fails to ca
 \subsection{Cross-Encoder Reranking Algorithms}
 Research indicates that \textbf{Bi-Encoders} (used by vector stores like ChromaDB) provide high-speed search but suffer from lower relational accuracy. To bridge this gap, modern architectures implement \textbf{Cross-Encoders} for the final reranking phase. Unlike Bi-Encoders, which process query and document independently, Cross-Encoders (e.g., \textbf{MS-MARCO}) feed the concatenated query-document pair into a transformer simultaneously. This allows the model to capture deep interactions between the user's intent and the retrieved video segment, significantly reducing false-positive retrieval.
 
-\subsection{Evaluation Metrics in Narrative Synthesis}
-Assessing the quality of generated video narratives requires standardized quantitative metrics. The literature identifies three primary benchmarks:
-\begin{itemize}
-    \item \textbf{BLEU (Bilingual Evaluation Understudy):} Measures $n$-gram overlap between the generated narrative and a ground-truth reference.
-    \item \textbf{ROUGE (Recall-Oriented Understudy for Gisting Evaluation):} Focuses on recall, measuring the coverage of the generated summary against the source material.
-    \item \textbf{METEOR (Metric for Evaluation of Translation with Explicit ORdering):} Addresses the limitations of BLEU by considering synonyms and morphological variants, providing a more human-aligned accuracy score.
-\end{itemize}
+Assessing the quality of generated video narratives requires standardized quantitative benchmarks. The literature primarily identifies three metrics: \textbf{BLEU (Bilingual Evaluation Understudy)}, which measures $n$-gram overlap; \textbf{ROUGE (Recall-Oriented Understudy for Gisting Evaluation)}, which focuses on summary coverage; and \textbf{METEOR}, which addresses synonyms and morphological variants to provide a more human-aligned accuracy score. Together, these metrics ensure that narrative synthesis is both factually grounded and linguistically coherent.
 
 \section{Comparison of Similar Projects}
-Several systems have attempted to bridge the gap between video data and natural language reasoning. Among them, frameworks like \textbf{Video-ChatGPT}, \textbf{Video-LLaVA}, and \textbf{PaperQA} (for document-level grounding) provide the current state-of-the-art context.
-
-\subsection{Video-LLaVA and Video-ChatGPT}
-These models are built as end-to-end transformers that process video tokens alongside text. While they excel at short-form visual Q\&A on benchmarks like \textbf{ActivityNet-QA} and \textbf{MSVD-QA}, they are limited in several ways \cite{videollava}:
-\begin{itemize}
-    \item \textbf{High Resource Consumption:} They require server-grade GPUs (40GB--80GB VRAM), making them inaccessible for edge-local deployments.
-    \item \textbf{Temporal Hallucination:} Without structured tracking, they often "hallucinate" actions or confuse the chronological order of events in longer videos.
-    \item \textbf{Fixed Context Windows:} They are vulnerable to "Lost in the Middle" phenomena where the model loses focus on earlier segments as the video length increases.
-\end{itemize}
+Several systems have attempted to bridge the gap between video data and natural language reasoning, most notably end-to-end models like \textbf{Video-ChatGPT} and \textbf{Video-LLaVA}. While these models excel at short-form visual Q\&A on benchmarks such as \textbf{ActivityNet-QA}, they face significant hurdles in professional forensic contexts. Primarily, their \textbf{High Resource Consumption} necessitates server-grade GPUs (40GB--80GB VRAM), effectively prohibiting edge-local deployment. Furthermore, without a structured tracking layer, these monolithic systems are prone to \textbf{Temporal Hallucination} and the "Lost in the Middle" phenomena, where the model loses focus on critical chronological details as video length increases beyond its fixed context window.
 
 \subsection{VidChain: A Hybrid Paradigm}
 In contrast to the monolithic approach, VidChain focuses on a \textbf{Hybrid Logic}. It combines the high-speed retrieval of ChromaDB with the structural persistence of **GraphRAG**. This richer framework allows for more transparent, explainable, and robust academic assistance—particularly useful for longitudinal studies and technical explanations where traceability is paramount.
 
 \section{Identified Gaps in the Literature}
-Despite the growing interest in multimodal RAG, several gaps remain unaddressed in the current body of research:
-\begin{itemize}
-    \item \textbf{Lack of Edge-Optimized Orchestration:} Existing frameworks do not permit local execution on consumer hardware, creating a dependence on high-latency cloud APIs.
-    \item \textbf{Insufficient Temporal Gating:} Few platforms implement automatic "energy-based gating" to manage computational loads during multimodal fusion.
-    \item \textbf{The Entity Persistence Gap:} Standard Video RAG lacks a native mechanism for multi-hop relational reasoning (e.g., "Where did the person seen at 02:00 reappear?").
-    \item \textbf{Lack of Citation Transparency:} Many systems provide black-box summaries without explicit links to the visual timestamps or audio segments that justify the claim.
-\end{itemize}
+Despite the rapid evolution of multimodal RAG, several critical gaps persist in the current research landscape. Most existing frameworks lack \textbf{Edge-Optimized Orchestration}, creating a problematic dependency on high-latency cloud APIs that prevents local execution on consumer-grade hardware. Furthermore, there is a notable absence of \textbf{Temporal Gating} mechanisms capable of managing computational loads during the fusion process. From a reasoning perspective, the \textbf{Entity Persistence Gap} remains a major hurdle; standard Video RAG systems often lack the structural memory required for multi-hop relational reasoning, such as tracking a specific subject's reappearances across temporal segments. Finally, a pervasive lack of \textbf{Citation Transparency} in many systems results in black-box summaries that fail to provide verifiable links to the specific visual or audio evidence justifying their claims. VidChain is specifically designed to bridge these gaps through its hybrid vector-graph architecture.
+
+\section{Project Timeline and Methodology}
+\label{sec:timeline}
+
+The development of VidChain followed a structured sequential methodology to ensure the integrity of the forensic pipeline. The project was divided into eight distinct phases, spanning from initial planning to final submission. The following Gantt chart (Figure~\ref{fig:gantt}) illustrates the temporal distribution of these efforts across the Spring 2026 semester, reflecting the high computational complexity of the implementation and testing phases.
+
+\begin{figure}[H]
+\centering
+\begin{ganttchart}[
+    hgrid,
+    vgrid={*1{black!10}},
+    x unit=0.6cm,
+    y unit chart=0.6cm,
+    title height=1,
+    title label font=\tiny\bfseries,
+    bar label font=\footnotesize,
+    bar/.style={fill=blue!60},
+    bar height=0.5,
+    progress label text={},
+    canvas/.style={draw=none}
+]{1}{12}
+    \gantttitle{Spring 2026 Semester Timeline}{12} \\
+    \gantttitle{Feb 02}{2} \gantttitle{Feb 16}{2} \gantttitle{Mar 02}{2} \gantttitle{Mar 16}{2} \gantttitle{Mar 30}{2} \gantttitle{Apr 13}{2} \\
+    \gantttitle{2026}{2} \gantttitle{2026}{2} \gantttitle{2026}{2} \gantttitle{2026}{2} \gantttitle{2026}{2} \gantttitle{2026}{2} \\
+    \ganttbar{1. Project Planning}{1}{1} \\
+    \ganttbar{2. Requirement Engineering}{2}{2} \\
+    \ganttbar{3. Data Collection \& Exploration}{3}{4} \\
+    \ganttbar{4. System Design}{5}{5} \\
+    \ganttbar{5. Implementation (Nodes \& Pipeline)}{6}{10} \\
+    \ganttbar{6. Testing, Debugging \& Evaluation}{11}{11} \\
+    \ganttbar{7. Documentation}{11}{12} \\
+    \ganttbar{8. Final Review \& Submission}{12}{12}
+\end{ganttchart}
+\caption{Project Development Timeline (Finalized April 26, 2026)}
+\label{fig:gantt}
+\end{figure}
 
 \section{Conclusion of Survey}
 The literature review highlights a dynamic landscape of video intelligence tools. While general-purpose models offer linguistic fluency, they lack the scholarly grounding and resource efficiency required for edge-local video analysis. This survey reinforces the importance of a decentralized research assistant that integrates real-time retrieval, semantic reranking, and citation transparency. The identified limitations in existing solutions provide a strong justification for the proposed **VidChain** system, which seeks to bridge these gaps and enhance the reliability of video-based information discovery.

@@ -16,6 +16,9 @@
 \usepackage{rotating} % Required for sidewaysfigure
 \usepackage{pdflscape} % Better landscape support in PDF
 \usepackage{subcaption}
+\usepackage{xcolor} % Required for custom colors
+\usepackage{tcolorbox} % Required for themed boxes
+\tcbuselibrary{skins, breakable}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, shapes.geometric, shapes.multipart, positioning, fit, backgrounds}
 \usepackage{pgfplots}
@@ -28,6 +31,20 @@
 \usepackage{lipsum}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{pgfgantt} % Professional Gantt charts
+
+% Custom style for subtle algorithm background
+\newtcolorbox{algbox}{
+    colback=gray!5,
+    colframe=gray!30,
+    boxrule=0.5pt,
+    arc=3pt,
+    left=5pt,
+    right=5pt,
+    top=5pt,
+    bottom=5pt,
+    fontupper=\small
+}
 
 \begin{document} 	
 	\begin{titlepage} 
