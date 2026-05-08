@@ -2,7 +2,7 @@
 
 > **High-Fidelity Multimodal RAG Framework for Forensic Video Intelligence**
 
-![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) ![Status](https://img.shields.io/badge/Status-v1.0.0--Stable-green) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/) [![Downloads](https://static.pepy.tech/badge/vidchain)](https://pepy.tech/project/vidchain)
+![Python](https://img.shields.io/badge/Python-3.11+-blue) ![CUDA](https://img.shields.io/badge/CUDA-12.1-green) ![License](https://img.shields.io/badge/License-MIT-yellow) [![PyPI version](https://badge.fury.io/py/vidchain.svg)](https://pypi.org/project/VidChain/) [![Downloads](https://static.pepy.tech/badge/vidchain)](https://pepy.tech/project/vidchain)
 
 VidChain is a local-first multimodal RAG framework powered by the **IRIS Engine** (Intelligent Retrieval & Insight System). It parses video through a modular sensory matrix — fusing visual, auditory, OCR, and temporal signals into a queryable intelligence layer — designed for forensic analysis, security auditing, and automated video summarization with strict on-device privacy.
 
@@ -204,3 +204,5 @@ Every query response is paired with a Base64-encoded visual snapshot extracted d
 MIT — See [LICENSE](LICENSE) for details.
 
 **Author:** Rahul Sharma — IIIT Manipur
+
+***🌟 Star this repo if you find it useful! It helps the IRIS Engine grow.***
